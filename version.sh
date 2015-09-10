@@ -2,7 +2,7 @@
 #
 ARCH=$(uname -m)
 
-config="imx_v7_defconfig"
+config="udoo_neo_defconfig"
 
 #toolchain="gcc_linaro_eabi_4_8"
 #toolchain="gcc_linaro_eabi_4_9"
@@ -14,7 +14,7 @@ toolchain="gcc_linaro_gnueabihf_4_8"
 #Kernel/Build
 KERNEL_REL=3.14
 KERNEL_TAG=${KERNEL_REL}.28
-BUILD=imx-r0.2
+BUILD=imx-r0.3
 kernel_rt=".X-rtY"
 
 #v3.X-rcX + upto SHA

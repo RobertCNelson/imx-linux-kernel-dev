@@ -72,6 +72,11 @@ external_git () {
 	git_tag="rel_imx_3.14.28_1.0.0_ga"
 	echo "pulling: ${git_tag}"
 	git pull ${git_opts} ${git_patchset} ${git_tag}
+
+	git_tag="imx_3.14.28_1.0.0_ga_neo"
+	git_patchset="https://github.com/UDOOboard/linux_kernel/"
+	echo "pulling: ${git_tag}"
+	git pull ${git_opts} ${git_patchset} ${git_tag}
 }
 
 rt_cleanup () {
