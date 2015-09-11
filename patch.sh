@@ -112,6 +112,27 @@ external_git
 #rt
 #local_patch
 
+dts () {
+	echo "dir: dts"
+	${git} "${DIR}/patches/dts/0001-neo-add-bluetooth.patch"
+}
+
+ti_wl () {
+	echo "dir: ti_wl"
+	${git} "${DIR}/patches/ti_wl/0001-imx6q-sabresd-add-support-for-wilink8-wlan-and-bluet.patch"
+	${git} "${DIR}/patches/ti_wl/0002-Bluetooth-Add-tty-HCI-driver.patch"
+	${git} "${DIR}/patches/ti_wl/0003-imx_v7_defconfig-enable-Wilink8-related-switches.patch"
+	${git} "${DIR}/patches/ti_wl/0004-st_kim-do-not-use-debugfs-functions-if-not-enabled.patch"
+	${git} "${DIR}/patches/ti_wl/0005-st_kim-allow-suspend-if-callback-is-not-registered.patch"
+	${git} "${DIR}/patches/ti_wl/0006-btwilink-add-minimal-device-tree-support.patch"
+	${git} "${DIR}/patches/ti_wl/0007-ti-st-add-device-tree-support.patch"
+	${git} "${DIR}/patches/ti_wl/0008-imx6sl-evk-add-support-for-wilink8-wlan-and-bluetoot.patch"
+	${git} "${DIR}/patches/ti_wl/0009-imx6-decrease-wilink8-sdio-pins-drive-strength.patch"
+}
+
+dts
+ti_wl
+
 packaging () {
 	echo "dir: packaging"
 	#regenerate="enable"

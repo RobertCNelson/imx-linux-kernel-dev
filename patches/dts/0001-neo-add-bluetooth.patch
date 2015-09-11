@@ -1,0 +1,44 @@
+From f93dd0290899b3cb590d97909de283f6e4842204 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Fri, 11 Sep 2015 10:55:35 -0500
+Subject: [PATCH] neo: add bluetooth
+
+Signed-off-by: Robert Nelson <robertcnelson@gmail.com>
+---
+ arch/arm/boot/dts/imx6sx-udoo-neo.dtsi | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
+index 5cf3ea8..01a4c83 100644
+--- a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
++++ b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
+@@ -89,6 +89,17 @@
+ 		};
+ 	};
+ 
++	kim {
++	        compatible = "kim";
++	        nshutdown_gpio = <49>;  // GPIO2_17 The wl8 driver expects gpio to be an integer, so gpio2_17 is (2-1)*32+17=49
++	        dev_name = "/dev/ttymxc2";
++	        flow_cntrl = <1>;
++	        baud_rate = <3000000>;
++	};
++
++	btwilink {
++	        compatible = "btwilink";
++	};
+ };
+ 
+ &cpu0 {
+@@ -507,7 +518,7 @@
+ 	#address-cells = <1>;
+ 	#size-cells = <0>;
+ 	wlcore: wlcore@0 {
+-		compatible = "ti,wl1831";
++		compatible = "ti,wl1835";
+ 		reg = <2>;
+ 		interrupt-parent = <&gpio2>;
+ 		interrupts = <16 IRQ_TYPE_EDGE_RISING>;
+-- 
+2.5.1
+
