@@ -1,0 +1,25 @@
+From e74576e7c4549c2a728f64a77ba6657caf7286cf Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:18 -0500
+Subject: [PATCH 18/97] apply backport patch
+ collateral-evolutions/media/0004-missing-include/ir-hix5hd2.patch
+
+---
+ backports/drivers/media/rc/ir-hix5hd2.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/backports/drivers/media/rc/ir-hix5hd2.c b/backports/drivers/media/rc/ir-hix5hd2.c
+index 58ec598..7ce369e 100644
+--- a/backports/drivers/media/rc/ir-hix5hd2.c
++++ b/backports/drivers/media/rc/ir-hix5hd2.c
+@@ -15,6 +15,7 @@
+ #include <linux/of_device.h>
+ #include <linux/regmap.h>
+ #include <media/rc-core.h>
++#include <linux/of.h>
+ 
+ #define IR_ENABLE		0x00
+ #define IR_CONFIG		0x04
+-- 
+2.5.1
+

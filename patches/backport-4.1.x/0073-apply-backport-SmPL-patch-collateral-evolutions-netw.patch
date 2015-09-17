@@ -1,0 +1,73 @@
+From 51462cf040e45cc40246ea3883fa55397a48925e Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:53 -0500
+Subject: [PATCH 73/97] apply backport SmPL patch
+ collateral-evolutions/network/0017-get_ts_info/get_ts_info.cocci
+
+---
+ backports/drivers/net/ethernet/intel/igb/igb_ethtool.c | 4 ++++
+ backports/drivers/net/usb/cdc_ncm.c                    | 2 ++
+ backports/drivers/net/usb/usbnet.c                     | 2 ++
+ 3 files changed, 8 insertions(+)
+
+diff --git a/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c b/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
+index b0b1759..044a8f4 100644
+--- a/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
++++ b/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
+@@ -2358,6 +2358,7 @@ static void igb_get_strings(struct net_device *netdev, u32 stringset, u8 *data)
+ 	}
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ static int igb_get_ts_info(struct net_device *dev,
+ 			   struct ethtool_ts_info *info)
+ {
+@@ -2413,6 +2414,7 @@ static int igb_get_ts_info(struct net_device *dev,
+ 		return -EOPNOTSUPP;
+ 	}
+ }
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ 
+ static int igb_get_rss_hash_opts(struct igb_adapter *adapter,
+ 				 struct ethtool_rxnfc *cmd)
+@@ -3069,7 +3071,9 @@ static const struct ethtool_ops igb_ethtool_ops = {
+ 	.get_ethtool_stats	= igb_get_ethtool_stats,
+ 	.get_coalesce		= igb_get_coalesce,
+ 	.set_coalesce		= igb_set_coalesce,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ 	.get_ts_info		= igb_get_ts_info,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ 	.get_rxnfc		= igb_get_rxnfc,
+ 	.set_rxnfc		= igb_set_rxnfc,
+ 	.get_eee		= igb_get_eee,
+diff --git a/backports/drivers/net/usb/cdc_ncm.c b/backports/drivers/net/usb/cdc_ncm.c
+index 8067b8f..c61bb0d 100644
+--- a/backports/drivers/net/usb/cdc_ncm.c
++++ b/backports/drivers/net/usb/cdc_ncm.c
+@@ -137,7 +137,9 @@ static const struct ethtool_ops cdc_ncm_ethtool_ops = {
+ 	.get_drvinfo       = usbnet_get_drvinfo,
+ 	.get_msglevel      = usbnet_get_msglevel,
+ 	.set_msglevel      = usbnet_set_msglevel,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ 	.get_ts_info       = ethtool_op_get_ts_info,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ 	.get_sset_count    = cdc_ncm_get_sset_count,
+ 	.get_strings       = cdc_ncm_get_strings,
+ 	.get_ethtool_stats = cdc_ncm_get_ethtool_stats,
+diff --git a/backports/drivers/net/usb/usbnet.c b/backports/drivers/net/usb/usbnet.c
+index aa61fcc..1b16bfa 100644
+--- a/backports/drivers/net/usb/usbnet.c
++++ b/backports/drivers/net/usb/usbnet.c
+@@ -1022,7 +1022,9 @@ static const struct ethtool_ops usbnet_ethtool_ops = {
+ 	.get_drvinfo		= usbnet_get_drvinfo,
+ 	.get_msglevel		= usbnet_get_msglevel,
+ 	.set_msglevel		= usbnet_set_msglevel,
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ 	.get_ts_info		= ethtool_op_get_ts_info,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ };
+ 
+ /*-------------------------------------------------------------------------*/
+-- 
+2.5.1
+

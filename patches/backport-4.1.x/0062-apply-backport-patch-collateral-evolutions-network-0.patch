@@ -1,0 +1,27 @@
+From f48583ff85056a464a770c6fa032175a4de9442e Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:35 -0500
+Subject: [PATCH 62/97] apply backport patch
+ collateral-evolutions/network/0051-no-wakeup_path/ssb.patch
+
+---
+ backports/drivers/ssb/pcihost_wrapper.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/drivers/ssb/pcihost_wrapper.c b/backports/drivers/ssb/pcihost_wrapper.c
+index 410215c..b9ea3fb 100644
+--- a/backports/drivers/ssb/pcihost_wrapper.c
++++ b/backports/drivers/ssb/pcihost_wrapper.c
+@@ -33,7 +33,9 @@ static int ssb_pcihost_suspend(struct device *d)
+ 
+ 	/* if there is a wakeup enabled child device on ssb bus,
+ 	   enable pci wakeup posibility. */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
+ 	device_set_wakeup_enable(d, d->power.wakeup_path);
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0) */
+ 
+ 	pci_prepare_to_sleep(dev);
+ 
+-- 
+2.5.1
+

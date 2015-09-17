@@ -1,0 +1,44 @@
+From f382398256757e9f82abf5b074796461df89e897 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:28 -0500
+Subject: [PATCH 44/97] apply backport patch
+ collateral-evolutions/network/0026-ipv6_stub/cdc_mbim.patch
+
+---
+ backports/drivers/net/usb/cdc_mbim.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/net/usb/cdc_mbim.c b/backports/drivers/net/usb/cdc_mbim.c
+index e4b7a47..0b8037d 100644
+--- a/backports/drivers/net/usb/cdc_mbim.c
++++ b/backports/drivers/net/usb/cdc_mbim.c
+@@ -301,6 +301,7 @@ error:
+ 	return NULL;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0)
+ /* Some devices are known to send Neigbor Solicitation messages and
+  * require Neigbor Advertisement replies.  The IPv6 core will not
+  * respond since IFF_NOARP is set, so we must handle them ourselves.
+@@ -361,6 +362,7 @@ static bool is_neigh_solicit(u8 *buf, size_t len)
+ 		msg->icmph.icmp6_code == 0 &&
+ 		msg->icmph.icmp6_type == NDISC_NEIGHBOUR_SOLICITATION);
+ }
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0) */
+ 
+ 
+ static struct sk_buff *cdc_mbim_process_dgram(struct usbnet *dev, u8 *buf, size_t len, u16 tci)
+@@ -377,8 +379,10 @@ static struct sk_buff *cdc_mbim_process_dgram(struct usbnet *dev, u8 *buf, size_
+ 			proto = htons(ETH_P_IP);
+ 			break;
+ 		case 0x60:
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0)
+ 			if (is_neigh_solicit(buf, len))
+ 				do_neigh_solicit(dev, buf, tci);
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0) */
+ 			proto = htons(ETH_P_IPV6);
+ 			break;
+ 		default:
+-- 
+2.5.1
+

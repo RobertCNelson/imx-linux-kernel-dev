@@ -1,0 +1,33 @@
+From 3298398472368808bece6661f086359491862fd2 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:19 -0500
+Subject: [PATCH 21/97] apply backport patch
+ collateral-evolutions/network/0002-disable-dump-adjust-on-old-kernels.patch
+
+---
+ backports/net/wireless/nl80211.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/net/wireless/nl80211.c b/backports/net/wireless/nl80211.c
+index dd78445..a4c8eeb 100644
+--- a/backports/net/wireless/nl80211.c
++++ b/backports/net/wireless/nl80211.c
+@@ -1803,6 +1803,7 @@ static int nl80211_dump_wiphy(struct sk_buff *skb, struct netlink_callback *cb)
+ 						 cb->nlh->nlmsg_seq,
+ 						 NLM_F_MULTI, state);
+ 			if (ret < 0) {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0)
+ 				/*
+ 				 * If sending the wiphy data didn't fit (ENOBUFS
+ 				 * or EMSGSIZE returned), this SKB is still
+@@ -1824,6 +1825,7 @@ static int nl80211_dump_wiphy(struct sk_buff *skb, struct netlink_callback *cb)
+ 					rtnl_unlock();
+ 					return 1;
+ 				}
++#endif
+ 				idx--;
+ 				break;
+ 			}
+-- 
+2.5.1
+

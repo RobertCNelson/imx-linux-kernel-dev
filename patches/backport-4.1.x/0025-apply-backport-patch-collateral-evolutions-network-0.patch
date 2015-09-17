@@ -1,0 +1,25 @@
+From 956661c58f5243c1cccb99cf2f0f21ff8be409d9 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:21 -0500
+Subject: [PATCH 25/97] apply backport patch
+ collateral-evolutions/network/0005-disable-usb-net-asix.patch
+
+---
+ backports/drivers/net/usb/Makefile | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/backports/drivers/net/usb/Makefile b/backports/drivers/net/usb/Makefile
+index f346885..3d8ec4b 100644
+--- a/backports/drivers/net/usb/Makefile
++++ b/backports/drivers/net/usb/Makefile
+@@ -9,7 +9,6 @@ obj-$(CONFIG_USB_RTL8150)	+= rtl8150.o
+ obj-$(CONFIG_USB_RTL8152)	+= r8152.o
+ obj-$(CONFIG_USB_HSO)		+= hso.o
+ obj-$(CONFIG_USB_NET_AX8817X)	+= asix.o
+-asix-y := asix_devices.o asix_common.o ax88172a.o
+ obj-$(CONFIG_USB_NET_AX88179_178A)      += ax88179_178a.o
+ obj-$(CONFIG_USB_NET_CDCETHER)	+= cdc_ether.o
+ obj-$(CONFIG_USB_NET_CDC_EEM)	+= cdc_eem.o
+-- 
+2.5.1
+

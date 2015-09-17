@@ -1,0 +1,29 @@
+From eac7b3a8139919a18b7a7ba889351baf32213422 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:33 -0500
+Subject: [PATCH 59/97] apply backport patch
+ collateral-evolutions/network/0048-no_ndo_xmit_flush/igb.patch
+
+---
+ backports/drivers/net/ethernet/intel/igb/igb_main.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/backports/drivers/net/ethernet/intel/igb/igb_main.c b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+index ae0dce5..444f769 100644
+--- a/backports/drivers/net/ethernet/intel/igb/igb_main.c
++++ b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+@@ -4965,7 +4965,10 @@ static void igb_tx_map(struct igb_ring *tx_ring,
+ 	/* Make sure there is space in the ring for the next send. */
+ 	igb_maybe_stop_tx(tx_ring, DESC_NEEDED);
+ 
+-	if (netif_xmit_stopped(txring_txq(tx_ring)) || !skb->xmit_more) {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++	if (netif_xmit_stopped(txring_txq(tx_ring)) || !skb->xmit_more)
++#endif
++	{
+ 		writel(i, tx_ring->tail);
+ 
+ 		/* we need this if more than one processor can write to our tail
+-- 
+2.5.1
+

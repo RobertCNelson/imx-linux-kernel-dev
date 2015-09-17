@@ -1,0 +1,29 @@
+From 118489a48495a9cace32e1a1ae0e8b164c4dd2b7 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:23 -0500
+Subject: [PATCH 32/97] apply backport patch
+ collateral-evolutions/network/0015-rename_pm_qos_request/drivers_net_wireless_ipw2x00_ipw2100.patch
+
+---
+ backports/drivers/net/wireless/ipw2x00/ipw2100.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ipw2x00/ipw2100.c b/backports/drivers/net/wireless/ipw2x00/ipw2100.c
+index a08601f..59ec951 100644
+--- a/backports/drivers/net/wireless/ipw2x00/ipw2100.c
++++ b/backports/drivers/net/wireless/ipw2x00/ipw2100.c
+@@ -175,7 +175,11 @@ that only one external action is invoked at a time.
+ #define DRV_DESCRIPTION	"Intel(R) PRO/Wireless 2100 Network Driver"
+ #define DRV_COPYRIGHT	"Copyright(c) 2003-2006 Intel Corporation"
+ 
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(3,2,0))
++static struct pm_qos_request_list ipw2100_pm_qos_req;
++#else
+ static struct pm_qos_request ipw2100_pm_qos_req;
++#endif
+ 
+ /* Debugging stuff */
+ #ifdef CONFIG_IPW2100_DEBUG
+-- 
+2.5.1
+

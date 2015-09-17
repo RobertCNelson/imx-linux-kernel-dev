@@ -1,0 +1,33 @@
+From e60c46fcc93459e6a6a8875b6c53727d91f451d1 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:24 -0500
+Subject: [PATCH 33/97] apply backport patch
+ collateral-evolutions/network/0016-libertas-olpc-ec-wakeup/drivers_net_wireless_libertas_if_usb.patch
+
+---
+ backports/drivers/net/wireless/libertas/if_usb.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/libertas/if_usb.c b/backports/drivers/net/wireless/libertas/if_usb.c
+index dff08a2..03ec7f4 100644
+--- a/backports/drivers/net/wireless/libertas/if_usb.c
++++ b/backports/drivers/net/wireless/libertas/if_usb.c
+@@ -959,6 +959,7 @@ static int if_usb_suspend(struct usb_interface *intf, pm_message_t message)
+ 		goto out;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0))
+ #ifdef CONFIG_OLPC
+ 	if (machine_is_olpc()) {
+ 		if (priv->wol_criteria == EHS_REMOVE_WAKEUP)
+@@ -967,6 +968,7 @@ static int if_usb_suspend(struct usb_interface *intf, pm_message_t message)
+ 			olpc_ec_wakeup_set(EC_SCI_SRC_WLAN);
+ 	}
+ #endif
++#endif
+ 
+ 	ret = lbs_suspend(priv);
+ 	if (ret)
+-- 
+2.5.1
+

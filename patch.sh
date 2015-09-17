@@ -68,6 +68,141 @@ pick () {
 	num=$(($num+1))
 }
 
+linux_backports () {
+	echo "dir: backport-4.1.x"
+	#regenerate="enable"
+	if [ "x${regenerate}" = "xenable" ] ; then
+		start_cleanup
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0001-Copied-backport.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0002-Add-driver-sources.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0003-Copied-backport.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0004-Add-driver-sources.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0005-verify-sources-for-automatic-backports.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0006-modify-top-level-backports-Kconfig-with-backports-id.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+	#	${git} "${DIR}/patches/backport-4.1.x/0007-Add-automatic-backports.patch"
+		git commit --allow-empty -a -m 'Add-automatic-backports'
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0008-apply-backport-patch-0000-upstream-backport-changes-.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0009-apply-backport-patch-backport-adjustments-crypto-ccm.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0010-apply-backport-patch-backport-adjustments-devcoredum.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0011-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0012-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0013-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0014-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0015-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0016-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0017-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0018-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0019-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0020-apply-backport-patch-collateral-evolutions-media-000.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0021-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0022-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0023-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0024-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0025-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0026-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0027-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0028-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0029-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0030-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0031-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0032-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0033-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0034-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0035-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0036-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0037-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0038-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0039-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0040-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0041-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0042-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0043-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0044-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0045-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0046-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0047-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0048-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0049-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0050-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0051-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0052-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0053-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0054-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0055-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0056-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0057-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0058-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0059-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0060-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0061-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0062-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0063-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0064-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0065-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0066-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0067-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0068-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0069-apply-backport-patch-collateral-evolutions-network-0.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0070-apply-backport-SmPL-patch-collateral-evolutions-gene.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0071-apply-backport-SmPL-patch-collateral-evolutions-gene.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0072-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0073-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0074-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0075-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0076-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0077-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0078-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0079-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0080-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0081-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0082-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0083-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0084-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0085-apply-backport-SmPL-patch-collateral-evolutions-netw.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0086-generate-kernel-version-requirement-Kconfig-file.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+	#	${git} "${DIR}/patches/backport-4.1.x/0087-verify-sources-on-top-level-backports-Kconfig.patch"
+	#	${git} "${DIR}/patches/backport-4.1.x/0088-prune-Kconfig-tree.patch"
+
+		git commit --allow-empty -a -m 'verify-sources-on-top-level-backports-Kconfig'
+		git commit --allow-empty -a -m 'prune-Kconfig-tree'
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0089-adjust-backports-config-symbols-we-port.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0090-convert-select-to-depends-on.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+	#	${git} "${DIR}/patches/backport-4.1.x/0091-add-useful-defconfig-files.patch"
+		git commit --allow-empty -a -m 'add-useful-defconfig-files'
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0092-rename-config-symbol-srctree-usage.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0093-disable-impossible-kconfig-symbols.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+	#	${git} "${DIR}/patches/backport-4.1.x/0094-add-kernel-version-dependencies.patch"
+		git commit --allow-empty -a -m 'add-kernel-version-dependencies'
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0095-disable-unsatisfied-Makefile-parts.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0096-hooked-backport-to-top-level-Kconfig.patch"
+	${git} "${DIR}/patches/backport-4.1.x/0097-apply-integration-patch-001-enable-backports-0001-en.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+		number=97
+		cleanup
+	fi
+
+	${git} "${DIR}/patches/backport-4.1.x/0001-backports-missed-rhashtable.c.patch"
+}
+
 external_git () {
 	git_tag="rel_imx_3.14.28_1.0.0_ga"
 	echo "pulling: ${git_tag}"
@@ -108,6 +243,7 @@ local_patch () {
 	${git} "${DIR}/patches/dir/0001-patch.patch"
 }
 
+#linux_backports
 external_git
 #rt
 #local_patch
@@ -130,8 +266,9 @@ ti_wl () {
 	${git} "${DIR}/patches/ti_wl/0009-imx6-decrease-wilink8-sdio-pins-drive-strength.patch"
 }
 
+linux_backports
 dts
-ti_wl
+#ti_wl
 
 packaging () {
 	echo "dir: packaging"

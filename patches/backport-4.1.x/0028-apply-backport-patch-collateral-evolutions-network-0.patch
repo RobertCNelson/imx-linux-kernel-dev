@@ -1,0 +1,25 @@
+From 0e8521cac36743df895d37883d39a9eca0272b06 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:22 -0500
+Subject: [PATCH 28/97] apply backport patch
+ collateral-evolutions/network/0013-fix-makefile-includes/ath10k.patch
+
+---
+ backports/drivers/net/wireless/ath/ath10k/htt.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/backports/drivers/net/wireless/ath/ath10k/htt.h b/backports/drivers/net/wireless/ath/ath10k/htt.h
+index 874bf44..6d9f361 100644
+--- a/backports/drivers/net/wireless/ath/ath10k/htt.h
++++ b/backports/drivers/net/wireless/ath/ath10k/htt.h
+@@ -19,6 +19,7 @@
+ #define _HTT_H_
+ 
+ #include <linux/bug.h>
++#include <linux/idr.h>
+ #include <linux/interrupt.h>
+ #include <linux/dmapool.h>
+ #include <linux/hashtable.h>
+-- 
+2.5.1
+

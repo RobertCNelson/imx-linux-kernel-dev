@@ -1,0 +1,27 @@
+From d71f7cec089706f6a69d157fc71b1fd8e5c3964f Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:33 -0500
+Subject: [PATCH 57/97] apply backport patch
+ collateral-evolutions/network/0046-mmc_rescan_entered/mwifiex.patch
+
+---
+ backports/drivers/net/wireless/mwifiex/sdio.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/mwifiex/sdio.c b/backports/drivers/net/wireless/mwifiex/sdio.c
+index d10320f..923e4b0 100644
+--- a/backports/drivers/net/wireless/mwifiex/sdio.c
++++ b/backports/drivers/net/wireless/mwifiex/sdio.c
+@@ -2063,7 +2063,9 @@ static void mwifiex_sdio_card_reset_work(struct mwifiex_adapter *adapter)
+ 	mmc_remove_host(target);
+ 	/* 200ms delay is based on experiment with sdhci controller */
+ 	mdelay(200);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
+ 	target->rescan_entered = 0; /* rescan non-removable cards */
++#endif
+ 	mmc_add_host(target);
+ }
+ 
+-- 
+2.5.1
+

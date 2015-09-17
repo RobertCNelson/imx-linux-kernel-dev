@@ -1,0 +1,21 @@
+From c285b23315cd61ec479f6409fdaf45738055830a Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:54 -0500
+Subject: [PATCH 96/97] hooked backport to top level Kconfig
+
+---
+ Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Kconfig b/Kconfig
+index c13f48d..cb8a999 100644
+--- a/Kconfig
++++ b/Kconfig
+@@ -9,3 +9,4 @@ config SRCARCH
+ 	option env="SRCARCH"
+ 
+ source "arch/$SRCARCH/Kconfig"
++source "backports/Kconfig"
+-- 
+2.5.1
+

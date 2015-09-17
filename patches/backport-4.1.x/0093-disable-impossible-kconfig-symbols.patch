@@ -1,0 +1,521 @@
+From 706dea7d5f0739b3b9ff53a9cb6cd99bef17ffee Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:52 -0500
+Subject: [PATCH 93/97] disable impossible kconfig symbols
+
+---
+ backports/drivers/net/ethernet/Kconfig          |  8 ++++++++
+ backports/drivers/net/ethernet/broadcom/Kconfig |  9 +++++++++
+ backports/drivers/net/ethernet/intel/Kconfig    | 10 +++++++++
+ backports/drivers/net/usb/Kconfig               | 27 +++++++++++++++++++++++++
+ backports/drivers/net/wireless/Kconfig          |  3 +++
+ backports/drivers/usb/class/Kconfig             |  3 +++
+ 6 files changed, 60 insertions(+)
+
+diff --git a/backports/drivers/net/ethernet/Kconfig b/backports/drivers/net/ethernet/Kconfig
+index 9845f12..262d0e9 100644
+--- a/backports/drivers/net/ethernet/Kconfig
++++ b/backports/drivers/net/ethernet/Kconfig
+@@ -42,6 +42,7 @@ source "$BACKPORT_DIR/drivers/net/ethernet/broadcom/Kconfig"
+ #source "drivers/net/ethernet/cisco/Kconfig"
+ 
+ config BACKPORT_CX_ECAT
++	depends on n
+ 	tristate "Beckhoff CX5020 EtherCAT master support"
+ 	depends on !CX_ECAT
+ 	depends on PCI
+@@ -57,6 +58,7 @@ config BACKPORT_CX_ECAT
+ #source "drivers/net/ethernet/davicom/Kconfig"
+ 
+ config BACKPORT_DNET
++	depends on n
+ 	tristate "Dave ethernet support (DNET)"
+ 	depends on !DNET
+ 	depends on HAS_IOMEM
+@@ -84,6 +86,7 @@ source "$BACKPORT_DIR/drivers/net/ethernet/intel/Kconfig"
+ #source "drivers/net/ethernet/icplus/Kconfig"
+ 
+ config BACKPORT_JME
++	depends on n
+ 	tristate "JMicron(R) PCI-Express Gigabit Ethernet support"
+ 	depends on !JME
+ 	depends on PCI
+@@ -97,6 +100,7 @@ config BACKPORT_JME
+ 	  will be called jme.
+ 
+ config BACKPORT_KORINA
++	depends on n
+ 	tristate "Korina (IDT RC32434) Ethernet support"
+ 	depends on !KORINA
+ 	depends on MIKROTIK_RB532
+@@ -105,6 +109,7 @@ config BACKPORT_KORINA
+ 	  based system say Y. Otherwise say N.
+ 
+ config BACKPORT_LANTIQ_ETOP
++	depends on n
+ 	tristate "Lantiq SoC ETOP driver"
+ 	depends on !LANTIQ_ETOP
+ 	depends on SOC_TYPE_XWAY
+@@ -119,6 +124,7 @@ config BACKPORT_LANTIQ_ETOP
+ #source "drivers/net/ethernet/myricom/Kconfig"
+ 
+ config BACKPORT_FEALNX
++	depends on n
+ 	tristate "Myson MTD-8xx PCI Ethernet support"
+ 	depends on !FEALNX
+ 	depends on PCI
+@@ -132,6 +138,7 @@ config BACKPORT_FEALNX
+ #source "drivers/net/ethernet/8390/Kconfig"
+ 
+ config BACKPORT_NET_NETX
++	depends on n
+ 	tristate "NetX Ethernet support"
+ 	depends on !NET_NETX
+ 	depends on MII
+@@ -149,6 +156,7 @@ config BACKPORT_NET_NETX
+ #source "drivers/net/ethernet/oki-semi/Kconfig"
+ 
+ config BACKPORT_ETHOC
++	depends on n
+ 	tristate "OpenCores 10/100 Mbps Ethernet MAC support"
+ 	depends on !ETHOC
+ 	depends on HAS_IOMEM && HAS_DMA
+diff --git a/backports/drivers/net/ethernet/broadcom/Kconfig b/backports/drivers/net/ethernet/broadcom/Kconfig
+index dcc58df..368493c 100644
+--- a/backports/drivers/net/ethernet/broadcom/Kconfig
++++ b/backports/drivers/net/ethernet/broadcom/Kconfig
+@@ -57,6 +57,7 @@ config BACKPORT_B44_PCI
+ 	default y
+ 
+ config BACKPORT_BCM63XX_ENET
++	depends on n
+ 	tristate "Broadcom 63xx internal mac support"
+ 	depends on !BCM63XX_ENET
+ 	depends on BCM63XX
+@@ -67,6 +68,7 @@ config BACKPORT_BCM63XX_ENET
+ 	  MIPS chipset family (BCM63XX).
+ 
+ config BACKPORT_BCMGENET
++	depends on n
+ 	tristate "Broadcom GENET internal MAC support"
+ 	depends on !BCMGENET
+ 	depends on MII
+@@ -78,6 +80,7 @@ config BACKPORT_BCMGENET
+ 	  Broadcom BCM7xxx Set Top Box family chipset.
+ 
+ config BACKPORT_BNX2
++	depends on n
+ 	tristate "QLogic bnx2 support"
+ 	depends on !BNX2
+ 	depends on PCI
+@@ -90,6 +93,7 @@ config BACKPORT_BNX2
+ 	  will be called bnx2.  This is recommended.
+ 
+ config BACKPORT_CNIC
++	depends on n
+ 	tristate "QLogic CNIC support"
+ 	depends on !CNIC
+ 	depends on PCI && (IPV6 || IPV6=n)
+@@ -103,6 +107,7 @@ config BACKPORT_CNIC
+ 	  will be called cnic.  This is recommended.
+ 
+ config BACKPORT_SB1250_MAC
++	depends on n
+ 	tristate "SB1250 Gigabit Ethernet support"
+ 	depends on !SB1250_MAC
+ 	depends on SIBYTE_SB1xxx_SOC
+@@ -117,6 +122,7 @@ config BACKPORT_SB1250_MAC
+ 	  will be called sb1250-mac.
+ 
+ config BACKPORT_TIGON3
++	depends on n
+ 	tristate "Broadcom Tigon3 support"
+ 	depends on !TIGON3
+ 	depends on PCI
+@@ -130,6 +136,7 @@ config BACKPORT_TIGON3
+ 	  will be called tg3.  This is recommended.
+ 
+ config BACKPORT_BNX2X
++	depends on n
+ 	tristate "Broadcom NetXtremeII 10Gb support"
+ 	depends on !BNX2X
+ 	depends on PCI
+@@ -154,6 +161,7 @@ config BACKPORT_BNX2X_SRIOV
+ 	  allows for virtual function acceleration in virtual environments.
+ 
+ config BACKPORT_BGMAC
++	depends on n
+ 	tristate "BCMA bus GBit core support"
+ 	depends on !BGMAC
+ 	depends on BACKPORT_BCMA_HOST_SOC && HAS_DMA && (BCM47XX || ARCH_BCM_5301X)
+@@ -165,6 +173,7 @@ config BACKPORT_BGMAC
+ 	  BACKPORT_BCMA_DRIVER_GMAC_CMN to make it work.
+ 
+ config BACKPORT_SYSTEMPORT
++	depends on n
+ 	tristate "Broadcom SYSTEMPORT internal MAC support"
+ 	depends on !SYSTEMPORT
+ 	depends on OF
+diff --git a/backports/drivers/net/ethernet/intel/Kconfig b/backports/drivers/net/ethernet/intel/Kconfig
+index 7774440..3f46276 100644
+--- a/backports/drivers/net/ethernet/intel/Kconfig
++++ b/backports/drivers/net/ethernet/intel/Kconfig
+@@ -19,6 +19,7 @@ config BACKPORT_NET_VENDOR_INTEL
+ if BACKPORT_NET_VENDOR_INTEL
+ 
+ config BACKPORT_E100
++	depends on n
+ 	tristate "Intel(R) PRO/100+ support"
+ 	depends on !E100
+ 	depends on PCI
+@@ -46,6 +47,7 @@ config BACKPORT_E100
+ 	  will be called e100.
+ 
+ config BACKPORT_E1000
++	depends on n
+ 	tristate "Intel(R) PRO/1000 Gigabit Ethernet support"
+ 	depends on !E1000
+ 	depends on PCI
+@@ -68,6 +70,7 @@ config BACKPORT_E1000
+ 	  will be called e1000.
+ 
+ config BACKPORT_E1000E
++	depends on n
+ 	tristate "Intel(R) PRO/1000 PCI-Express Gigabit Ethernet support"
+ 	depends on !E1000E
+ 	depends on PCI && (!SPARC32 || BROKEN)
+@@ -137,6 +140,7 @@ config BACKPORT_IGB_DCA
+ 	  is used, with the intent of lessening the impact of cache misses.
+ 
+ config BACKPORT_IGBVF
++	depends on n
+ 	tristate "Intel(R) 82576 Virtual Function Ethernet support"
+ 	depends on !IGBVF
+ 	depends on PCI
+@@ -159,6 +163,7 @@ config BACKPORT_IGBVF
+ 	  will be called igbvf.
+ 
+ config BACKPORT_IXGB
++	depends on n
+ 	tristate "Intel(R) PRO/10GbE support"
+ 	depends on !IXGB
+ 	depends on PCI
+@@ -182,6 +187,7 @@ config BACKPORT_IXGB
+ 	  will be called ixgb.
+ 
+ config BACKPORT_IXGBE
++	depends on n
+ 	tristate "Intel(R) 10GbE PCI Express adapters support"
+ 	depends on !IXGBE
+ 	depends on PCI
+@@ -245,6 +251,7 @@ config BACKPORT_IXGBE_DCB
+ 	  If unsure, say N.
+ 
+ config BACKPORT_IXGBEVF
++	depends on n
+ 	tristate "Intel(R) 10GbE PCI Express Virtual Function Ethernet support"
+ 	depends on !IXGBEVF
+ 	depends on PCI_MSI
+@@ -268,6 +275,7 @@ config BACKPORT_IXGBEVF
+ 	  for this driver to work correctly.
+ 
+ config BACKPORT_I40E
++	depends on n
+ 	tristate "Intel(R) Ethernet Controller XL710 Family support"
+ 	depends on !I40E
+ 	depends on PTP_1588_CLOCK
+@@ -323,6 +331,7 @@ config BACKPORT_I40E_FCOE
+ 	  If unsure, say N.
+ 
+ config BACKPORT_I40EVF
++	depends on n
+ 	tristate "Intel(R) XL710 X710 Virtual Function Ethernet support"
+ 	depends on !I40EVF
+ 	depends on PCI_MSI
+@@ -343,6 +352,7 @@ config BACKPORT_I40EVF
+ 	  for this driver to work correctly.
+ 
+ config BACKPORT_FM10K
++	depends on n
+ 	tristate "Intel(R) FM10000 Ethernet Switch Host Interface Support"
+ 	depends on !FM10K
+ 	default n
+diff --git a/backports/drivers/net/usb/Kconfig b/backports/drivers/net/usb/Kconfig
+index 7adf39d..294c535 100644
+--- a/backports/drivers/net/usb/Kconfig
++++ b/backports/drivers/net/usb/Kconfig
+@@ -13,6 +13,7 @@ menuconfig BACKPORT_USB_NET_DRIVERS
+ if BACKPORT_USB_NET_DRIVERS
+ 
+ config BACKPORT_USB_CATC
++	depends on n
+ 	tristate "USB CATC NetMate-based Ethernet device support"
+ 	depends on !USB_CATC
+ 	depends on CRC32
+@@ -33,6 +34,7 @@ config BACKPORT_USB_CATC
+ 	  module will be called catc.
+ 
+ config BACKPORT_USB_KAWETH
++	depends on n
+ 	tristate "USB KLSI KL5USB101-based ethernet device support"
+ 	depends on !USB_KAWETH
+ 	---help---
+@@ -73,6 +75,7 @@ config BACKPORT_USB_KAWETH
+ 	  module will be called kaweth.
+ 
+ config BACKPORT_USB_PEGASUS
++	depends on n
+ 	tristate "USB Pegasus/Pegasus-II based ethernet device support"
+ 	depends on !USB_PEGASUS
+ 	depends on MII
+@@ -89,6 +92,7 @@ config BACKPORT_USB_PEGASUS
+ 	  module will be called pegasus.
+ 
+ config BACKPORT_USB_RTL8150
++	depends on n
+ 	tristate "USB RTL8150 based ethernet device support"
+ 	depends on !USB_RTL8150
+ 	depends on MII
+@@ -101,6 +105,7 @@ config BACKPORT_USB_RTL8150
+ 	  module will be called rtl8150.
+ 
+ config BACKPORT_USB_RTL8152
++	depends on n
+ 	tristate "Realtek RTL8152/RTL8153 Based USB Ethernet Adapters"
+ 	depends on !USB_RTL8152
+ 	depends on MII
+@@ -148,6 +153,7 @@ config BACKPORT_USB_USBNET
+ 	  module will be called usbnet.
+ 
+ config BACKPORT_USB_NET_AX8817X
++	depends on n
+ 	tristate "ASIX AX88xxx Based USB 2.0 Ethernet Adapters"
+ 	depends on !USB_NET_AX8817X
+ 	depends on BACKPORT_USB_USBNET
+@@ -178,6 +184,7 @@ config BACKPORT_USB_NET_AX8817X
+ 	  what other networking devices you have in use.
+ 
+ config BACKPORT_USB_NET_AX88179_178A
++	depends on n
+ 	tristate "ASIX AX88179/178A USB 3.0/2.0 to Gigabit Ethernet"
+ 	depends on !USB_NET_AX88179_178A
+ 	depends on BACKPORT_USB_USBNET
+@@ -226,6 +233,7 @@ config BACKPORT_USB_NET_CDCETHER
+ 	  name is used instead.
+ 
+ config BACKPORT_USB_NET_CDC_EEM
++	depends on n
+ 	tristate "CDC EEM support"
+ 	depends on !USB_NET_CDC_EEM
+ 	depends on BACKPORT_USB_USBNET
+@@ -261,6 +269,7 @@ config BACKPORT_USB_NET_CDC_NCM
+ 	    * Ericsson F5521gw Mobile Broadband Module
+ 
+ config BACKPORT_USB_NET_HUAWEI_CDC_NCM
++	depends on n
+ 	tristate "Huawei NCM embedded AT channel support"
+ 	depends on !USB_NET_HUAWEI_CDC_NCM
+ 	depends on BACKPORT_USB_USBNET
+@@ -296,6 +305,7 @@ config BACKPORT_USB_NET_CDC_MBIM
+ 	  module will be called cdc_mbim.
+ 
+ config BACKPORT_USB_NET_DM9601
++	depends on n
+ 	tristate "Davicom DM96xx based USB 10/100 ethernet devices"
+ 	depends on !USB_NET_DM9601
+ 	depends on BACKPORT_USB_USBNET
+@@ -305,6 +315,7 @@ config BACKPORT_USB_NET_DM9601
+ 	  based USB 10/100 Ethernet adapters.
+ 
+ config BACKPORT_USB_NET_SR9700
++	depends on n
+ 	tristate "CoreChip-sz SR9700 based USB 1.1 10/100 ethernet devices"
+ 	depends on !USB_NET_SR9700
+ 	depends on BACKPORT_USB_USBNET
+@@ -314,6 +325,7 @@ config BACKPORT_USB_NET_SR9700
+ 	  10/100 Ethernet adapters.
+ 
+ config BACKPORT_USB_NET_SR9800
++	depends on n
+ 	tristate "CoreChip-sz SR9800 based USB 2.0 10/100 ethernet devices"
+ 	depends on !USB_NET_SR9800
+ 	depends on BACKPORT_USB_USBNET
+@@ -330,6 +342,7 @@ config BACKPORT_USB_NET_SR9800
+ 	  module will be called sr9800.
+ 
+ config BACKPORT_USB_NET_SMSC75XX
++	depends on n
+ 	tristate "SMSC LAN75XX based USB 2.0 gigabit ethernet devices"
+ 	depends on !USB_NET_SMSC75XX
+ 	depends on BACKPORT_USB_USBNET
+@@ -341,6 +354,7 @@ config BACKPORT_USB_NET_SMSC75XX
+ 	  Gigabit Ethernet adapters.
+ 
+ config BACKPORT_USB_NET_SMSC95XX
++	depends on n
+ 	tristate "SMSC LAN95XX based USB 2.0 10/100 ethernet devices"
+ 	depends on !USB_NET_SMSC95XX
+ 	depends on BACKPORT_USB_USBNET
+@@ -352,6 +366,7 @@ config BACKPORT_USB_NET_SMSC95XX
+ 	  10/100 Ethernet adapters.
+ 
+ config BACKPORT_USB_NET_GL620A
++	depends on n
+ 	tristate "GeneSys GL620USB-A based cables"
+ 	depends on !USB_NET_GL620A
+ 	depends on BACKPORT_USB_USBNET
+@@ -362,6 +377,7 @@ config BACKPORT_USB_NET_GL620A
+ 	  Note that the half-duplex "GL620USB" is not supported.
+ 
+ config BACKPORT_USB_NET_NET1080
++	depends on n
+ 	tristate "NetChip 1080 based cables (Laplink, ...)"
+ 	depends on !USB_NET_NET1080
+ 	default y
+@@ -372,6 +388,7 @@ config BACKPORT_USB_NET_NET1080
+ 	  optionally with LEDs that indicate traffic
+ 
+ config BACKPORT_USB_NET_PLUSB
++	depends on n
+ 	tristate "Prolific PL-2301/2302/25A1 based cables"
+ 	depends on !USB_NET_PLUSB
+ 	# if the handshake/init/reset problems, from original 'plusb',
+@@ -382,6 +399,7 @@ config BACKPORT_USB_NET_PLUSB
+ 	  with one of these chips.
+ 
+ config BACKPORT_USB_NET_MCS7830
++	depends on n
+ 	tristate "MosChip MCS7830 based Ethernet adapters"
+ 	depends on !USB_NET_MCS7830
+ 	depends on BACKPORT_USB_USBNET
+@@ -407,6 +425,7 @@ config BACKPORT_USB_NET_RNDIS_HOST
+ 	  (and for) Microsoft; it isn't an "Open" ecosystem or market.
+ 
+ config BACKPORT_USB_NET_CDC_SUBSET
++	depends on n
+ 	tristate "Simple USB Network Links (CDC Ethernet subset)"
+ 	depends on !USB_NET_CDC_SUBSET
+ 	depends on BACKPORT_USB_USBNET
+@@ -484,6 +503,7 @@ config BACKPORT_USB_KC2190
+ 	  with one of these chips.
+ 
+ config BACKPORT_USB_NET_ZAURUS
++	depends on n
+ 	tristate "Sharp Zaurus (stock ROMs) and compatible"
+ 	depends on !USB_NET_ZAURUS
+ 	depends on BACKPORT_USB_USBNET
+@@ -503,6 +523,7 @@ config BACKPORT_USB_NET_ZAURUS
+ 	  some cases CDC MDLM) protocol, not "g_ether".
+ 
+ config BACKPORT_USB_NET_CX82310_ETH
++	depends on n
+ 	tristate "Conexant CX82310 USB ethernet port"
+ 	depends on !USB_NET_CX82310_ETH
+ 	depends on BACKPORT_USB_USBNET
+@@ -512,6 +533,7 @@ config BACKPORT_USB_NET_CX82310_ETH
+ 	  it will not work with ADSL modems (use cxacru driver instead).
+ 
+ config BACKPORT_USB_NET_KALMIA
++	depends on n
+ 	tristate "Samsung Kalmia based LTE USB modem"
+ 	depends on !USB_NET_KALMIA
+ 	depends on BACKPORT_USB_USBNET
+@@ -546,6 +568,7 @@ config BACKPORT_USB_NET_QMI_WWAN
+ 	  module will be called qmi_wwan.
+ 
+ config BACKPORT_USB_HSO
++	depends on n
+ 	tristate "Option USB High Speed Mobile Devices"
+ 	depends on !USB_HSO
+ 	depends on USB && RFKILL && TTY
+@@ -558,6 +581,7 @@ config BACKPORT_USB_HSO
+ 	  module will be called hso.
+ 
+ config BACKPORT_USB_NET_INT51X1
++	depends on n
+ 	tristate "Intellon PLC based usb adapter"
+ 	depends on !USB_NET_INT51X1
+ 	depends on BACKPORT_USB_USBNET
+@@ -567,6 +591,7 @@ config BACKPORT_USB_NET_INT51X1
+ 	  INT51x1/INT5200 chip, like the "devolo dLan duo".
+ 
+ config BACKPORT_USB_CDC_PHONET
++	depends on n
+ 	tristate "CDC Phonet support"
+ 	depends on !USB_CDC_PHONET
+ 	depends on PHONET
+@@ -576,6 +601,7 @@ config BACKPORT_USB_CDC_PHONET
+ 	  "PC suite" USB profile.
+ 
+ config BACKPORT_USB_IPHETH
++	depends on n
+ 	tristate "Apple iPhone USB Ethernet driver"
+ 	depends on !USB_IPHETH
+ 	default n
+@@ -599,6 +625,7 @@ config BACKPORT_USB_SIERRA_NET
+ 	  module will be called sierra_net.
+ 
+ config BACKPORT_USB_VL600
++	depends on n
+ 	tristate "LG VL600 modem dongle"
+ 	depends on !USB_VL600
+ 	depends on BACKPORT_USB_NET_CDCETHER && TTY
+diff --git a/backports/drivers/net/wireless/Kconfig b/backports/drivers/net/wireless/Kconfig
+index 3ed49ae..a207cad 100644
+--- a/backports/drivers/net/wireless/Kconfig
++++ b/backports/drivers/net/wireless/Kconfig
+@@ -19,6 +19,7 @@ menuconfig BACKPORT_WLAN
+ if BACKPORT_WLAN
+ 
+ config BACKPORT_PCMCIA_RAYCS
++	depends on n
+ 	tristate "Aviator/Raytheon 2.4GHz wireless support"
+ 	depends on !PCMCIA_RAYCS
+ 	depends on PCMCIA
+@@ -148,6 +149,7 @@ config BACKPORT_AIRO_CS
+ 	  Cisco Linux utilities can be used to configure the card.
+ 
+ config BACKPORT_PCMCIA_WL3501
++	depends on n
+ 	tristate "Planet WL3501 PCMCIA cards"
+ 	depends on !PCMCIA_WL3501
+ 	depends on BACKPORT_CFG80211 && PCMCIA
+@@ -159,6 +161,7 @@ config BACKPORT_PCMCIA_WL3501
+ 	  micro support for ethtool.
+ 
+ config BACKPORT_PRISM54
++	depends on n
+ 	tristate 'Intersil Prism GT/Duette/Indigo PCI/Cardbus (DEPRECATED)'
+ 	depends on !PRISM54
+ 	depends on PCI
+diff --git a/backports/drivers/usb/class/Kconfig b/backports/drivers/usb/class/Kconfig
+index dfb6e0d..81765bc 100644
+--- a/backports/drivers/usb/class/Kconfig
++++ b/backports/drivers/usb/class/Kconfig
+@@ -4,6 +4,7 @@
+ comment "USB Device Class drivers"
+ 
+ config BACKPORT_USB_ACM
++	depends on n
+ 	tristate "USB Modem (CDC ACM) support"
+ 	depends on !USB_ACM
+ 	depends on TTY
+@@ -20,6 +21,7 @@ config BACKPORT_USB_ACM
+ 	  module will be called cdc-acm.
+ 
+ config BACKPORT_USB_PRINTER
++	depends on n
+ 	tristate "USB Printer support"
+ 	depends on !USB_PRINTER
+ 	help
+@@ -41,6 +43,7 @@ config BACKPORT_USB_WDM
+ 	  module will be called cdc-wdm.
+ 
+ config BACKPORT_USB_TMC
++	depends on n
+ 	tristate "USB Test and Measurement Class support"
+ 	depends on !USB_TMC
+ 	help
+-- 
+2.5.1
+

@@ -1,0 +1,3293 @@
+From 05637dec55f0438e13c520509b0032aa2bb435e8 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:13 -0500
+Subject: [PATCH 06/97] modify top level backports/Kconfig with backports
+ identity
+
+---
+ backports/Kconfig                              |  12 +-
+ backports/compat/Makefile                      |   6 +
+ backports/compat/crypto-ccm.c                  | 884 +++++++++++++++++++++++++
+ backports/compat/drivers-base-devcoredump.c    | 305 +++++++++
+ backports/compat/lib-average.c                 |  64 ++
+ backports/compat/lib-cordic.c                  | 101 +++
+ backports/compat/lib-rhashtable.c              | 849 ++++++++++++++++++++++++
+ backports/include/linux/average.h              |  10 +
+ backports/include/linux/backport-average.h     |  30 +
+ backports/include/linux/backport-devcoredump.h |  35 +
+ backports/include/linux/backport-rhashtable.h  | 822 +++++++++++++++++++++++
+ backports/include/linux/devcoredump.h          |  10 +
+ backports/include/linux/rhashtable.h           |  30 +
+ 13 files changed, 3152 insertions(+), 6 deletions(-)
+ create mode 100644 backports/compat/crypto-ccm.c
+ create mode 100644 backports/compat/drivers-base-devcoredump.c
+ create mode 100644 backports/compat/lib-average.c
+ create mode 100644 backports/compat/lib-cordic.c
+ create mode 100644 backports/compat/lib-rhashtable.c
+ create mode 100644 backports/include/linux/average.h
+ create mode 100644 backports/include/linux/backport-average.h
+ create mode 100644 backports/include/linux/backport-devcoredump.h
+ create mode 100644 backports/include/linux/backport-rhashtable.h
+ create mode 100644 backports/include/linux/devcoredump.h
+ create mode 100644 backports/include/linux/rhashtable.h
+
+diff --git a/backports/Kconfig b/backports/Kconfig
+index f64a3f6..5c1c5d8 100644
+--- a/backports/Kconfig
++++ b/backports/Kconfig
+@@ -4,26 +4,26 @@ config BACKPORT_INTEGRATE
+ 
+ config BACKPORT_DIR
+ 	string
+-	default "%%BACKPORT_DIR%%"
++	default "backports/"
+ 
+ config BACKPORT_VERSION
+ 	string
+-	default "%%BACKPORTS_VERSION%%"
++	default "v4.1.1-1-0-g8286954"
+ 
+ config BACKPORT_KERNEL_VERSION
+ 	string
+-	default "%%BACKPORTED_KERNEL_VERSION%%"
++	default "v4.1.7-0-g0c5c1f1"
+ 
+ config BACKPORT_KERNEL_NAME
+ 	string
+-	default "%%BACKPORTED_KERNEL_NAME%%"
++	default "Linux"
+ 
+ menuconfig BACKPORT_LINUX
+-	bool "Backport %%BACKPORTED_KERNEL_NAME%% %%BACKPORTED_KERNEL_VERSION%% (backports %%BACKPORTS_VERSION%%)"
++	bool "Backport Linux v4.1.7-0-g0c5c1f1 (backports v4.1.1-1-0-g8286954)"
+ 	default n
+ 	---help---
+ 	  Enabling this will let give you the opportunity to use features and
+-	  drivers backported from %%BACKPORTED_KERNEL_NAME%% %%BACKPORTED_KERNEL_VERSION%%
++	  drivers backported from Linux v4.1.7-0-g0c5c1f1
+ 	  on the kernel your are using. This is experimental and you should
+ 	  say no unless you'd like to help test things or want to help debug
+ 	  this should we run into any issues.
+diff --git a/backports/compat/Makefile b/backports/compat/Makefile
+index f60c32b..c0c7228 100644
+--- a/backports/compat/Makefile
++++ b/backports/compat/Makefile
+@@ -29,3 +29,9 @@ compat-$(CPTCFG_KERNEL_4_1) += backport-4.1.o
+ 
+ compat-$(CPTCFG_BPAUTO_BUILD_CRYPTO_CCM) += crypto-ccm.o
+ compat-$(CPTCFG_BPAUTO_BUILD_DMA_SHARED_HELPERS) += dma-shared-helpers.o
++compat-$(CONFIG_BACKPORT_BPAUTO_RHASHTABLE) += lib-rhashtable.o
++compat-$(CONFIG_BACKPORT_BPAUTO_BUILD_WANT_DEV_COREDUMP) += drivers-base-devcoredump.o
++compat-$(CONFIG_BACKPORT_BPAUTO_BUILD_AVERAGE) += lib-average.o
++cordic-objs += lib-cordic.o
++obj-$(CONFIG_BACKPORT_BPAUTO_BUILD_CORDIC) += cordic.o
++compat-$(CONFIG_BACKPORT_BPAUTO_BUILD_CRYPTO_CCM) += crypto-ccm.o
+diff --git a/backports/compat/crypto-ccm.c b/backports/compat/crypto-ccm.c
+new file mode 100644
+index 0000000..003bbbd
+--- /dev/null
++++ b/backports/compat/crypto-ccm.c
+@@ -0,0 +1,884 @@
++/*
++ * CCM: Counter with CBC-MAC
++ *
++ * (C) Copyright IBM Corp. 2007 - Joy Latten <latten@us.ibm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the Free
++ * Software Foundation; either version 2 of the License, or (at your option)
++ * any later version.
++ *
++ */
++
++#include <crypto/internal/aead.h>
++#include <crypto/internal/skcipher.h>
++#include <crypto/scatterwalk.h>
++#include <linux/err.h>
++#include <linux/init.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++
++#include "internal.h"
++
++struct ccm_instance_ctx {
++	struct crypto_skcipher_spawn ctr;
++	struct crypto_spawn cipher;
++};
++
++struct crypto_ccm_ctx {
++	struct crypto_cipher *cipher;
++	struct crypto_ablkcipher *ctr;
++};
++
++struct crypto_rfc4309_ctx {
++	struct crypto_aead *child;
++	u8 nonce[3];
++};
++
++struct crypto_ccm_req_priv_ctx {
++	u8 odata[16];
++	u8 idata[16];
++	u8 auth_tag[16];
++	u32 ilen;
++	u32 flags;
++	struct scatterlist src[2];
++	struct scatterlist dst[2];
++	struct ablkcipher_request abreq;
++};
++
++static inline struct crypto_ccm_req_priv_ctx *crypto_ccm_reqctx(
++	struct aead_request *req)
++{
++	unsigned long align = crypto_aead_alignmask(crypto_aead_reqtfm(req));
++
++	return (void *)PTR_ALIGN((u8 *)aead_request_ctx(req), align + 1);
++}
++
++static int set_msg_len(u8 *block, unsigned int msglen, int csize)
++{
++	__be32 data;
++
++	memset(block, 0, csize);
++	block += csize;
++
++	if (csize >= 4)
++		csize = 4;
++	else if (msglen > (1 << (8 * csize)))
++		return -EOVERFLOW;
++
++	data = cpu_to_be32(msglen);
++	memcpy(block - csize, (u8 *)&data + 4 - csize, csize);
++
++	return 0;
++}
++
++static int crypto_ccm_setkey(struct crypto_aead *aead, const u8 *key,
++			     unsigned int keylen)
++{
++	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
++	struct crypto_ablkcipher *ctr = ctx->ctr;
++	struct crypto_cipher *tfm = ctx->cipher;
++	int err = 0;
++
++	crypto_ablkcipher_clear_flags(ctr, CRYPTO_TFM_REQ_MASK);
++	crypto_ablkcipher_set_flags(ctr, crypto_aead_get_flags(aead) &
++				    CRYPTO_TFM_REQ_MASK);
++	err = crypto_ablkcipher_setkey(ctr, key, keylen);
++	crypto_aead_set_flags(aead, crypto_ablkcipher_get_flags(ctr) &
++			      CRYPTO_TFM_RES_MASK);
++	if (err)
++		goto out;
++
++	crypto_cipher_clear_flags(tfm, CRYPTO_TFM_REQ_MASK);
++	crypto_cipher_set_flags(tfm, crypto_aead_get_flags(aead) &
++				    CRYPTO_TFM_REQ_MASK);
++	err = crypto_cipher_setkey(tfm, key, keylen);
++	crypto_aead_set_flags(aead, crypto_cipher_get_flags(tfm) &
++			      CRYPTO_TFM_RES_MASK);
++
++out:
++	return err;
++}
++
++static int crypto_ccm_setauthsize(struct crypto_aead *tfm,
++				  unsigned int authsize)
++{
++	switch (authsize) {
++	case 4:
++	case 6:
++	case 8:
++	case 10:
++	case 12:
++	case 14:
++	case 16:
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int format_input(u8 *info, struct aead_request *req,
++			unsigned int cryptlen)
++{
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	unsigned int lp = req->iv[0];
++	unsigned int l = lp + 1;
++	unsigned int m;
++
++	m = crypto_aead_authsize(aead);
++
++	memcpy(info, req->iv, 16);
++
++	/* format control info per RFC 3610 and
++	 * NIST Special Publication 800-38C
++	 */
++	*info |= (8 * ((m - 2) / 2));
++	if (req->assoclen)
++		*info |= 64;
++
++	return set_msg_len(info + 16 - l, cryptlen, l);
++}
++
++static int format_adata(u8 *adata, unsigned int a)
++{
++	int len = 0;
++
++	/* add control info for associated data
++	 * RFC 3610 and NIST Special Publication 800-38C
++	 */
++	if (a < 65280) {
++		*(__be16 *)adata = cpu_to_be16(a);
++		len = 2;
++	} else  {
++		*(__be16 *)adata = cpu_to_be16(0xfffe);
++		*(__be32 *)&adata[2] = cpu_to_be32(a);
++		len = 6;
++	}
++
++	return len;
++}
++
++static void compute_mac(struct crypto_cipher *tfm, u8 *data, int n,
++		       struct crypto_ccm_req_priv_ctx *pctx)
++{
++	unsigned int bs = 16;
++	u8 *odata = pctx->odata;
++	u8 *idata = pctx->idata;
++	int datalen, getlen;
++
++	datalen = n;
++
++	/* first time in here, block may be partially filled. */
++	getlen = bs - pctx->ilen;
++	if (datalen >= getlen) {
++		memcpy(idata + pctx->ilen, data, getlen);
++		crypto_xor(odata, idata, bs);
++		crypto_cipher_encrypt_one(tfm, odata, odata);
++		datalen -= getlen;
++		data += getlen;
++		pctx->ilen = 0;
++	}
++
++	/* now encrypt rest of data */
++	while (datalen >= bs) {
++		crypto_xor(odata, data, bs);
++		crypto_cipher_encrypt_one(tfm, odata, odata);
++
++		datalen -= bs;
++		data += bs;
++	}
++
++	/* check and see if there's leftover data that wasn't
++	 * enough to fill a block.
++	 */
++	if (datalen) {
++		memcpy(idata + pctx->ilen, data, datalen);
++		pctx->ilen += datalen;
++	}
++}
++
++static void get_data_to_compute(struct crypto_cipher *tfm,
++			       struct crypto_ccm_req_priv_ctx *pctx,
++			       struct scatterlist *sg, unsigned int len)
++{
++	struct scatter_walk walk;
++	u8 *data_src;
++	int n;
++
++	scatterwalk_start(&walk, sg);
++
++	while (len) {
++		n = scatterwalk_clamp(&walk, len);
++		if (!n) {
++			scatterwalk_start(&walk, sg_next(walk.sg));
++			n = scatterwalk_clamp(&walk, len);
++		}
++		data_src = scatterwalk_map(&walk);
++
++		compute_mac(tfm, data_src, n, pctx);
++		len -= n;
++
++		scatterwalk_unmap(data_src);
++		scatterwalk_advance(&walk, n);
++		scatterwalk_done(&walk, 0, len);
++		if (len)
++			crypto_yield(pctx->flags);
++	}
++
++	/* any leftover needs padding and then encrypted */
++	if (pctx->ilen) {
++		int padlen;
++		u8 *odata = pctx->odata;
++		u8 *idata = pctx->idata;
++
++		padlen = 16 - pctx->ilen;
++		memset(idata + pctx->ilen, 0, padlen);
++		crypto_xor(odata, idata, 16);
++		crypto_cipher_encrypt_one(tfm, odata, odata);
++		pctx->ilen = 0;
++	}
++}
++
++static int crypto_ccm_auth(struct aead_request *req, struct scatterlist *plain,
++			   unsigned int cryptlen)
++{
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
++	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
++	struct crypto_cipher *cipher = ctx->cipher;
++	unsigned int assoclen = req->assoclen;
++	u8 *odata = pctx->odata;
++	u8 *idata = pctx->idata;
++	int err;
++
++	/* format control data for input */
++	err = format_input(odata, req, cryptlen);
++	if (err)
++		goto out;
++
++	/* encrypt first block to use as start in computing mac  */
++	crypto_cipher_encrypt_one(cipher, odata, odata);
++
++	/* format associated data and compute into mac */
++	if (assoclen) {
++		pctx->ilen = format_adata(idata, assoclen);
++		get_data_to_compute(cipher, pctx, req->assoc, req->assoclen);
++	} else {
++		pctx->ilen = 0;
++	}
++
++	/* compute plaintext into mac */
++	if (cryptlen)
++		get_data_to_compute(cipher, pctx, plain, cryptlen);
++
++out:
++	return err;
++}
++
++static void crypto_ccm_encrypt_done(struct crypto_async_request *areq, int err)
++{
++	struct aead_request *req = areq->data;
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
++	u8 *odata = pctx->odata;
++
++	if (!err)
++		scatterwalk_map_and_copy(odata, req->dst, req->cryptlen,
++					 crypto_aead_authsize(aead), 1);
++	aead_request_complete(req, err);
++}
++
++static inline int crypto_ccm_check_iv(const u8 *iv)
++{
++	/* 2 <= L <= 8, so 1 <= L' <= 7. */
++	if (1 > iv[0] || iv[0] > 7)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int crypto_ccm_encrypt(struct aead_request *req)
++{
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
++	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
++	struct ablkcipher_request *abreq = &pctx->abreq;
++	struct scatterlist *dst;
++	unsigned int cryptlen = req->cryptlen;
++	u8 *odata = pctx->odata;
++	u8 *iv = req->iv;
++	int err;
++
++	err = crypto_ccm_check_iv(iv);
++	if (err)
++		return err;
++
++	pctx->flags = aead_request_flags(req);
++
++	err = crypto_ccm_auth(req, req->src, cryptlen);
++	if (err)
++		return err;
++
++	 /* Note: rfc 3610 and NIST 800-38C require counter of
++	 * zero to encrypt auth tag.
++	 */
++	memset(iv + 15 - iv[0], 0, iv[0] + 1);
++
++	sg_init_table(pctx->src, 2);
++	sg_set_buf(pctx->src, odata, 16);
++	scatterwalk_sg_chain(pctx->src, 2, req->src);
++
++	dst = pctx->src;
++	if (req->src != req->dst) {
++		sg_init_table(pctx->dst, 2);
++		sg_set_buf(pctx->dst, odata, 16);
++		scatterwalk_sg_chain(pctx->dst, 2, req->dst);
++		dst = pctx->dst;
++	}
++
++	ablkcipher_request_set_tfm(abreq, ctx->ctr);
++	ablkcipher_request_set_callback(abreq, pctx->flags,
++					crypto_ccm_encrypt_done, req);
++	ablkcipher_request_set_crypt(abreq, pctx->src, dst, cryptlen + 16, iv);
++	err = crypto_ablkcipher_encrypt(abreq);
++	if (err)
++		return err;
++
++	/* copy authtag to end of dst */
++	scatterwalk_map_and_copy(odata, req->dst, cryptlen,
++				 crypto_aead_authsize(aead), 1);
++	return err;
++}
++
++static void crypto_ccm_decrypt_done(struct crypto_async_request *areq,
++				   int err)
++{
++	struct aead_request *req = areq->data;
++	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	unsigned int authsize = crypto_aead_authsize(aead);
++	unsigned int cryptlen = req->cryptlen - authsize;
++
++	if (!err) {
++		err = crypto_ccm_auth(req, req->dst, cryptlen);
++		if (!err && crypto_memneq(pctx->auth_tag, pctx->odata, authsize))
++			err = -EBADMSG;
++	}
++	aead_request_complete(req, err);
++}
++
++static int crypto_ccm_decrypt(struct aead_request *req)
++{
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	struct crypto_ccm_ctx *ctx = crypto_aead_ctx(aead);
++	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
++	struct ablkcipher_request *abreq = &pctx->abreq;
++	struct scatterlist *dst;
++	unsigned int authsize = crypto_aead_authsize(aead);
++	unsigned int cryptlen = req->cryptlen;
++	u8 *authtag = pctx->auth_tag;
++	u8 *odata = pctx->odata;
++	u8 *iv = req->iv;
++	int err;
++
++	if (cryptlen < authsize)
++		return -EINVAL;
++	cryptlen -= authsize;
++
++	err = crypto_ccm_check_iv(iv);
++	if (err)
++		return err;
++
++	pctx->flags = aead_request_flags(req);
++
++	scatterwalk_map_and_copy(authtag, req->src, cryptlen, authsize, 0);
++
++	memset(iv + 15 - iv[0], 0, iv[0] + 1);
++
++	sg_init_table(pctx->src, 2);
++	sg_set_buf(pctx->src, authtag, 16);
++	scatterwalk_sg_chain(pctx->src, 2, req->src);
++
++	dst = pctx->src;
++	if (req->src != req->dst) {
++		sg_init_table(pctx->dst, 2);
++		sg_set_buf(pctx->dst, authtag, 16);
++		scatterwalk_sg_chain(pctx->dst, 2, req->dst);
++		dst = pctx->dst;
++	}
++
++	ablkcipher_request_set_tfm(abreq, ctx->ctr);
++	ablkcipher_request_set_callback(abreq, pctx->flags,
++					crypto_ccm_decrypt_done, req);
++	ablkcipher_request_set_crypt(abreq, pctx->src, dst, cryptlen + 16, iv);
++	err = crypto_ablkcipher_decrypt(abreq);
++	if (err)
++		return err;
++
++	err = crypto_ccm_auth(req, req->dst, cryptlen);
++	if (err)
++		return err;
++
++	/* verify */
++	if (crypto_memneq(authtag, odata, authsize))
++		return -EBADMSG;
++
++	return err;
++}
++
++static int crypto_ccm_init_tfm(struct crypto_tfm *tfm)
++{
++	struct crypto_instance *inst = (void *)tfm->__crt_alg;
++	struct ccm_instance_ctx *ictx = crypto_instance_ctx(inst);
++	struct crypto_ccm_ctx *ctx = crypto_tfm_ctx(tfm);
++	struct crypto_cipher *cipher;
++	struct crypto_ablkcipher *ctr;
++	unsigned long align;
++	int err;
++
++	cipher = crypto_spawn_cipher(&ictx->cipher);
++	if (IS_ERR(cipher))
++		return PTR_ERR(cipher);
++
++	ctr = crypto_spawn_skcipher(&ictx->ctr);
++	err = PTR_ERR(ctr);
++	if (IS_ERR(ctr))
++		goto err_free_cipher;
++
++	ctx->cipher = cipher;
++	ctx->ctr = ctr;
++
++	align = crypto_tfm_alg_alignmask(tfm);
++	align &= ~(crypto_tfm_ctx_alignment() - 1);
++	tfm->crt_aead.reqsize = align +
++				sizeof(struct crypto_ccm_req_priv_ctx) +
++				crypto_ablkcipher_reqsize(ctr);
++
++	return 0;
++
++err_free_cipher:
++	crypto_free_cipher(cipher);
++	return err;
++}
++
++static void crypto_ccm_exit_tfm(struct crypto_tfm *tfm)
++{
++	struct crypto_ccm_ctx *ctx = crypto_tfm_ctx(tfm);
++
++	crypto_free_cipher(ctx->cipher);
++	crypto_free_ablkcipher(ctx->ctr);
++}
++
++static struct crypto_instance *crypto_ccm_alloc_common(struct rtattr **tb,
++						       const char *full_name,
++						       const char *ctr_name,
++						       const char *cipher_name)
++{
++	struct crypto_attr_type *algt;
++	struct crypto_instance *inst;
++	struct crypto_alg *ctr;
++	struct crypto_alg *cipher;
++	struct ccm_instance_ctx *ictx;
++	int err;
++
++	algt = crypto_get_attr_type(tb);
++	if (IS_ERR(algt))
++		return ERR_CAST(algt);
++
++	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
++		return ERR_PTR(-EINVAL);
++
++	cipher = crypto_alg_mod_lookup(cipher_name,  CRYPTO_ALG_TYPE_CIPHER,
++				       CRYPTO_ALG_TYPE_MASK);
++	if (IS_ERR(cipher))
++		return ERR_CAST(cipher);
++
++	err = -EINVAL;
++	if (cipher->cra_blocksize != 16)
++		goto out_put_cipher;
++
++	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
++	err = -ENOMEM;
++	if (!inst)
++		goto out_put_cipher;
++
++	ictx = crypto_instance_ctx(inst);
++
++	err = crypto_init_spawn(&ictx->cipher, cipher, inst,
++				CRYPTO_ALG_TYPE_MASK);
++	if (err)
++		goto err_free_inst;
++
++	crypto_set_skcipher_spawn(&ictx->ctr, inst);
++	err = crypto_grab_skcipher(&ictx->ctr, ctr_name, 0,
++				   crypto_requires_sync(algt->type,
++							algt->mask));
++	if (err)
++		goto err_drop_cipher;
++
++	ctr = crypto_skcipher_spawn_alg(&ictx->ctr);
++
++	/* Not a stream cipher? */
++	err = -EINVAL;
++	if (ctr->cra_blocksize != 1)
++		goto err_drop_ctr;
++
++	/* We want the real thing! */
++	if (ctr->cra_ablkcipher.ivsize != 16)
++		goto err_drop_ctr;
++
++	err = -ENAMETOOLONG;
++	if (snprintf(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME,
++		     "ccm_base(%s,%s)", ctr->cra_driver_name,
++		     cipher->cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
++		goto err_drop_ctr;
++
++	memcpy(inst->alg.cra_name, full_name, CRYPTO_MAX_ALG_NAME);
++
++	inst->alg.cra_flags = CRYPTO_ALG_TYPE_AEAD;
++	inst->alg.cra_flags |= ctr->cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.cra_priority = cipher->cra_priority + ctr->cra_priority;
++	inst->alg.cra_blocksize = 1;
++	inst->alg.cra_alignmask = cipher->cra_alignmask | ctr->cra_alignmask |
++				  (__alignof__(u32) - 1);
++	inst->alg.cra_type = &crypto_aead_type;
++	inst->alg.cra_aead.ivsize = 16;
++	inst->alg.cra_aead.maxauthsize = 16;
++	inst->alg.cra_ctxsize = sizeof(struct crypto_ccm_ctx);
++	inst->alg.cra_init = crypto_ccm_init_tfm;
++	inst->alg.cra_exit = crypto_ccm_exit_tfm;
++	inst->alg.cra_aead.setkey = crypto_ccm_setkey;
++	inst->alg.cra_aead.setauthsize = crypto_ccm_setauthsize;
++	inst->alg.cra_aead.encrypt = crypto_ccm_encrypt;
++	inst->alg.cra_aead.decrypt = crypto_ccm_decrypt;
++
++out:
++	crypto_mod_put(cipher);
++	return inst;
++
++err_drop_ctr:
++	crypto_drop_skcipher(&ictx->ctr);
++err_drop_cipher:
++	crypto_drop_spawn(&ictx->cipher);
++err_free_inst:
++	kfree(inst);
++out_put_cipher:
++	inst = ERR_PTR(err);
++	goto out;
++}
++
++static struct crypto_instance *crypto_ccm_alloc(struct rtattr **tb)
++{
++	const char *cipher_name;
++	char ctr_name[CRYPTO_MAX_ALG_NAME];
++	char full_name[CRYPTO_MAX_ALG_NAME];
++
++	cipher_name = crypto_attr_alg_name(tb[1]);
++	if (IS_ERR(cipher_name))
++		return ERR_CAST(cipher_name);
++
++	if (snprintf(ctr_name, CRYPTO_MAX_ALG_NAME, "ctr(%s)",
++		     cipher_name) >= CRYPTO_MAX_ALG_NAME)
++		return ERR_PTR(-ENAMETOOLONG);
++
++	if (snprintf(full_name, CRYPTO_MAX_ALG_NAME, "ccm(%s)", cipher_name) >=
++	    CRYPTO_MAX_ALG_NAME)
++		return ERR_PTR(-ENAMETOOLONG);
++
++	return crypto_ccm_alloc_common(tb, full_name, ctr_name, cipher_name);
++}
++
++static void crypto_ccm_free(struct crypto_instance *inst)
++{
++	struct ccm_instance_ctx *ctx = crypto_instance_ctx(inst);
++
++	crypto_drop_spawn(&ctx->cipher);
++	crypto_drop_skcipher(&ctx->ctr);
++	kfree(inst);
++}
++
++static struct crypto_template crypto_ccm_tmpl = {
++	.name = "ccm",
++	.alloc = crypto_ccm_alloc,
++	.free = crypto_ccm_free,
++	.module = THIS_MODULE,
++};
++
++static struct crypto_instance *crypto_ccm_base_alloc(struct rtattr **tb)
++{
++	const char *ctr_name;
++	const char *cipher_name;
++	char full_name[CRYPTO_MAX_ALG_NAME];
++
++	ctr_name = crypto_attr_alg_name(tb[1]);
++	if (IS_ERR(ctr_name))
++		return ERR_CAST(ctr_name);
++
++	cipher_name = crypto_attr_alg_name(tb[2]);
++	if (IS_ERR(cipher_name))
++		return ERR_CAST(cipher_name);
++
++	if (snprintf(full_name, CRYPTO_MAX_ALG_NAME, "ccm_base(%s,%s)",
++		     ctr_name, cipher_name) >= CRYPTO_MAX_ALG_NAME)
++		return ERR_PTR(-ENAMETOOLONG);
++
++	return crypto_ccm_alloc_common(tb, full_name, ctr_name, cipher_name);
++}
++
++static struct crypto_template crypto_ccm_base_tmpl = {
++	.name = "ccm_base",
++	.alloc = crypto_ccm_base_alloc,
++	.free = crypto_ccm_free,
++	.module = THIS_MODULE,
++};
++
++static int crypto_rfc4309_setkey(struct crypto_aead *parent, const u8 *key,
++				 unsigned int keylen)
++{
++	struct crypto_rfc4309_ctx *ctx = crypto_aead_ctx(parent);
++	struct crypto_aead *child = ctx->child;
++	int err;
++
++	if (keylen < 3)
++		return -EINVAL;
++
++	keylen -= 3;
++	memcpy(ctx->nonce, key + keylen, 3);
++
++	crypto_aead_clear_flags(child, CRYPTO_TFM_REQ_MASK);
++	crypto_aead_set_flags(child, crypto_aead_get_flags(parent) &
++				     CRYPTO_TFM_REQ_MASK);
++	err = crypto_aead_setkey(child, key, keylen);
++	crypto_aead_set_flags(parent, crypto_aead_get_flags(child) &
++				      CRYPTO_TFM_RES_MASK);
++
++	return err;
++}
++
++static int crypto_rfc4309_setauthsize(struct crypto_aead *parent,
++				      unsigned int authsize)
++{
++	struct crypto_rfc4309_ctx *ctx = crypto_aead_ctx(parent);
++
++	switch (authsize) {
++	case 8:
++	case 12:
++	case 16:
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	return crypto_aead_setauthsize(ctx->child, authsize);
++}
++
++static struct aead_request *crypto_rfc4309_crypt(struct aead_request *req)
++{
++	struct aead_request *subreq = aead_request_ctx(req);
++	struct crypto_aead *aead = crypto_aead_reqtfm(req);
++	struct crypto_rfc4309_ctx *ctx = crypto_aead_ctx(aead);
++	struct crypto_aead *child = ctx->child;
++	u8 *iv = PTR_ALIGN((u8 *)(subreq + 1) + crypto_aead_reqsize(child),
++			   crypto_aead_alignmask(child) + 1);
++
++	/* L' */
++	iv[0] = 3;
++
++	memcpy(iv + 1, ctx->nonce, 3);
++	memcpy(iv + 4, req->iv, 8);
++
++	aead_request_set_tfm(subreq, child);
++	aead_request_set_callback(subreq, req->base.flags, req->base.complete,
++				  req->base.data);
++	aead_request_set_crypt(subreq, req->src, req->dst, req->cryptlen, iv);
++	aead_request_set_assoc(subreq, req->assoc, req->assoclen);
++
++	return subreq;
++}
++
++static int crypto_rfc4309_encrypt(struct aead_request *req)
++{
++	req = crypto_rfc4309_crypt(req);
++
++	return crypto_aead_encrypt(req);
++}
++
++static int crypto_rfc4309_decrypt(struct aead_request *req)
++{
++	req = crypto_rfc4309_crypt(req);
++
++	return crypto_aead_decrypt(req);
++}
++
++static int crypto_rfc4309_init_tfm(struct crypto_tfm *tfm)
++{
++	struct crypto_instance *inst = (void *)tfm->__crt_alg;
++	struct crypto_aead_spawn *spawn = crypto_instance_ctx(inst);
++	struct crypto_rfc4309_ctx *ctx = crypto_tfm_ctx(tfm);
++	struct crypto_aead *aead;
++	unsigned long align;
++
++	aead = crypto_spawn_aead(spawn);
++	if (IS_ERR(aead))
++		return PTR_ERR(aead);
++
++	ctx->child = aead;
++
++	align = crypto_aead_alignmask(aead);
++	align &= ~(crypto_tfm_ctx_alignment() - 1);
++	tfm->crt_aead.reqsize = sizeof(struct aead_request) +
++				ALIGN(crypto_aead_reqsize(aead),
++				      crypto_tfm_ctx_alignment()) +
++				align + 16;
++
++	return 0;
++}
++
++static void crypto_rfc4309_exit_tfm(struct crypto_tfm *tfm)
++{
++	struct crypto_rfc4309_ctx *ctx = crypto_tfm_ctx(tfm);
++
++	crypto_free_aead(ctx->child);
++}
++
++static struct crypto_instance *crypto_rfc4309_alloc(struct rtattr **tb)
++{
++	struct crypto_attr_type *algt;
++	struct crypto_instance *inst;
++	struct crypto_aead_spawn *spawn;
++	struct crypto_alg *alg;
++	const char *ccm_name;
++	int err;
++
++	algt = crypto_get_attr_type(tb);
++	if (IS_ERR(algt))
++		return ERR_CAST(algt);
++
++	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
++		return ERR_PTR(-EINVAL);
++
++	ccm_name = crypto_attr_alg_name(tb[1]);
++	if (IS_ERR(ccm_name))
++		return ERR_CAST(ccm_name);
++
++	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
++	if (!inst)
++		return ERR_PTR(-ENOMEM);
++
++	spawn = crypto_instance_ctx(inst);
++	crypto_set_aead_spawn(spawn, inst);
++	err = crypto_grab_aead(spawn, ccm_name, 0,
++			       crypto_requires_sync(algt->type, algt->mask));
++	if (err)
++		goto out_free_inst;
++
++	alg = crypto_aead_spawn_alg(spawn);
++
++	err = -EINVAL;
++
++	/* We only support 16-byte blocks. */
++	if (alg->cra_aead.ivsize != 16)
++		goto out_drop_alg;
++
++	/* Not a stream cipher? */
++	if (alg->cra_blocksize != 1)
++		goto out_drop_alg;
++
++	err = -ENAMETOOLONG;
++	if (snprintf(inst->alg.cra_name, CRYPTO_MAX_ALG_NAME,
++		     "rfc4309(%s)", alg->cra_name) >= CRYPTO_MAX_ALG_NAME ||
++	    snprintf(inst->alg.cra_driver_name, CRYPTO_MAX_ALG_NAME,
++		     "rfc4309(%s)", alg->cra_driver_name) >=
++	    CRYPTO_MAX_ALG_NAME)
++		goto out_drop_alg;
++
++	inst->alg.cra_flags = CRYPTO_ALG_TYPE_AEAD;
++	inst->alg.cra_flags |= alg->cra_flags & CRYPTO_ALG_ASYNC;
++	inst->alg.cra_priority = alg->cra_priority;
++	inst->alg.cra_blocksize = 1;
++	inst->alg.cra_alignmask = alg->cra_alignmask;
++	inst->alg.cra_type = &crypto_nivaead_type;
++
++	inst->alg.cra_aead.ivsize = 8;
++	inst->alg.cra_aead.maxauthsize = 16;
++
++	inst->alg.cra_ctxsize = sizeof(struct crypto_rfc4309_ctx);
++
++	inst->alg.cra_init = crypto_rfc4309_init_tfm;
++	inst->alg.cra_exit = crypto_rfc4309_exit_tfm;
++
++	inst->alg.cra_aead.setkey = crypto_rfc4309_setkey;
++	inst->alg.cra_aead.setauthsize = crypto_rfc4309_setauthsize;
++	inst->alg.cra_aead.encrypt = crypto_rfc4309_encrypt;
++	inst->alg.cra_aead.decrypt = crypto_rfc4309_decrypt;
++
++	inst->alg.cra_aead.geniv = "seqiv";
++
++out:
++	return inst;
++
++out_drop_alg:
++	crypto_drop_aead(spawn);
++out_free_inst:
++	kfree(inst);
++	inst = ERR_PTR(err);
++	goto out;
++}
++
++static void crypto_rfc4309_free(struct crypto_instance *inst)
++{
++	crypto_drop_spawn(crypto_instance_ctx(inst));
++	kfree(inst);
++}
++
++static struct crypto_template crypto_rfc4309_tmpl = {
++	.name = "rfc4309",
++	.alloc = crypto_rfc4309_alloc,
++	.free = crypto_rfc4309_free,
++	.module = THIS_MODULE,
++};
++
++static int __init crypto_ccm_module_init(void)
++{
++	int err;
++
++	err = crypto_register_template(&crypto_ccm_base_tmpl);
++	if (err)
++		goto out;
++
++	err = crypto_register_template(&crypto_ccm_tmpl);
++	if (err)
++		goto out_undo_base;
++
++	err = crypto_register_template(&crypto_rfc4309_tmpl);
++	if (err)
++		goto out_undo_ccm;
++
++out:
++	return err;
++
++out_undo_ccm:
++	crypto_unregister_template(&crypto_ccm_tmpl);
++out_undo_base:
++	crypto_unregister_template(&crypto_ccm_base_tmpl);
++	goto out;
++}
++
++static void __exit crypto_ccm_module_exit(void)
++{
++	crypto_unregister_template(&crypto_rfc4309_tmpl);
++	crypto_unregister_template(&crypto_ccm_tmpl);
++	crypto_unregister_template(&crypto_ccm_base_tmpl);
++}
++
++module_init(crypto_ccm_module_init);
++module_exit(crypto_ccm_module_exit);
++
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("Counter with CBC MAC");
++MODULE_ALIAS_CRYPTO("ccm_base");
++MODULE_ALIAS_CRYPTO("rfc4309");
++MODULE_ALIAS_CRYPTO("ccm");
+diff --git a/backports/compat/drivers-base-devcoredump.c b/backports/compat/drivers-base-devcoredump.c
+new file mode 100644
+index 0000000..1bd120a
+--- /dev/null
++++ b/backports/compat/drivers-base-devcoredump.c
+@@ -0,0 +1,305 @@
++/*
++ * This file is provided under the GPLv2 license.
++ *
++ * GPL LICENSE SUMMARY
++ *
++ * Copyright(c) 2014 Intel Mobile Communications GmbH
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of version 2 of the GNU General Public License as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * The full GNU General Public License is included in this distribution
++ * in the file called COPYING.
++ *
++ * Contact Information:
++ *  Intel Linux Wireless <ilw@linux.intel.com>
++ * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
++ *
++ * Author: Johannes Berg <johannes@sipsolutions.net>
++ */
++#include <linux/module.h>
++#include <linux/device.h>
++#include <linux/devcoredump.h>
++#include <linux/list.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/workqueue.h>
++
++static struct class devcd_class;
++
++/* global disable flag, for security purposes */
++static bool devcd_disabled;
++
++/* if data isn't read by userspace after 5 minutes then delete it */
++#define DEVCD_TIMEOUT	(HZ * 60 * 5)
++
++struct devcd_entry {
++	struct device devcd_dev;
++	const void *data;
++	size_t datalen;
++	struct module *owner;
++	ssize_t (*read)(char *buffer, loff_t offset, size_t count,
++			const void *data, size_t datalen);
++	void (*free)(const void *data);
++	struct delayed_work del_wk;
++	struct device *failing_dev;
++};
++
++static struct devcd_entry *dev_to_devcd(struct device *dev)
++{
++	return container_of(dev, struct devcd_entry, devcd_dev);
++}
++
++static void devcd_dev_release(struct device *dev)
++{
++	struct devcd_entry *devcd = dev_to_devcd(dev);
++
++	devcd->free(devcd->data);
++	module_put(devcd->owner);
++
++	/*
++	 * this seems racy, but I don't see a notifier or such on
++	 * a struct device to know when it goes away?
++	 */
++	if (devcd->failing_dev->kobj.sd)
++		sysfs_delete_link(&devcd->failing_dev->kobj, &dev->kobj,
++				  "devcoredump");
++
++	put_device(devcd->failing_dev);
++	kfree(devcd);
++}
++
++static void devcd_del(struct work_struct *wk)
++{
++	struct devcd_entry *devcd;
++
++	devcd = container_of(wk, struct devcd_entry, del_wk.work);
++
++	device_del(&devcd->devcd_dev);
++	put_device(&devcd->devcd_dev);
++}
++
++static ssize_t devcd_data_read(struct file *filp, struct kobject *kobj,
++			       struct bin_attribute *bin_attr,
++			       char *buffer, loff_t offset, size_t count)
++{
++	struct device *dev = kobj_to_dev(kobj);
++	struct devcd_entry *devcd = dev_to_devcd(dev);
++
++	return devcd->read(buffer, offset, count, devcd->data, devcd->datalen);
++}
++
++static ssize_t devcd_data_write(struct file *filp, struct kobject *kobj,
++				struct bin_attribute *bin_attr,
++				char *buffer, loff_t offset, size_t count)
++{
++	struct device *dev = kobj_to_dev(kobj);
++	struct devcd_entry *devcd = dev_to_devcd(dev);
++
++	mod_delayed_work(system_wq, &devcd->del_wk, 0);
++
++	return count;
++}
++
++static struct bin_attribute devcd_attr_data = {
++	.attr = { .name = "data", .mode = S_IRUSR | S_IWUSR, },
++	.size = 0,
++	.read = devcd_data_read,
++	.write = devcd_data_write,
++};
++
++static struct bin_attribute *devcd_dev_bin_attrs[] = {
++	&devcd_attr_data, NULL,
++};
++
++static const struct attribute_group devcd_dev_group = {
++	.bin_attrs = devcd_dev_bin_attrs,
++};
++
++static const struct attribute_group *devcd_dev_groups[] = {
++	&devcd_dev_group, NULL,
++};
++
++static int devcd_free(struct device *dev, void *data)
++{
++	struct devcd_entry *devcd = dev_to_devcd(dev);
++
++	flush_delayed_work(&devcd->del_wk);
++	return 0;
++}
++
++static ssize_t disabled_show(struct class *class, struct class_attribute *attr,
++			     char *buf)
++{
++	return sprintf(buf, "%d\n", devcd_disabled);
++}
++
++static ssize_t disabled_store(struct class *class, struct class_attribute *attr,
++			      const char *buf, size_t count)
++{
++	long tmp = simple_strtol(buf, NULL, 10);
++
++	/*
++	 * This essentially makes the attribute write-once, since you can't
++	 * go back to not having it disabled. This is intentional, it serves
++	 * as a system lockdown feature.
++	 */
++	if (tmp != 1)
++		return -EINVAL;
++
++	devcd_disabled = true;
++
++	class_for_each_device(&devcd_class, NULL, NULL, devcd_free);
++
++	return count;
++}
++
++static struct class_attribute devcd_class_attrs[] = {
++	__ATTR_RW(disabled),
++	__ATTR_NULL
++};
++
++static struct class devcd_class = {
++	.name		= "devcoredump",
++	.owner		= THIS_MODULE,
++	.dev_release	= devcd_dev_release,
++	.dev_groups	= devcd_dev_groups,
++	.class_attrs	= devcd_class_attrs,
++};
++
++static ssize_t devcd_readv(char *buffer, loff_t offset, size_t count,
++			   const void *data, size_t datalen)
++{
++	if (offset > datalen)
++		return -EINVAL;
++
++	if (offset + count > datalen)
++		count = datalen - offset;
++
++	if (count)
++		memcpy(buffer, ((u8 *)data) + offset, count);
++
++	return count;
++}
++
++/**
++ * dev_coredumpv - create device coredump with vmalloc data
++ * @dev: the struct device for the crashed device
++ * @data: vmalloc data containing the device coredump
++ * @datalen: length of the data
++ * @gfp: allocation flags
++ *
++ * This function takes ownership of the vmalloc'ed data and will free
++ * it when it is no longer used. See dev_coredumpm() for more information.
++ */
++void dev_coredumpv(struct device *dev, const void *data, size_t datalen,
++		   gfp_t gfp)
++{
++	dev_coredumpm(dev, NULL, data, datalen, gfp, devcd_readv, vfree);
++}
++EXPORT_SYMBOL_GPL(dev_coredumpv);
++
++static int devcd_match_failing(struct device *dev, const void *failing)
++{
++	struct devcd_entry *devcd = dev_to_devcd(dev);
++
++	return devcd->failing_dev == failing;
++}
++
++/**
++ * dev_coredumpm - create device coredump with read/free methods
++ * @dev: the struct device for the crashed device
++ * @owner: the module that contains the read/free functions, use %THIS_MODULE
++ * @data: data cookie for the @read/@free functions
++ * @datalen: length of the data
++ * @gfp: allocation flags
++ * @read: function to read from the given buffer
++ * @free: function to free the given buffer
++ *
++ * Creates a new device coredump for the given device. If a previous one hasn't
++ * been read yet, the new coredump is discarded. The data lifetime is determined
++ * by the device coredump framework and when it is no longer needed the @free
++ * function will be called to free the data.
++ */
++void dev_coredumpm(struct device *dev, struct module *owner,
++		   const void *data, size_t datalen, gfp_t gfp,
++		   ssize_t (*read)(char *buffer, loff_t offset, size_t count,
++				   const void *data, size_t datalen),
++		   void (*free)(const void *data))
++{
++	static atomic_t devcd_count = ATOMIC_INIT(0);
++	struct devcd_entry *devcd;
++	struct device *existing;
++
++	if (devcd_disabled)
++		goto free;
++
++	existing = class_find_device(&devcd_class, NULL, dev,
++				     devcd_match_failing);
++	if (existing) {
++		put_device(existing);
++		goto free;
++	}
++
++	if (!try_module_get(owner))
++		goto free;
++
++	devcd = kzalloc(sizeof(*devcd), gfp);
++	if (!devcd)
++		goto put_module;
++
++	devcd->owner = owner;
++	devcd->data = data;
++	devcd->datalen = datalen;
++	devcd->read = read;
++	devcd->free = free;
++	devcd->failing_dev = get_device(dev);
++
++	device_initialize(&devcd->devcd_dev);
++
++	dev_set_name(&devcd->devcd_dev, "devcd%d",
++		     atomic_inc_return(&devcd_count));
++	devcd->devcd_dev.class = &devcd_class;
++
++	if (device_add(&devcd->devcd_dev))
++		goto put_device;
++
++	if (sysfs_create_link(&devcd->devcd_dev.kobj, &dev->kobj,
++			      "failing_device"))
++		/* nothing - symlink will be missing */;
++
++	if (sysfs_create_link(&dev->kobj, &devcd->devcd_dev.kobj,
++			      "devcoredump"))
++		/* nothing - symlink will be missing */;
++
++	INIT_DELAYED_WORK(&devcd->del_wk, devcd_del);
++	schedule_delayed_work(&devcd->del_wk, DEVCD_TIMEOUT);
++
++	return;
++ put_device:
++	put_device(&devcd->devcd_dev);
++ put_module:
++	module_put(owner);
++ free:
++	free(data);
++}
++EXPORT_SYMBOL_GPL(dev_coredumpm);
++
++static int __init devcoredump_init(void)
++{
++	return class_register(&devcd_class);
++}
++__initcall(devcoredump_init);
++
++static void __exit devcoredump_exit(void)
++{
++	class_for_each_device(&devcd_class, NULL, NULL, devcd_free);
++	class_unregister(&devcd_class);
++}
++__exitcall(devcoredump_exit);
+diff --git a/backports/compat/lib-average.c b/backports/compat/lib-average.c
+new file mode 100644
+index 0000000..114d1be
+--- /dev/null
++++ b/backports/compat/lib-average.c
+@@ -0,0 +1,64 @@
++/*
++ * lib/average.c
++ *
++ * This source code is licensed under the GNU General Public License,
++ * Version 2.  See the file COPYING for more details.
++ */
++
++#include <linux/export.h>
++#include <linux/average.h>
++#include <linux/kernel.h>
++#include <linux/bug.h>
++#include <linux/log2.h>
++
++/**
++ * DOC: Exponentially Weighted Moving Average (EWMA)
++ *
++ * These are generic functions for calculating Exponentially Weighted Moving
++ * Averages (EWMA). We keep a structure with the EWMA parameters and a scaled
++ * up internal representation of the average value to prevent rounding errors.
++ * The factor for scaling up and the exponential weight (or decay rate) have to
++ * be specified thru the init fuction. The structure should not be accessed
++ * directly but only thru the helper functions.
++ */
++
++/**
++ * ewma_init() - Initialize EWMA parameters
++ * @avg: Average structure
++ * @factor: Factor to use for the scaled up internal value. The maximum value
++ *	of averages can be ULONG_MAX/(factor*weight). For performance reasons
++ *	factor has to be a power of 2.
++ * @weight: Exponential weight, or decay rate. This defines how fast the
++ *	influence of older values decreases. For performance reasons weight has
++ *	to be a power of 2.
++ *
++ * Initialize the EWMA parameters for a given struct ewma @avg.
++ */
++void ewma_init(struct ewma *avg, unsigned long factor, unsigned long weight)
++{
++	WARN_ON(!is_power_of_2(weight) || !is_power_of_2(factor));
++
++	avg->weight = ilog2(weight);
++	avg->factor = ilog2(factor);
++	avg->internal = 0;
++}
++EXPORT_SYMBOL(ewma_init);
++
++/**
++ * ewma_add() - Exponentially weighted moving average (EWMA)
++ * @avg: Average structure
++ * @val: Current value
++ *
++ * Add a sample to the average.
++ */
++struct ewma *ewma_add(struct ewma *avg, unsigned long val)
++{
++	unsigned long internal = ACCESS_ONCE(avg->internal);
++
++	ACCESS_ONCE(avg->internal) = internal ?
++		(((internal << avg->weight) - internal) +
++			(val << avg->factor)) >> avg->weight :
++		(val << avg->factor);
++	return avg;
++}
++EXPORT_SYMBOL(ewma_add);
+diff --git a/backports/compat/lib-cordic.c b/backports/compat/lib-cordic.c
+new file mode 100644
+index 0000000..6cf4778
+--- /dev/null
++++ b/backports/compat/lib-cordic.c
+@@ -0,0 +1,101 @@
++/*
++ * Copyright (c) 2011 Broadcom Corporation
++ *
++ * Permission to use, copy, modify, and/or distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
++ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
++ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
++ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++#include <linux/module.h>
++#include <linux/cordic.h>
++
++#define CORDIC_ANGLE_GEN	39797
++#define CORDIC_PRECISION_SHIFT	16
++#define	CORDIC_NUM_ITER		(CORDIC_PRECISION_SHIFT + 2)
++
++#define	FIXED(X)	((s32)((X) << CORDIC_PRECISION_SHIFT))
++#define	FLOAT(X)	(((X) >= 0) \
++		? ((((X) >> (CORDIC_PRECISION_SHIFT - 1)) + 1) >> 1) \
++		: -((((-(X)) >> (CORDIC_PRECISION_SHIFT - 1)) + 1) >> 1))
++
++static const s32 arctan_table[] = {
++	2949120,
++	1740967,
++	919879,
++	466945,
++	234379,
++	117304,
++	58666,
++	29335,
++	14668,
++	7334,
++	3667,
++	1833,
++	917,
++	458,
++	229,
++	115,
++	57,
++	29
++};
++
++/*
++ * cordic_calc_iq() - calculates the i/q coordinate for given angle
++ *
++ * theta: angle in degrees for which i/q coordinate is to be calculated
++ * coord: function output parameter holding the i/q coordinate
++ */
++struct cordic_iq cordic_calc_iq(s32 theta)
++{
++	struct cordic_iq coord;
++	s32 angle, valtmp;
++	unsigned iter;
++	int signx = 1;
++	int signtheta;
++
++	coord.i = CORDIC_ANGLE_GEN;
++	coord.q = 0;
++	angle = 0;
++
++	theta = FIXED(theta);
++	signtheta = (theta < 0) ? -1 : 1;
++	theta = ((theta + FIXED(180) * signtheta) % FIXED(360)) -
++		FIXED(180) * signtheta;
++
++	if (FLOAT(theta) > 90) {
++		theta -= FIXED(180);
++		signx = -1;
++	} else if (FLOAT(theta) < -90) {
++		theta += FIXED(180);
++		signx = -1;
++	}
++
++	for (iter = 0; iter < CORDIC_NUM_ITER; iter++) {
++		if (theta > angle) {
++			valtmp = coord.i - (coord.q >> iter);
++			coord.q += (coord.i >> iter);
++			angle += arctan_table[iter];
++		} else {
++			valtmp = coord.i + (coord.q >> iter);
++			coord.q -= (coord.i >> iter);
++			angle -= arctan_table[iter];
++		}
++		coord.i = valtmp;
++	}
++
++	coord.i *= signx;
++	coord.q *= signx;
++	return coord;
++}
++EXPORT_SYMBOL(cordic_calc_iq);
++
++MODULE_DESCRIPTION("CORDIC algorithm");
++MODULE_AUTHOR("Broadcom Corporation");
++MODULE_LICENSE("Dual BSD/GPL");
+diff --git a/backports/compat/lib-rhashtable.c b/backports/compat/lib-rhashtable.c
+new file mode 100644
+index 0000000..8609378
+--- /dev/null
++++ b/backports/compat/lib-rhashtable.c
+@@ -0,0 +1,849 @@
++/*
++ * Resizable, Scalable, Concurrent Hash Table
++ *
++ * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
++ * Copyright (c) 2014-2015 Thomas Graf <tgraf@suug.ch>
++ * Copyright (c) 2008-2014 Patrick McHardy <kaber@trash.net>
++ *
++ * Code partially derived from nft_hash
++ * Rewritten with rehash code from br_multicast plus single list
++ * pointer as suggested by Josh Triplett
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#include <linux/atomic.h>
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/log2.h>
++#include <linux/sched.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
++#include <linux/mm.h>
++#include <linux/jhash.h>
++#include <linux/random.h>
++#include <linux/rhashtable.h>
++#include <linux/err.h>
++#include <linux/export.h>
++
++#define HASH_DEFAULT_SIZE	64UL
++#define HASH_MIN_SIZE		4U
++#define BUCKET_LOCKS_PER_CPU   128UL
++
++static u32 head_hashfn(struct rhashtable *ht,
++		       const struct bucket_table *tbl,
++		       const struct rhash_head *he)
++{
++	return rht_head_hashfn(ht, tbl, he, ht->p);
++}
++
++#ifdef CONFIG_PROVE_LOCKING
++#define ASSERT_RHT_MUTEX(HT) BUG_ON(!lockdep_rht_mutex_is_held(HT))
++
++int lockdep_rht_mutex_is_held(struct rhashtable *ht)
++{
++	return (debug_locks) ? lockdep_is_held(&ht->mutex) : 1;
++}
++EXPORT_SYMBOL_GPL(lockdep_rht_mutex_is_held);
++
++int lockdep_rht_bucket_is_held(const struct bucket_table *tbl, u32 hash)
++{
++	spinlock_t *lock = rht_bucket_lock(tbl, hash);
++
++	return (debug_locks) ? lockdep_is_held(lock) : 1;
++}
++EXPORT_SYMBOL_GPL(lockdep_rht_bucket_is_held);
++#else
++#define ASSERT_RHT_MUTEX(HT)
++#endif
++
++
++static int alloc_bucket_locks(struct rhashtable *ht, struct bucket_table *tbl,
++			      gfp_t gfp)
++{
++	unsigned int i, size;
++#if defined(CONFIG_PROVE_LOCKING)
++	unsigned int nr_pcpus = 2;
++#else
++	unsigned int nr_pcpus = num_possible_cpus();
++#endif
++
++	nr_pcpus = min_t(unsigned int, nr_pcpus, 32UL);
++	size = roundup_pow_of_two(nr_pcpus * ht->p.locks_mul);
++
++	/* Never allocate more than 0.5 locks per bucket */
++	size = min_t(unsigned int, size, tbl->size >> 1);
++
++	if (sizeof(spinlock_t) != 0) {
++#ifdef CONFIG_NUMA
++		if (size * sizeof(spinlock_t) > PAGE_SIZE &&
++		    gfp == GFP_KERNEL)
++			tbl->locks = vmalloc(size * sizeof(spinlock_t));
++		else
++#endif
++		tbl->locks = kmalloc_array(size, sizeof(spinlock_t),
++					   gfp);
++		if (!tbl->locks)
++			return -ENOMEM;
++		for (i = 0; i < size; i++)
++			spin_lock_init(&tbl->locks[i]);
++	}
++	tbl->locks_mask = size - 1;
++
++	return 0;
++}
++
++static void bucket_table_free(const struct bucket_table *tbl)
++{
++	if (tbl)
++		kvfree(tbl->locks);
++
++	kvfree(tbl);
++}
++
++static void bucket_table_free_rcu(struct rcu_head *head)
++{
++	bucket_table_free(container_of(head, struct bucket_table, rcu));
++}
++
++static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
++					       size_t nbuckets,
++					       gfp_t gfp)
++{
++	struct bucket_table *tbl = NULL;
++	size_t size;
++	int i;
++
++	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
++	if (size <= (PAGE_SIZE << PAGE_ALLOC_COSTLY_ORDER) ||
++	    gfp != GFP_KERNEL)
++		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
++	if (tbl == NULL && gfp == GFP_KERNEL)
++		tbl = vzalloc(size);
++	if (tbl == NULL)
++		return NULL;
++
++	tbl->size = nbuckets;
++
++	if (alloc_bucket_locks(ht, tbl, gfp) < 0) {
++		bucket_table_free(tbl);
++		return NULL;
++	}
++
++	INIT_LIST_HEAD(&tbl->walkers);
++
++	get_random_bytes(&tbl->hash_rnd, sizeof(tbl->hash_rnd));
++
++	for (i = 0; i < nbuckets; i++)
++		INIT_RHT_NULLS_HEAD(tbl->buckets[i], ht, i);
++
++	return tbl;
++}
++
++static struct bucket_table *rhashtable_last_table(struct rhashtable *ht,
++						  struct bucket_table *tbl)
++{
++	struct bucket_table *new_tbl;
++
++	do {
++		new_tbl = tbl;
++		tbl = rht_dereference_rcu(tbl->future_tbl, ht);
++	} while (tbl);
++
++	return new_tbl;
++}
++
++static int rhashtable_rehash_one(struct rhashtable *ht, unsigned int old_hash)
++{
++	struct bucket_table *old_tbl = rht_dereference(ht->tbl, ht);
++	struct bucket_table *new_tbl = rhashtable_last_table(ht,
++		rht_dereference_rcu(old_tbl->future_tbl, ht));
++	struct rhash_head __rcu **pprev = &old_tbl->buckets[old_hash];
++	int err = -ENOENT;
++	struct rhash_head *head, *next, *entry;
++	spinlock_t *new_bucket_lock;
++	unsigned int new_hash;
++
++	rht_for_each(entry, old_tbl, old_hash) {
++		err = 0;
++		next = rht_dereference_bucket(entry->next, old_tbl, old_hash);
++
++		if (rht_is_a_nulls(next))
++			break;
++
++		pprev = &entry->next;
++	}
++
++	if (err)
++		goto out;
++
++	new_hash = head_hashfn(ht, new_tbl, entry);
++
++	new_bucket_lock = rht_bucket_lock(new_tbl, new_hash);
++
++	spin_lock_nested(new_bucket_lock, SINGLE_DEPTH_NESTING);
++	head = rht_dereference_bucket(new_tbl->buckets[new_hash],
++				      new_tbl, new_hash);
++
++	if (rht_is_a_nulls(head))
++		INIT_RHT_NULLS_HEAD(entry->next, ht, new_hash);
++	else
++		RCU_INIT_POINTER(entry->next, head);
++
++	rcu_assign_pointer(new_tbl->buckets[new_hash], entry);
++	spin_unlock(new_bucket_lock);
++
++	rcu_assign_pointer(*pprev, next);
++
++out:
++	return err;
++}
++
++static void rhashtable_rehash_chain(struct rhashtable *ht,
++				    unsigned int old_hash)
++{
++	struct bucket_table *old_tbl = rht_dereference(ht->tbl, ht);
++	spinlock_t *old_bucket_lock;
++
++	old_bucket_lock = rht_bucket_lock(old_tbl, old_hash);
++
++	spin_lock_bh(old_bucket_lock);
++	while (!rhashtable_rehash_one(ht, old_hash))
++		;
++	old_tbl->rehash++;
++	spin_unlock_bh(old_bucket_lock);
++}
++
++static int rhashtable_rehash_attach(struct rhashtable *ht,
++				    struct bucket_table *old_tbl,
++				    struct bucket_table *new_tbl)
++{
++	/* Protect future_tbl using the first bucket lock. */
++	spin_lock_bh(old_tbl->locks);
++
++	/* Did somebody beat us to it? */
++	if (rcu_access_pointer(old_tbl->future_tbl)) {
++		spin_unlock_bh(old_tbl->locks);
++		return -EEXIST;
++	}
++
++	/* Make insertions go into the new, empty table right away. Deletions
++	 * and lookups will be attempted in both tables until we synchronize.
++	 */
++	rcu_assign_pointer(old_tbl->future_tbl, new_tbl);
++
++	/* Ensure the new table is visible to readers. */
++	smp_wmb();
++
++	spin_unlock_bh(old_tbl->locks);
++
++	return 0;
++}
++
++static int rhashtable_rehash_table(struct rhashtable *ht)
++{
++	struct bucket_table *old_tbl = rht_dereference(ht->tbl, ht);
++	struct bucket_table *new_tbl;
++	struct rhashtable_walker *walker;
++	unsigned int old_hash;
++
++	new_tbl = rht_dereference(old_tbl->future_tbl, ht);
++	if (!new_tbl)
++		return 0;
++
++	for (old_hash = 0; old_hash < old_tbl->size; old_hash++)
++		rhashtable_rehash_chain(ht, old_hash);
++
++	/* Publish the new table pointer. */
++	rcu_assign_pointer(ht->tbl, new_tbl);
++
++	spin_lock(&ht->lock);
++	list_for_each_entry(walker, &old_tbl->walkers, list)
++		walker->tbl = NULL;
++	spin_unlock(&ht->lock);
++
++	/* Wait for readers. All new readers will see the new
++	 * table, and thus no references to the old table will
++	 * remain.
++	 */
++	call_rcu(&old_tbl->rcu, bucket_table_free_rcu);
++
++	return rht_dereference(new_tbl->future_tbl, ht) ? -EAGAIN : 0;
++}
++
++/**
++ * rhashtable_expand - Expand hash table while allowing concurrent lookups
++ * @ht:		the hash table to expand
++ *
++ * A secondary bucket array is allocated and the hash entries are migrated.
++ *
++ * This function may only be called in a context where it is safe to call
++ * synchronize_rcu(), e.g. not within a rcu_read_lock() section.
++ *
++ * The caller must ensure that no concurrent resizing occurs by holding
++ * ht->mutex.
++ *
++ * It is valid to have concurrent insertions and deletions protected by per
++ * bucket locks or concurrent RCU protected lookups and traversals.
++ */
++static int rhashtable_expand(struct rhashtable *ht)
++{
++	struct bucket_table *new_tbl, *old_tbl = rht_dereference(ht->tbl, ht);
++	int err;
++
++	ASSERT_RHT_MUTEX(ht);
++
++	old_tbl = rhashtable_last_table(ht, old_tbl);
++
++	new_tbl = bucket_table_alloc(ht, old_tbl->size * 2, GFP_KERNEL);
++	if (new_tbl == NULL)
++		return -ENOMEM;
++
++	err = rhashtable_rehash_attach(ht, old_tbl, new_tbl);
++	if (err)
++		bucket_table_free(new_tbl);
++
++	return err;
++}
++
++/**
++ * rhashtable_shrink - Shrink hash table while allowing concurrent lookups
++ * @ht:		the hash table to shrink
++ *
++ * This function shrinks the hash table to fit, i.e., the smallest
++ * size would not cause it to expand right away automatically.
++ *
++ * The caller must ensure that no concurrent resizing occurs by holding
++ * ht->mutex.
++ *
++ * The caller must ensure that no concurrent table mutations take place.
++ * It is however valid to have concurrent lookups if they are RCU protected.
++ *
++ * It is valid to have concurrent insertions and deletions protected by per
++ * bucket locks or concurrent RCU protected lookups and traversals.
++ */
++static int rhashtable_shrink(struct rhashtable *ht)
++{
++	struct bucket_table *new_tbl, *old_tbl = rht_dereference(ht->tbl, ht);
++	unsigned int size;
++	int err;
++
++	ASSERT_RHT_MUTEX(ht);
++
++	size = roundup_pow_of_two(atomic_read(&ht->nelems) * 3 / 2);
++	if (size < ht->p.min_size)
++		size = ht->p.min_size;
++
++	if (old_tbl->size <= size)
++		return 0;
++
++	if (rht_dereference(old_tbl->future_tbl, ht))
++		return -EEXIST;
++
++	new_tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
++	if (new_tbl == NULL)
++		return -ENOMEM;
++
++	err = rhashtable_rehash_attach(ht, old_tbl, new_tbl);
++	if (err)
++		bucket_table_free(new_tbl);
++
++	return err;
++}
++
++static void rht_deferred_worker(struct work_struct *work)
++{
++	struct rhashtable *ht;
++	struct bucket_table *tbl;
++	int err = 0;
++
++	ht = container_of(work, struct rhashtable, run_work);
++	mutex_lock(&ht->mutex);
++
++	tbl = rht_dereference(ht->tbl, ht);
++	tbl = rhashtable_last_table(ht, tbl);
++
++	if (rht_grow_above_75(ht, tbl))
++		rhashtable_expand(ht);
++	else if (ht->p.automatic_shrinking && rht_shrink_below_30(ht, tbl))
++		rhashtable_shrink(ht);
++
++	err = rhashtable_rehash_table(ht);
++
++	mutex_unlock(&ht->mutex);
++
++	if (err)
++		schedule_work(&ht->run_work);
++}
++
++static bool rhashtable_check_elasticity(struct rhashtable *ht,
++					struct bucket_table *tbl,
++					unsigned int hash)
++{
++	unsigned int elasticity = ht->elasticity;
++	struct rhash_head *head;
++
++	rht_for_each(head, tbl, hash)
++		if (!--elasticity)
++			return true;
++
++	return false;
++}
++
++int rhashtable_insert_rehash(struct rhashtable *ht)
++{
++	struct bucket_table *old_tbl;
++	struct bucket_table *new_tbl;
++	struct bucket_table *tbl;
++	unsigned int size;
++	int err;
++
++	old_tbl = rht_dereference_rcu(ht->tbl, ht);
++	tbl = rhashtable_last_table(ht, old_tbl);
++
++	size = tbl->size;
++
++	if (rht_grow_above_75(ht, tbl))
++		size *= 2;
++	/* Do not schedule more than one rehash */
++	else if (old_tbl != tbl)
++		return -EBUSY;
++
++	new_tbl = bucket_table_alloc(ht, size, GFP_ATOMIC);
++	if (new_tbl == NULL) {
++		/* Schedule async resize/rehash to try allocation
++		 * non-atomic context.
++		 */
++		schedule_work(&ht->run_work);
++		return -ENOMEM;
++	}
++
++	err = rhashtable_rehash_attach(ht, tbl, new_tbl);
++	if (err) {
++		bucket_table_free(new_tbl);
++		if (err == -EEXIST)
++			err = 0;
++	} else
++		schedule_work(&ht->run_work);
++
++	return err;
++}
++EXPORT_SYMBOL_GPL(rhashtable_insert_rehash);
++
++int rhashtable_insert_slow(struct rhashtable *ht, const void *key,
++			   struct rhash_head *obj,
++			   struct bucket_table *tbl)
++{
++	struct rhash_head *head;
++	unsigned int hash;
++	int err;
++
++	tbl = rhashtable_last_table(ht, tbl);
++	hash = head_hashfn(ht, tbl, obj);
++	spin_lock_nested(rht_bucket_lock(tbl, hash), SINGLE_DEPTH_NESTING);
++
++	err = -EEXIST;
++	if (key && rhashtable_lookup_fast(ht, key, ht->p))
++		goto exit;
++
++	err = -E2BIG;
++	if (unlikely(rht_grow_above_max(ht, tbl)))
++		goto exit;
++
++	err = -EAGAIN;
++	if (rhashtable_check_elasticity(ht, tbl, hash) ||
++	    rht_grow_above_100(ht, tbl))
++		goto exit;
++
++	err = 0;
++
++	head = rht_dereference_bucket(tbl->buckets[hash], tbl, hash);
++
++	RCU_INIT_POINTER(obj->next, head);
++
++	rcu_assign_pointer(tbl->buckets[hash], obj);
++
++	atomic_inc(&ht->nelems);
++
++exit:
++	spin_unlock(rht_bucket_lock(tbl, hash));
++
++	return err;
++}
++EXPORT_SYMBOL_GPL(rhashtable_insert_slow);
++
++/**
++ * rhashtable_walk_init - Initialise an iterator
++ * @ht:		Table to walk over
++ * @iter:	Hash table Iterator
++ *
++ * This function prepares a hash table walk.
++ *
++ * Note that if you restart a walk after rhashtable_walk_stop you
++ * may see the same object twice.  Also, you may miss objects if
++ * there are removals in between rhashtable_walk_stop and the next
++ * call to rhashtable_walk_start.
++ *
++ * For a completely stable walk you should construct your own data
++ * structure outside the hash table.
++ *
++ * This function may sleep so you must not call it from interrupt
++ * context or with spin locks held.
++ *
++ * You must call rhashtable_walk_exit if this function returns
++ * successfully.
++ */
++int rhashtable_walk_init(struct rhashtable *ht, struct rhashtable_iter *iter)
++{
++	iter->ht = ht;
++	iter->p = NULL;
++	iter->slot = 0;
++	iter->skip = 0;
++
++	iter->walker = kmalloc(sizeof(*iter->walker), GFP_KERNEL);
++	if (!iter->walker)
++		return -ENOMEM;
++
++	mutex_lock(&ht->mutex);
++	iter->walker->tbl = rht_dereference(ht->tbl, ht);
++	list_add(&iter->walker->list, &iter->walker->tbl->walkers);
++	mutex_unlock(&ht->mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(rhashtable_walk_init);
++
++/**
++ * rhashtable_walk_exit - Free an iterator
++ * @iter:	Hash table Iterator
++ *
++ * This function frees resources allocated by rhashtable_walk_init.
++ */
++void rhashtable_walk_exit(struct rhashtable_iter *iter)
++{
++	mutex_lock(&iter->ht->mutex);
++	if (iter->walker->tbl)
++		list_del(&iter->walker->list);
++	mutex_unlock(&iter->ht->mutex);
++	kfree(iter->walker);
++}
++EXPORT_SYMBOL_GPL(rhashtable_walk_exit);
++
++/**
++ * rhashtable_walk_start - Start a hash table walk
++ * @iter:	Hash table iterator
++ *
++ * Start a hash table walk.  Note that we take the RCU lock in all
++ * cases including when we return an error.  So you must always call
++ * rhashtable_walk_stop to clean up.
++ *
++ * Returns zero if successful.
++ *
++ * Returns -EAGAIN if resize event occured.  Note that the iterator
++ * will rewind back to the beginning and you may use it immediately
++ * by calling rhashtable_walk_next.
++ */
++int rhashtable_walk_start(struct rhashtable_iter *iter)
++	__acquires(RCU)
++{
++	struct rhashtable *ht = iter->ht;
++
++	mutex_lock(&ht->mutex);
++
++	if (iter->walker->tbl)
++		list_del(&iter->walker->list);
++
++	rcu_read_lock();
++
++	mutex_unlock(&ht->mutex);
++
++	if (!iter->walker->tbl) {
++		iter->walker->tbl = rht_dereference_rcu(ht->tbl, ht);
++		return -EAGAIN;
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(rhashtable_walk_start);
++
++/**
++ * rhashtable_walk_next - Return the next object and advance the iterator
++ * @iter:	Hash table iterator
++ *
++ * Note that you must call rhashtable_walk_stop when you are finished
++ * with the walk.
++ *
++ * Returns the next object or NULL when the end of the table is reached.
++ *
++ * Returns -EAGAIN if resize event occured.  Note that the iterator
++ * will rewind back to the beginning and you may continue to use it.
++ */
++void *rhashtable_walk_next(struct rhashtable_iter *iter)
++{
++	struct bucket_table *tbl = iter->walker->tbl;
++	struct rhashtable *ht = iter->ht;
++	struct rhash_head *p = iter->p;
++	void *obj = NULL;
++
++	if (p) {
++		p = rht_dereference_bucket_rcu(p->next, tbl, iter->slot);
++		goto next;
++	}
++
++	for (; iter->slot < tbl->size; iter->slot++) {
++		int skip = iter->skip;
++
++		rht_for_each_rcu(p, tbl, iter->slot) {
++			if (!skip)
++				break;
++			skip--;
++		}
++
++next:
++		if (!rht_is_a_nulls(p)) {
++			iter->skip++;
++			iter->p = p;
++			obj = rht_obj(ht, p);
++			goto out;
++		}
++
++		iter->skip = 0;
++	}
++
++	/* Ensure we see any new tables. */
++	smp_rmb();
++
++	iter->walker->tbl = rht_dereference_rcu(tbl->future_tbl, ht);
++	if (iter->walker->tbl) {
++		iter->slot = 0;
++		iter->skip = 0;
++		return ERR_PTR(-EAGAIN);
++	}
++
++	iter->p = NULL;
++
++out:
++
++	return obj;
++}
++EXPORT_SYMBOL_GPL(rhashtable_walk_next);
++
++/**
++ * rhashtable_walk_stop - Finish a hash table walk
++ * @iter:	Hash table iterator
++ *
++ * Finish a hash table walk.
++ */
++void rhashtable_walk_stop(struct rhashtable_iter *iter)
++	__releases(RCU)
++{
++	struct rhashtable *ht;
++	struct bucket_table *tbl = iter->walker->tbl;
++
++	if (!tbl)
++		goto out;
++
++	ht = iter->ht;
++
++	spin_lock(&ht->lock);
++	if (tbl->rehash < tbl->size)
++		list_add(&iter->walker->list, &tbl->walkers);
++	else
++		iter->walker->tbl = NULL;
++	spin_unlock(&ht->lock);
++
++	iter->p = NULL;
++
++out:
++	rcu_read_unlock();
++}
++EXPORT_SYMBOL_GPL(rhashtable_walk_stop);
++
++static size_t rounded_hashtable_size(const struct rhashtable_params *params)
++{
++	return max(roundup_pow_of_two(params->nelem_hint * 4 / 3),
++		   (unsigned long)params->min_size);
++}
++
++static u32 rhashtable_jhash2(const void *key, u32 length, u32 seed)
++{
++	return jhash2(key, length, seed);
++}
++
++/**
++ * rhashtable_init - initialize a new hash table
++ * @ht:		hash table to be initialized
++ * @params:	configuration parameters
++ *
++ * Initializes a new hash table based on the provided configuration
++ * parameters. A table can be configured either with a variable or
++ * fixed length key:
++ *
++ * Configuration Example 1: Fixed length keys
++ * struct test_obj {
++ *	int			key;
++ *	void *			my_member;
++ *	struct rhash_head	node;
++ * };
++ *
++ * struct rhashtable_params params = {
++ *	.head_offset = offsetof(struct test_obj, node),
++ *	.key_offset = offsetof(struct test_obj, key),
++ *	.key_len = sizeof(int),
++ *	.hashfn = jhash,
++ *	.nulls_base = (1U << RHT_BASE_SHIFT),
++ * };
++ *
++ * Configuration Example 2: Variable length keys
++ * struct test_obj {
++ *	[...]
++ *	struct rhash_head	node;
++ * };
++ *
++ * u32 my_hash_fn(const void *data, u32 len, u32 seed)
++ * {
++ *	struct test_obj *obj = data;
++ *
++ *	return [... hash ...];
++ * }
++ *
++ * struct rhashtable_params params = {
++ *	.head_offset = offsetof(struct test_obj, node),
++ *	.hashfn = jhash,
++ *	.obj_hashfn = my_hash_fn,
++ * };
++ */
++int rhashtable_init(struct rhashtable *ht,
++		    const struct rhashtable_params *params)
++{
++	struct bucket_table *tbl;
++	size_t size;
++
++	size = HASH_DEFAULT_SIZE;
++
++	if ((!params->key_len && !params->obj_hashfn) ||
++	    (params->obj_hashfn && !params->obj_cmpfn))
++		return -EINVAL;
++
++	if (params->nulls_base && params->nulls_base < (1U << RHT_BASE_SHIFT))
++		return -EINVAL;
++
++	if (params->nelem_hint)
++		size = rounded_hashtable_size(params);
++
++	memset(ht, 0, sizeof(*ht));
++	mutex_init(&ht->mutex);
++	spin_lock_init(&ht->lock);
++	memcpy(&ht->p, params, sizeof(*params));
++
++	if (params->min_size)
++		ht->p.min_size = roundup_pow_of_two(params->min_size);
++
++	if (params->max_size)
++		ht->p.max_size = rounddown_pow_of_two(params->max_size);
++
++	if (params->insecure_max_entries)
++		ht->p.insecure_max_entries =
++			rounddown_pow_of_two(params->insecure_max_entries);
++	else
++		ht->p.insecure_max_entries = ht->p.max_size * 2;
++
++	ht->p.min_size = max(ht->p.min_size, HASH_MIN_SIZE);
++
++	/* The maximum (not average) chain length grows with the
++	 * size of the hash table, at a rate of (log N)/(log log N).
++	 * The value of 16 is selected so that even if the hash
++	 * table grew to 2^32 you would not expect the maximum
++	 * chain length to exceed it unless we are under attack
++	 * (or extremely unlucky).
++	 *
++	 * As this limit is only to detect attacks, we don't need
++	 * to set it to a lower value as you'd need the chain
++	 * length to vastly exceed 16 to have any real effect
++	 * on the system.
++	 */
++	if (!params->insecure_elasticity)
++		ht->elasticity = 16;
++
++	if (params->locks_mul)
++		ht->p.locks_mul = roundup_pow_of_two(params->locks_mul);
++	else
++		ht->p.locks_mul = BUCKET_LOCKS_PER_CPU;
++
++	ht->key_len = ht->p.key_len;
++	if (!params->hashfn) {
++		ht->p.hashfn = jhash;
++
++		if (!(ht->key_len & (sizeof(u32) - 1))) {
++			ht->key_len /= sizeof(u32);
++			ht->p.hashfn = rhashtable_jhash2;
++		}
++	}
++
++	tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
++	if (tbl == NULL)
++		return -ENOMEM;
++
++	atomic_set(&ht->nelems, 0);
++
++	RCU_INIT_POINTER(ht->tbl, tbl);
++
++	INIT_WORK(&ht->run_work, rht_deferred_worker);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(rhashtable_init);
++
++/**
++ * rhashtable_free_and_destroy - free elements and destroy hash table
++ * @ht:		the hash table to destroy
++ * @free_fn:	callback to release resources of element
++ * @arg:	pointer passed to free_fn
++ *
++ * Stops an eventual async resize. If defined, invokes free_fn for each
++ * element to releasal resources. Please note that RCU protected
++ * readers may still be accessing the elements. Releasing of resources
++ * must occur in a compatible manner. Then frees the bucket array.
++ *
++ * This function will eventually sleep to wait for an async resize
++ * to complete. The caller is responsible that no further write operations
++ * occurs in parallel.
++ */
++void rhashtable_free_and_destroy(struct rhashtable *ht,
++				 void (*free_fn)(void *ptr, void *arg),
++				 void *arg)
++{
++	const struct bucket_table *tbl;
++	unsigned int i;
++
++	cancel_work_sync(&ht->run_work);
++
++	mutex_lock(&ht->mutex);
++	tbl = rht_dereference(ht->tbl, ht);
++	if (free_fn) {
++		for (i = 0; i < tbl->size; i++) {
++			struct rhash_head *pos, *next;
++
++			for (pos = rht_dereference(tbl->buckets[i], ht),
++			     next = !rht_is_a_nulls(pos) ?
++					rht_dereference(pos->next, ht) : NULL;
++			     !rht_is_a_nulls(pos);
++			     pos = next,
++			     next = !rht_is_a_nulls(pos) ?
++					rht_dereference(pos->next, ht) : NULL)
++				free_fn(rht_obj(ht, pos), arg);
++		}
++	}
++
++	bucket_table_free(tbl);
++	mutex_unlock(&ht->mutex);
++}
++EXPORT_SYMBOL_GPL(rhashtable_free_and_destroy);
++
++void rhashtable_destroy(struct rhashtable *ht)
++{
++	return rhashtable_free_and_destroy(ht, NULL, NULL);
++}
++EXPORT_SYMBOL_GPL(rhashtable_destroy);
+diff --git a/backports/include/linux/average.h b/backports/include/linux/average.h
+new file mode 100644
+index 0000000..5d5a8ee
+--- /dev/null
++++ b/backports/include/linux/average.h
+@@ -0,0 +1,10 @@
++/* Automatically created during backport process */
++#ifndef CONFIG_BACKPORT_BPAUTO_BUILD_AVERAGE
++#include_next <linux/average.h>
++#else
++#undef ewma_init
++#define ewma_init LINUX_BACKPORT(ewma_init)
++#undef ewma_add
++#define ewma_add LINUX_BACKPORT(ewma_add)
++#include <linux/backport-average.h>
++#endif /* CONFIG_BACKPORT_BPAUTO_BUILD_AVERAGE */
+diff --git a/backports/include/linux/backport-average.h b/backports/include/linux/backport-average.h
+new file mode 100644
+index 0000000..c6028fd
+--- /dev/null
++++ b/backports/include/linux/backport-average.h
+@@ -0,0 +1,30 @@
++#ifndef _LINUX_AVERAGE_H
++#define _LINUX_AVERAGE_H
++
++/* Exponentially weighted moving average (EWMA) */
++
++/* For more documentation see lib/average.c */
++
++struct ewma {
++	unsigned long internal;
++	unsigned long factor;
++	unsigned long weight;
++};
++
++extern void ewma_init(struct ewma *avg, unsigned long factor,
++		      unsigned long weight);
++
++extern struct ewma *ewma_add(struct ewma *avg, unsigned long val);
++
++/**
++ * ewma_read() - Get average value
++ * @avg: Average structure
++ *
++ * Returns the average value held in @avg.
++ */
++static inline unsigned long ewma_read(const struct ewma *avg)
++{
++	return avg->internal >> avg->factor;
++}
++
++#endif /* _LINUX_AVERAGE_H */
+diff --git a/backports/include/linux/backport-devcoredump.h b/backports/include/linux/backport-devcoredump.h
+new file mode 100644
+index 0000000..c0a360e
+--- /dev/null
++++ b/backports/include/linux/backport-devcoredump.h
+@@ -0,0 +1,35 @@
++#ifndef __DEVCOREDUMP_H
++#define __DEVCOREDUMP_H
++
++#include <linux/device.h>
++#include <linux/module.h>
++#include <linux/vmalloc.h>
++
++#ifdef CONFIG_DEV_COREDUMP
++void dev_coredumpv(struct device *dev, const void *data, size_t datalen,
++		   gfp_t gfp);
++
++void dev_coredumpm(struct device *dev, struct module *owner,
++		   const void *data, size_t datalen, gfp_t gfp,
++		   ssize_t (*read)(char *buffer, loff_t offset, size_t count,
++				   const void *data, size_t datalen),
++		   void (*free)(const void *data));
++#else
++static inline void dev_coredumpv(struct device *dev, const void *data,
++				 size_t datalen, gfp_t gfp)
++{
++	vfree(data);
++}
++
++static inline void
++dev_coredumpm(struct device *dev, struct module *owner,
++	      const void *data, size_t datalen, gfp_t gfp,
++	      ssize_t (*read)(char *buffer, loff_t offset, size_t count,
++			      const void *data, size_t datalen),
++	      void (*free)(const void *data))
++{
++	free(data);
++}
++#endif /* CONFIG_DEV_COREDUMP */
++
++#endif /* __DEVCOREDUMP_H */
+diff --git a/backports/include/linux/backport-rhashtable.h b/backports/include/linux/backport-rhashtable.h
+new file mode 100644
+index 0000000..843ceca
+--- /dev/null
++++ b/backports/include/linux/backport-rhashtable.h
+@@ -0,0 +1,822 @@
++/*
++ * Resizable, Scalable, Concurrent Hash Table
++ *
++ * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
++ * Copyright (c) 2014-2015 Thomas Graf <tgraf@suug.ch>
++ * Copyright (c) 2008-2014 Patrick McHardy <kaber@trash.net>
++ *
++ * Code partially derived from nft_hash
++ * Rewritten with rehash code from br_multicast plus single list
++ * pointer as suggested by Josh Triplett
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef _LINUX_RHASHTABLE_H
++#define _LINUX_RHASHTABLE_H
++
++#include <linux/atomic.h>
++#include <linux/compiler.h>
++#include <linux/errno.h>
++#include <linux/jhash.h>
++#include <linux/list_nulls.h>
++#include <linux/workqueue.h>
++#include <linux/mutex.h>
++#include <linux/rcupdate.h>
++
++/*
++ * The end of the chain is marked with a special nulls marks which has
++ * the following format:
++ *
++ * +-------+-----------------------------------------------------+-+
++ * | Base  |                      Hash                           |1|
++ * +-------+-----------------------------------------------------+-+
++ *
++ * Base (4 bits) : Reserved to distinguish between multiple tables.
++ *                 Specified via &struct rhashtable_params.nulls_base.
++ * Hash (27 bits): Full hash (unmasked) of first element added to bucket
++ * 1 (1 bit)     : Nulls marker (always set)
++ *
++ * The remaining bits of the next pointer remain unused for now.
++ */
++#define RHT_BASE_BITS		4
++#define RHT_HASH_BITS		27
++#define RHT_BASE_SHIFT		RHT_HASH_BITS
++
++/* Base bits plus 1 bit for nulls marker */
++#define RHT_HASH_RESERVED_SPACE	(RHT_BASE_BITS + 1)
++
++struct rhash_head {
++	struct rhash_head __rcu		*next;
++};
++
++/**
++ * struct bucket_table - Table of hash buckets
++ * @size: Number of hash buckets
++ * @rehash: Current bucket being rehashed
++ * @hash_rnd: Random seed to fold into hash
++ * @locks_mask: Mask to apply before accessing locks[]
++ * @locks: Array of spinlocks protecting individual buckets
++ * @walkers: List of active walkers
++ * @rcu: RCU structure for freeing the table
++ * @future_tbl: Table under construction during rehashing
++ * @buckets: size * hash buckets
++ */
++struct bucket_table {
++	unsigned int		size;
++	unsigned int		rehash;
++	u32			hash_rnd;
++	unsigned int		locks_mask;
++	spinlock_t		*locks;
++	struct list_head	walkers;
++	struct rcu_head		rcu;
++
++	struct bucket_table __rcu *future_tbl;
++
++	struct rhash_head __rcu	*buckets[] ____cacheline_aligned_in_smp;
++};
++
++/**
++ * struct rhashtable_compare_arg - Key for the function rhashtable_compare
++ * @ht: Hash table
++ * @key: Key to compare against
++ */
++struct rhashtable_compare_arg {
++	struct rhashtable *ht;
++	const void *key;
++};
++
++typedef u32 (*rht_hashfn_t)(const void *data, u32 len, u32 seed);
++typedef u32 (*rht_obj_hashfn_t)(const void *data, u32 len, u32 seed);
++typedef int (*rht_obj_cmpfn_t)(struct rhashtable_compare_arg *arg,
++			       const void *obj);
++
++struct rhashtable;
++
++/**
++ * struct rhashtable_params - Hash table construction parameters
++ * @nelem_hint: Hint on number of elements, should be 75% of desired size
++ * @key_len: Length of key
++ * @key_offset: Offset of key in struct to be hashed
++ * @head_offset: Offset of rhash_head in struct to be hashed
++ * @insecure_max_entries: Maximum number of entries (may be exceeded)
++ * @max_size: Maximum size while expanding
++ * @min_size: Minimum size while shrinking
++ * @nulls_base: Base value to generate nulls marker
++ * @insecure_elasticity: Set to true to disable chain length checks
++ * @automatic_shrinking: Enable automatic shrinking of tables
++ * @locks_mul: Number of bucket locks to allocate per cpu (default: 128)
++ * @hashfn: Hash function (default: jhash2 if !(key_len % 4), or jhash)
++ * @obj_hashfn: Function to hash object
++ * @obj_cmpfn: Function to compare key with object
++ */
++struct rhashtable_params {
++	size_t			nelem_hint;
++	size_t			key_len;
++	size_t			key_offset;
++	size_t			head_offset;
++	unsigned int		insecure_max_entries;
++	unsigned int		max_size;
++	unsigned int		min_size;
++	u32			nulls_base;
++	bool			insecure_elasticity;
++	bool			automatic_shrinking;
++	size_t			locks_mul;
++	rht_hashfn_t		hashfn;
++	rht_obj_hashfn_t	obj_hashfn;
++	rht_obj_cmpfn_t		obj_cmpfn;
++};
++
++/**
++ * struct rhashtable - Hash table handle
++ * @tbl: Bucket table
++ * @nelems: Number of elements in table
++ * @key_len: Key length for hashfn
++ * @elasticity: Maximum chain length before rehash
++ * @p: Configuration parameters
++ * @run_work: Deferred worker to expand/shrink asynchronously
++ * @mutex: Mutex to protect current/future table swapping
++ * @lock: Spin lock to protect walker list
++ */
++struct rhashtable {
++	struct bucket_table __rcu	*tbl;
++	atomic_t			nelems;
++	unsigned int			key_len;
++	unsigned int			elasticity;
++	struct rhashtable_params	p;
++	struct work_struct		run_work;
++	struct mutex                    mutex;
++	spinlock_t			lock;
++};
++
++/**
++ * struct rhashtable_walker - Hash table walker
++ * @list: List entry on list of walkers
++ * @tbl: The table that we were walking over
++ */
++struct rhashtable_walker {
++	struct list_head list;
++	struct bucket_table *tbl;
++};
++
++/**
++ * struct rhashtable_iter - Hash table iterator, fits into netlink cb
++ * @ht: Table to iterate through
++ * @p: Current pointer
++ * @walker: Associated rhashtable walker
++ * @slot: Current slot
++ * @skip: Number of entries to skip in slot
++ */
++struct rhashtable_iter {
++	struct rhashtable *ht;
++	struct rhash_head *p;
++	struct rhashtable_walker *walker;
++	unsigned int slot;
++	unsigned int skip;
++};
++
++static inline unsigned long rht_marker(const struct rhashtable *ht, u32 hash)
++{
++	return NULLS_MARKER(ht->p.nulls_base + hash);
++}
++
++#define INIT_RHT_NULLS_HEAD(ptr, ht, hash) \
++	((ptr) = (typeof(ptr)) rht_marker(ht, hash))
++
++static inline bool rht_is_a_nulls(const struct rhash_head *ptr)
++{
++	return ((unsigned long) ptr & 1);
++}
++
++static inline unsigned long rht_get_nulls_value(const struct rhash_head *ptr)
++{
++	return ((unsigned long) ptr) >> 1;
++}
++
++static inline void *rht_obj(const struct rhashtable *ht,
++			    const struct rhash_head *he)
++{
++	return (char *)he - ht->p.head_offset;
++}
++
++static inline unsigned int rht_bucket_index(const struct bucket_table *tbl,
++					    unsigned int hash)
++{
++	return (hash >> RHT_HASH_RESERVED_SPACE) & (tbl->size - 1);
++}
++
++static inline unsigned int rht_key_hashfn(
++	struct rhashtable *ht, const struct bucket_table *tbl,
++	const void *key, const struct rhashtable_params params)
++{
++	unsigned int hash;
++
++	/* params must be equal to ht->p if it isn't constant. */
++	if (!__builtin_constant_p(params.key_len))
++		hash = ht->p.hashfn(key, ht->key_len, tbl->hash_rnd);
++	else if (params.key_len) {
++		unsigned int key_len = params.key_len;
++
++		if (params.hashfn)
++			hash = params.hashfn(key, key_len, tbl->hash_rnd);
++		else if (key_len & (sizeof(u32) - 1))
++			hash = jhash(key, key_len, tbl->hash_rnd);
++		else
++			hash = jhash2(key, key_len / sizeof(u32),
++				      tbl->hash_rnd);
++	} else {
++		unsigned int key_len = ht->p.key_len;
++
++		if (params.hashfn)
++			hash = params.hashfn(key, key_len, tbl->hash_rnd);
++		else
++			hash = jhash(key, key_len, tbl->hash_rnd);
++	}
++
++	return rht_bucket_index(tbl, hash);
++}
++
++static inline unsigned int rht_head_hashfn(
++	struct rhashtable *ht, const struct bucket_table *tbl,
++	const struct rhash_head *he, const struct rhashtable_params params)
++{
++	const char *ptr = rht_obj(ht, he);
++
++	return likely(params.obj_hashfn) ?
++	       rht_bucket_index(tbl, params.obj_hashfn(ptr, params.key_len ?:
++							    ht->p.key_len,
++						       tbl->hash_rnd)) :
++	       rht_key_hashfn(ht, tbl, ptr + params.key_offset, params);
++}
++
++/**
++ * rht_grow_above_75 - returns true if nelems > 0.75 * table-size
++ * @ht:		hash table
++ * @tbl:	current table
++ */
++static inline bool rht_grow_above_75(const struct rhashtable *ht,
++				     const struct bucket_table *tbl)
++{
++	/* Expand table when exceeding 75% load */
++	return atomic_read(&ht->nelems) > (tbl->size / 4 * 3) &&
++	       (!ht->p.max_size || tbl->size < ht->p.max_size);
++}
++
++/**
++ * rht_shrink_below_30 - returns true if nelems < 0.3 * table-size
++ * @ht:		hash table
++ * @tbl:	current table
++ */
++static inline bool rht_shrink_below_30(const struct rhashtable *ht,
++				       const struct bucket_table *tbl)
++{
++	/* Shrink table beneath 30% load */
++	return atomic_read(&ht->nelems) < (tbl->size * 3 / 10) &&
++	       tbl->size > ht->p.min_size;
++}
++
++/**
++ * rht_grow_above_100 - returns true if nelems > table-size
++ * @ht:		hash table
++ * @tbl:	current table
++ */
++static inline bool rht_grow_above_100(const struct rhashtable *ht,
++				      const struct bucket_table *tbl)
++{
++	return atomic_read(&ht->nelems) > tbl->size &&
++		(!ht->p.max_size || tbl->size < ht->p.max_size);
++}
++
++/**
++ * rht_grow_above_max - returns true if table is above maximum
++ * @ht:		hash table
++ * @tbl:	current table
++ */
++static inline bool rht_grow_above_max(const struct rhashtable *ht,
++				      const struct bucket_table *tbl)
++{
++	return ht->p.insecure_max_entries &&
++	       atomic_read(&ht->nelems) >= ht->p.insecure_max_entries;
++}
++
++/* The bucket lock is selected based on the hash and protects mutations
++ * on a group of hash buckets.
++ *
++ * A maximum of tbl->size/2 bucket locks is allocated. This ensures that
++ * a single lock always covers both buckets which may both contains
++ * entries which link to the same bucket of the old table during resizing.
++ * This allows to simplify the locking as locking the bucket in both
++ * tables during resize always guarantee protection.
++ *
++ * IMPORTANT: When holding the bucket lock of both the old and new table
++ * during expansions and shrinking, the old bucket lock must always be
++ * acquired first.
++ */
++static inline spinlock_t *rht_bucket_lock(const struct bucket_table *tbl,
++					  unsigned int hash)
++{
++	return &tbl->locks[hash & tbl->locks_mask];
++}
++
++#ifdef CONFIG_PROVE_LOCKING
++int lockdep_rht_mutex_is_held(struct rhashtable *ht);
++int lockdep_rht_bucket_is_held(const struct bucket_table *tbl, u32 hash);
++#else
++static inline int lockdep_rht_mutex_is_held(struct rhashtable *ht)
++{
++	return 1;
++}
++
++static inline int lockdep_rht_bucket_is_held(const struct bucket_table *tbl,
++					     u32 hash)
++{
++	return 1;
++}
++#endif /* CONFIG_PROVE_LOCKING */
++
++int rhashtable_init(struct rhashtable *ht,
++		    const struct rhashtable_params *params);
++
++int rhashtable_insert_slow(struct rhashtable *ht, const void *key,
++			   struct rhash_head *obj,
++			   struct bucket_table *old_tbl);
++int rhashtable_insert_rehash(struct rhashtable *ht);
++
++int rhashtable_walk_init(struct rhashtable *ht, struct rhashtable_iter *iter);
++void rhashtable_walk_exit(struct rhashtable_iter *iter);
++int rhashtable_walk_start(struct rhashtable_iter *iter) __acquires(RCU);
++void *rhashtable_walk_next(struct rhashtable_iter *iter);
++void rhashtable_walk_stop(struct rhashtable_iter *iter) __releases(RCU);
++
++void rhashtable_free_and_destroy(struct rhashtable *ht,
++				 void (*free_fn)(void *ptr, void *arg),
++				 void *arg);
++void rhashtable_destroy(struct rhashtable *ht);
++
++#define rht_dereference(p, ht) \
++	rcu_dereference_protected(p, lockdep_rht_mutex_is_held(ht))
++
++#define rht_dereference_rcu(p, ht) \
++	rcu_dereference_check(p, lockdep_rht_mutex_is_held(ht))
++
++#define rht_dereference_bucket(p, tbl, hash) \
++	rcu_dereference_protected(p, lockdep_rht_bucket_is_held(tbl, hash))
++
++#define rht_dereference_bucket_rcu(p, tbl, hash) \
++	rcu_dereference_check(p, lockdep_rht_bucket_is_held(tbl, hash))
++
++#define rht_entry(tpos, pos, member) \
++	({ tpos = container_of(pos, typeof(*tpos), member); 1; })
++
++/**
++ * rht_for_each_continue - continue iterating over hash chain
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @head:	the previous &struct rhash_head to continue from
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ */
++#define rht_for_each_continue(pos, head, tbl, hash) \
++	for (pos = rht_dereference_bucket(head, tbl, hash); \
++	     !rht_is_a_nulls(pos); \
++	     pos = rht_dereference_bucket((pos)->next, tbl, hash))
++
++/**
++ * rht_for_each - iterate over hash chain
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ */
++#define rht_for_each(pos, tbl, hash) \
++	rht_for_each_continue(pos, (tbl)->buckets[hash], tbl, hash)
++
++/**
++ * rht_for_each_entry_continue - continue iterating over hash chain
++ * @tpos:	the type * to use as a loop cursor.
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @head:	the previous &struct rhash_head to continue from
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ * @member:	name of the &struct rhash_head within the hashable struct.
++ */
++#define rht_for_each_entry_continue(tpos, pos, head, tbl, hash, member)	\
++	for (pos = rht_dereference_bucket(head, tbl, hash);		\
++	     (!rht_is_a_nulls(pos)) && rht_entry(tpos, pos, member);	\
++	     pos = rht_dereference_bucket((pos)->next, tbl, hash))
++
++/**
++ * rht_for_each_entry - iterate over hash chain of given type
++ * @tpos:	the type * to use as a loop cursor.
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ * @member:	name of the &struct rhash_head within the hashable struct.
++ */
++#define rht_for_each_entry(tpos, pos, tbl, hash, member)		\
++	rht_for_each_entry_continue(tpos, pos, (tbl)->buckets[hash],	\
++				    tbl, hash, member)
++
++/**
++ * rht_for_each_entry_safe - safely iterate over hash chain of given type
++ * @tpos:	the type * to use as a loop cursor.
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @next:	the &struct rhash_head to use as next in loop cursor.
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ * @member:	name of the &struct rhash_head within the hashable struct.
++ *
++ * This hash chain list-traversal primitive allows for the looped code to
++ * remove the loop cursor from the list.
++ */
++#define rht_for_each_entry_safe(tpos, pos, next, tbl, hash, member)	    \
++	for (pos = rht_dereference_bucket((tbl)->buckets[hash], tbl, hash), \
++	     next = !rht_is_a_nulls(pos) ?				    \
++		       rht_dereference_bucket(pos->next, tbl, hash) : NULL; \
++	     (!rht_is_a_nulls(pos)) && rht_entry(tpos, pos, member);	    \
++	     pos = next,						    \
++	     next = !rht_is_a_nulls(pos) ?				    \
++		       rht_dereference_bucket(pos->next, tbl, hash) : NULL)
++
++/**
++ * rht_for_each_rcu_continue - continue iterating over rcu hash chain
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @head:	the previous &struct rhash_head to continue from
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ *
++ * This hash chain list-traversal primitive may safely run concurrently with
++ * the _rcu mutation primitives such as rhashtable_insert() as long as the
++ * traversal is guarded by rcu_read_lock().
++ */
++#define rht_for_each_rcu_continue(pos, head, tbl, hash)			\
++	for (({barrier(); }),						\
++	     pos = rht_dereference_bucket_rcu(head, tbl, hash);		\
++	     !rht_is_a_nulls(pos);					\
++	     pos = rcu_dereference_raw(pos->next))
++
++/**
++ * rht_for_each_rcu - iterate over rcu hash chain
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ *
++ * This hash chain list-traversal primitive may safely run concurrently with
++ * the _rcu mutation primitives such as rhashtable_insert() as long as the
++ * traversal is guarded by rcu_read_lock().
++ */
++#define rht_for_each_rcu(pos, tbl, hash)				\
++	rht_for_each_rcu_continue(pos, (tbl)->buckets[hash], tbl, hash)
++
++/**
++ * rht_for_each_entry_rcu_continue - continue iterating over rcu hash chain
++ * @tpos:	the type * to use as a loop cursor.
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @head:	the previous &struct rhash_head to continue from
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ * @member:	name of the &struct rhash_head within the hashable struct.
++ *
++ * This hash chain list-traversal primitive may safely run concurrently with
++ * the _rcu mutation primitives such as rhashtable_insert() as long as the
++ * traversal is guarded by rcu_read_lock().
++ */
++#define rht_for_each_entry_rcu_continue(tpos, pos, head, tbl, hash, member) \
++	for (({barrier(); }),						    \
++	     pos = rht_dereference_bucket_rcu(head, tbl, hash);		    \
++	     (!rht_is_a_nulls(pos)) && rht_entry(tpos, pos, member);	    \
++	     pos = rht_dereference_bucket_rcu(pos->next, tbl, hash))
++
++/**
++ * rht_for_each_entry_rcu - iterate over rcu hash chain of given type
++ * @tpos:	the type * to use as a loop cursor.
++ * @pos:	the &struct rhash_head to use as a loop cursor.
++ * @tbl:	the &struct bucket_table
++ * @hash:	the hash value / bucket index
++ * @member:	name of the &struct rhash_head within the hashable struct.
++ *
++ * This hash chain list-traversal primitive may safely run concurrently with
++ * the _rcu mutation primitives such as rhashtable_insert() as long as the
++ * traversal is guarded by rcu_read_lock().
++ */
++#define rht_for_each_entry_rcu(tpos, pos, tbl, hash, member)		\
++	rht_for_each_entry_rcu_continue(tpos, pos, (tbl)->buckets[hash],\
++					tbl, hash, member)
++
++static inline int rhashtable_compare(struct rhashtable_compare_arg *arg,
++				     const void *obj)
++{
++	struct rhashtable *ht = arg->ht;
++	const char *ptr = obj;
++
++	return memcmp(ptr + ht->p.key_offset, arg->key, ht->p.key_len);
++}
++
++/**
++ * rhashtable_lookup_fast - search hash table, inlined version
++ * @ht:		hash table
++ * @key:	the pointer to the key
++ * @params:	hash table parameters
++ *
++ * Computes the hash value for the key and traverses the bucket chain looking
++ * for a entry with an identical key. The first matching entry is returned.
++ *
++ * Returns the first entry on which the compare function returned true.
++ */
++static inline void *rhashtable_lookup_fast(
++	struct rhashtable *ht, const void *key,
++	const struct rhashtable_params params)
++{
++	struct rhashtable_compare_arg arg = {
++		.ht = ht,
++		.key = key,
++	};
++	const struct bucket_table *tbl;
++	struct rhash_head *he;
++	unsigned int hash;
++
++	rcu_read_lock();
++
++	tbl = rht_dereference_rcu(ht->tbl, ht);
++restart:
++	hash = rht_key_hashfn(ht, tbl, key, params);
++	rht_for_each_rcu(he, tbl, hash) {
++		if (params.obj_cmpfn ?
++		    params.obj_cmpfn(&arg, rht_obj(ht, he)) :
++		    rhashtable_compare(&arg, rht_obj(ht, he)))
++			continue;
++		rcu_read_unlock();
++		return rht_obj(ht, he);
++	}
++
++	/* Ensure we see any new tables. */
++	smp_rmb();
++
++	tbl = rht_dereference_rcu(tbl->future_tbl, ht);
++	if (unlikely(tbl))
++		goto restart;
++	rcu_read_unlock();
++
++	return NULL;
++}
++
++/* Internal function, please use rhashtable_insert_fast() instead */
++static inline int __rhashtable_insert_fast(
++	struct rhashtable *ht, const void *key, struct rhash_head *obj,
++	const struct rhashtable_params params)
++{
++	struct rhashtable_compare_arg arg = {
++		.ht = ht,
++		.key = key,
++	};
++	struct bucket_table *tbl, *new_tbl;
++	struct rhash_head *head;
++	spinlock_t *lock;
++	unsigned int elasticity;
++	unsigned int hash;
++	int err;
++
++restart:
++	rcu_read_lock();
++
++	tbl = rht_dereference_rcu(ht->tbl, ht);
++
++	/* All insertions must grab the oldest table containing
++	 * the hashed bucket that is yet to be rehashed.
++	 */
++	for (;;) {
++		hash = rht_head_hashfn(ht, tbl, obj, params);
++		lock = rht_bucket_lock(tbl, hash);
++		spin_lock_bh(lock);
++
++		if (tbl->rehash <= hash)
++			break;
++
++		spin_unlock_bh(lock);
++		tbl = rht_dereference_rcu(tbl->future_tbl, ht);
++	}
++
++	new_tbl = rht_dereference_rcu(tbl->future_tbl, ht);
++	if (unlikely(new_tbl)) {
++		err = rhashtable_insert_slow(ht, key, obj, new_tbl);
++		if (err == -EAGAIN)
++			goto slow_path;
++		goto out;
++	}
++
++	err = -E2BIG;
++	if (unlikely(rht_grow_above_max(ht, tbl)))
++		goto out;
++
++	if (unlikely(rht_grow_above_100(ht, tbl))) {
++slow_path:
++		spin_unlock_bh(lock);
++		err = rhashtable_insert_rehash(ht);
++		rcu_read_unlock();
++		if (err)
++			return err;
++
++		goto restart;
++	}
++
++	err = -EEXIST;
++	elasticity = ht->elasticity;
++	rht_for_each(head, tbl, hash) {
++		if (key &&
++		    unlikely(!(params.obj_cmpfn ?
++			       params.obj_cmpfn(&arg, rht_obj(ht, head)) :
++			       rhashtable_compare(&arg, rht_obj(ht, head)))))
++			goto out;
++		if (!--elasticity)
++			goto slow_path;
++	}
++
++	err = 0;
++
++	head = rht_dereference_bucket(tbl->buckets[hash], tbl, hash);
++
++	RCU_INIT_POINTER(obj->next, head);
++
++	rcu_assign_pointer(tbl->buckets[hash], obj);
++
++	atomic_inc(&ht->nelems);
++	if (rht_grow_above_75(ht, tbl))
++		schedule_work(&ht->run_work);
++
++out:
++	spin_unlock_bh(lock);
++	rcu_read_unlock();
++
++	return err;
++}
++
++/**
++ * rhashtable_insert_fast - insert object into hash table
++ * @ht:		hash table
++ * @obj:	pointer to hash head inside object
++ * @params:	hash table parameters
++ *
++ * Will take a per bucket spinlock to protect against mutual mutations
++ * on the same bucket. Multiple insertions may occur in parallel unless
++ * they map to the same bucket lock.
++ *
++ * It is safe to call this function from atomic context.
++ *
++ * Will trigger an automatic deferred table resizing if the size grows
++ * beyond the watermark indicated by grow_decision() which can be passed
++ * to rhashtable_init().
++ */
++static inline int rhashtable_insert_fast(
++	struct rhashtable *ht, struct rhash_head *obj,
++	const struct rhashtable_params params)
++{
++	return __rhashtable_insert_fast(ht, NULL, obj, params);
++}
++
++/**
++ * rhashtable_lookup_insert_fast - lookup and insert object into hash table
++ * @ht:		hash table
++ * @obj:	pointer to hash head inside object
++ * @params:	hash table parameters
++ *
++ * Locks down the bucket chain in both the old and new table if a resize
++ * is in progress to ensure that writers can't remove from the old table
++ * and can't insert to the new table during the atomic operation of search
++ * and insertion. Searches for duplicates in both the old and new table if
++ * a resize is in progress.
++ *
++ * This lookup function may only be used for fixed key hash table (key_len
++ * parameter set). It will BUG() if used inappropriately.
++ *
++ * It is safe to call this function from atomic context.
++ *
++ * Will trigger an automatic deferred table resizing if the size grows
++ * beyond the watermark indicated by grow_decision() which can be passed
++ * to rhashtable_init().
++ */
++static inline int rhashtable_lookup_insert_fast(
++	struct rhashtable *ht, struct rhash_head *obj,
++	const struct rhashtable_params params)
++{
++	const char *key = rht_obj(ht, obj);
++
++	BUG_ON(ht->p.obj_hashfn);
++
++	return __rhashtable_insert_fast(ht, key + ht->p.key_offset, obj,
++					params);
++}
++
++/**
++ * rhashtable_lookup_insert_key - search and insert object to hash table
++ *				  with explicit key
++ * @ht:		hash table
++ * @key:	key
++ * @obj:	pointer to hash head inside object
++ * @params:	hash table parameters
++ *
++ * Locks down the bucket chain in both the old and new table if a resize
++ * is in progress to ensure that writers can't remove from the old table
++ * and can't insert to the new table during the atomic operation of search
++ * and insertion. Searches for duplicates in both the old and new table if
++ * a resize is in progress.
++ *
++ * Lookups may occur in parallel with hashtable mutations and resizing.
++ *
++ * Will trigger an automatic deferred table resizing if the size grows
++ * beyond the watermark indicated by grow_decision() which can be passed
++ * to rhashtable_init().
++ *
++ * Returns zero on success.
++ */
++static inline int rhashtable_lookup_insert_key(
++	struct rhashtable *ht, const void *key, struct rhash_head *obj,
++	const struct rhashtable_params params)
++{
++	BUG_ON(!ht->p.obj_hashfn || !key);
++
++	return __rhashtable_insert_fast(ht, key, obj, params);
++}
++
++/* Internal function, please use rhashtable_remove_fast() instead */
++static inline int __rhashtable_remove_fast(
++	struct rhashtable *ht, struct bucket_table *tbl,
++	struct rhash_head *obj, const struct rhashtable_params params)
++{
++	struct rhash_head __rcu **pprev;
++	struct rhash_head *he;
++	spinlock_t * lock;
++	unsigned int hash;
++	int err = -ENOENT;
++
++	hash = rht_head_hashfn(ht, tbl, obj, params);
++	lock = rht_bucket_lock(tbl, hash);
++
++	spin_lock_bh(lock);
++
++	pprev = &tbl->buckets[hash];
++	rht_for_each(he, tbl, hash) {
++		if (he != obj) {
++			pprev = &he->next;
++			continue;
++		}
++
++		rcu_assign_pointer(*pprev, obj->next);
++		err = 0;
++		break;
++	}
++
++	spin_unlock_bh(lock);
++
++	return err;
++}
++
++/**
++ * rhashtable_remove_fast - remove object from hash table
++ * @ht:		hash table
++ * @obj:	pointer to hash head inside object
++ * @params:	hash table parameters
++ *
++ * Since the hash chain is single linked, the removal operation needs to
++ * walk the bucket chain upon removal. The removal operation is thus
++ * considerable slow if the hash table is not correctly sized.
++ *
++ * Will automatically shrink the table via rhashtable_expand() if the
++ * shrink_decision function specified at rhashtable_init() returns true.
++ *
++ * Returns zero on success, -ENOENT if the entry could not be found.
++ */
++static inline int rhashtable_remove_fast(
++	struct rhashtable *ht, struct rhash_head *obj,
++	const struct rhashtable_params params)
++{
++	struct bucket_table *tbl;
++	int err;
++
++	rcu_read_lock();
++
++	tbl = rht_dereference_rcu(ht->tbl, ht);
++
++	/* Because we have already taken (and released) the bucket
++	 * lock in old_tbl, if we find that future_tbl is not yet
++	 * visible then that guarantees the entry to still be in
++	 * the old tbl if it exists.
++	 */
++	while ((err = __rhashtable_remove_fast(ht, tbl, obj, params)) &&
++	       (tbl = rht_dereference_rcu(tbl->future_tbl, ht)))
++		;
++
++	if (err)
++		goto out;
++
++	atomic_dec(&ht->nelems);
++	if (unlikely(ht->p.automatic_shrinking &&
++		     rht_shrink_below_30(ht, tbl)))
++		schedule_work(&ht->run_work);
++
++out:
++	rcu_read_unlock();
++
++	return err;
++}
++
++#endif /* _LINUX_RHASHTABLE_H */
+diff --git a/backports/include/linux/devcoredump.h b/backports/include/linux/devcoredump.h
+new file mode 100644
+index 0000000..4183b50
+--- /dev/null
++++ b/backports/include/linux/devcoredump.h
+@@ -0,0 +1,10 @@
++/* Automatically created during backport process */
++#ifndef CONFIG_BACKPORT_BPAUTO_BUILD_WANT_DEV_COREDUMP
++#include_next <linux/devcoredump.h>
++#else
++#undef dev_coredumpv
++#define dev_coredumpv LINUX_BACKPORT(dev_coredumpv)
++#undef dev_coredumpm
++#define dev_coredumpm LINUX_BACKPORT(dev_coredumpm)
++#include <linux/backport-devcoredump.h>
++#endif /* CONFIG_BACKPORT_BPAUTO_BUILD_WANT_DEV_COREDUMP */
+diff --git a/backports/include/linux/rhashtable.h b/backports/include/linux/rhashtable.h
+new file mode 100644
+index 0000000..20b6090
+--- /dev/null
++++ b/backports/include/linux/rhashtable.h
+@@ -0,0 +1,30 @@
++/* Automatically created during backport process */
++#ifndef CONFIG_BACKPORT_BPAUTO_RHASHTABLE
++#include_next <linux/rhashtable.h>
++#else
++#undef lockdep_rht_mutex_is_held
++#define lockdep_rht_mutex_is_held LINUX_BACKPORT(lockdep_rht_mutex_is_held)
++#undef lockdep_rht_bucket_is_held
++#define lockdep_rht_bucket_is_held LINUX_BACKPORT(lockdep_rht_bucket_is_held)
++#undef rhashtable_insert_rehash
++#define rhashtable_insert_rehash LINUX_BACKPORT(rhashtable_insert_rehash)
++#undef rhashtable_insert_slow
++#define rhashtable_insert_slow LINUX_BACKPORT(rhashtable_insert_slow)
++#undef rhashtable_walk_init
++#define rhashtable_walk_init LINUX_BACKPORT(rhashtable_walk_init)
++#undef rhashtable_walk_exit
++#define rhashtable_walk_exit LINUX_BACKPORT(rhashtable_walk_exit)
++#undef rhashtable_walk_start
++#define rhashtable_walk_start LINUX_BACKPORT(rhashtable_walk_start)
++#undef rhashtable_walk_next
++#define rhashtable_walk_next LINUX_BACKPORT(rhashtable_walk_next)
++#undef rhashtable_walk_stop
++#define rhashtable_walk_stop LINUX_BACKPORT(rhashtable_walk_stop)
++#undef rhashtable_init
++#define rhashtable_init LINUX_BACKPORT(rhashtable_init)
++#undef rhashtable_free_and_destroy
++#define rhashtable_free_and_destroy LINUX_BACKPORT(rhashtable_free_and_destroy)
++#undef rhashtable_destroy
++#define rhashtable_destroy LINUX_BACKPORT(rhashtable_destroy)
++#include <linux/backport-rhashtable.h>
++#endif /* CONFIG_BACKPORT_BPAUTO_RHASHTABLE */
+-- 
+2.5.1
+

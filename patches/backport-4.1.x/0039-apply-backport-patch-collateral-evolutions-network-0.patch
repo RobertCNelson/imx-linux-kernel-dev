@@ -1,0 +1,27 @@
+From f3857ffe7eda6ee51ca5fc4cb860e251198e306e Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:26 -0500
+Subject: [PATCH 39/97] apply backport patch
+ collateral-evolutions/network/0022-define-tracing/ath6kl.patch
+
+---
+ backports/drivers/net/wireless/ath/ath6kl/trace.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ath/ath6kl/trace.c b/backports/drivers/net/wireless/ath/ath6kl/trace.c
+index e7d64b1..bcfcb83 100644
+--- a/backports/drivers/net/wireless/ath/ath6kl/trace.c
++++ b/backports/drivers/net/wireless/ath/ath6kl/trace.c
+@@ -15,6 +15,9 @@
+  */
+ 
+ #include <linux/module.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,1,0)
++#include <linux/interrupt.h>
++#endif
+ 
+ #define CREATE_TRACE_POINTS
+ #include "trace.h"
+-- 
+2.5.1
+

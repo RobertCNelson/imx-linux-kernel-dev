@@ -1,0 +1,364 @@
+From ccded2aadaeee1761bb6411c6dc5d1a98c4d2fe6 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:53 -0500
+Subject: [PATCH 95/97] disable unsatisfied Makefile parts
+
+---
+ backports/drivers/net/ethernet/Makefile          | 160 +++++++++++------------
+ backports/drivers/net/ethernet/broadcom/Makefile |  18 +--
+ backports/drivers/net/ethernet/intel/Makefile    |  22 ++--
+ backports/drivers/net/usb/Makefile               |  57 ++++----
+ backports/drivers/net/wireless/Makefile          |  12 +-
+ backports/drivers/usb/class/Makefile             |   8 +-
+ 6 files changed, 139 insertions(+), 138 deletions(-)
+
+diff --git a/backports/drivers/net/ethernet/Makefile b/backports/drivers/net/ethernet/Makefile
+index 2ee3d11..bbcee5b 100644
+--- a/backports/drivers/net/ethernet/Makefile
++++ b/backports/drivers/net/ethernet/Makefile
+@@ -1,86 +1,86 @@
+ #
+ # Makefile for the Linux network Ethernet device drivers.
+ #
+-
+-obj-$(CONFIG_NET_VENDOR_3COM) += 3com/
+-obj-$(CONFIG_NET_VENDOR_8390) += 8390/
+-obj-$(CONFIG_NET_VENDOR_ADAPTEC) += adaptec/
+-obj-$(CONFIG_GRETH) += aeroflex/
+-obj-$(CONFIG_NET_VENDOR_AGERE) += agere/
+-obj-$(CONFIG_NET_VENDOR_ALLWINNER) += allwinner/
+-obj-$(CONFIG_NET_VENDOR_ALTEON) += alteon/
+-obj-$(CONFIG_ALTERA_TSE) += altera/
+-obj-$(CONFIG_NET_VENDOR_AMD) += amd/
+-obj-$(CONFIG_NET_XGENE) += apm/
+-obj-$(CONFIG_NET_VENDOR_APPLE) += apple/
+-obj-$(CONFIG_NET_VENDOR_ARC) += arc/
++#
++#obj-$(CONFIG_NET_VENDOR_3COM+= 3com/
++#obj-$(CONFIG_NET_VENDOR_8390 += 8390/
++#obj-$(CONFIG_NET_VENDOR_ADAPTEC += adaptec/
++#obj-$(CONFIG_GRETH += aeroflex/
++#obj-$(CONFIG_NET_VENDOR_AGERE += agere/
++#obj-$(CONFIG_NET_VENDOR_ALLWINNER += allwinner/
++#obj-$(CONFIG_NET_VENDOR_ALTEON += alteon/
++#obj-$(CONFIG_ALTERA_TSE += altera/
++#obj-$(CONFIG_NET_VENDOR_AMD += amd/
++#obj-$(CONFIG_NET_XGENE += apm/
++#obj-$(CONFIG_NET_VENDOR_APPLE += apple/
++#obj-$(CONFIG_NET_VENDOR_ARC += arc/
+ obj-$(CONFIG_BACKPORT_NET_VENDOR_ATHEROS) += atheros/
+-obj-$(CONFIG_NET_CADENCE) += cadence/
+-obj-$(CONFIG_NET_BFIN) += adi/
++#obj-$(CONFIG_NET_CADENCE += cadence/
++#obj-$(CONFIG_NET_BFIN += adi/
+ obj-$(CONFIG_BACKPORT_NET_VENDOR_BROADCOM) += broadcom/
+-obj-$(CONFIG_NET_VENDOR_BROCADE) += brocade/
+-obj-$(CONFIG_NET_CALXEDA_XGMAC) += calxeda/
+-obj-$(CONFIG_NET_VENDOR_CHELSIO) += chelsio/
+-obj-$(CONFIG_NET_VENDOR_CIRRUS) += cirrus/
+-obj-$(CONFIG_NET_VENDOR_CISCO) += cisco/
+-obj-$(CONFIG_BACKPORT_CX_ECAT) += ec_bhf.o
+-obj-$(CONFIG_DM9000) += davicom/
+-obj-$(CONFIG_BACKPORT_DNET) += dnet.o
+-obj-$(CONFIG_NET_VENDOR_DEC) += dec/
+-obj-$(CONFIG_NET_VENDOR_DLINK) += dlink/
+-obj-$(CONFIG_NET_VENDOR_EMULEX) += emulex/
+-obj-$(CONFIG_NET_VENDOR_EXAR) += neterion/
+-obj-$(CONFIG_NET_VENDOR_FARADAY) += faraday/
+-obj-$(CONFIG_NET_VENDOR_FREESCALE) += freescale/
+-obj-$(CONFIG_NET_VENDOR_FUJITSU) += fujitsu/
+-obj-$(CONFIG_NET_VENDOR_HISILICON) += hisilicon/
+-obj-$(CONFIG_NET_VENDOR_HP) += hp/
+-obj-$(CONFIG_NET_VENDOR_IBM) += ibm/
++#obj-$(CONFIG_NET_VENDOR_BROCADE += brocade/
++#obj-$(CONFIG_NET_CALXEDA_XGMAC += calxeda/
++#obj-$(CONFIG_NET_VENDOR_CHELSIO += chelsio/
++#obj-$(CONFIG_NET_VENDOR_CIRRUS += cirrus/
++#obj-$(CONFIG_NET_VENDOR_CISCO += cisco/
++#obj-$(CONFIG_BACKPORT_CX_ECAT += ec_bhf.o
++#obj-$(CONFIG_DM9000 += davicom/
++#obj-$(CONFIG_BACKPORT_DNET += dnet.o
++#obj-$(CONFIG_NET_VENDOR_DEC += dec/
++#obj-$(CONFIG_NET_VENDOR_DLINK += dlink/
++#obj-$(CONFIG_NET_VENDOR_EMULEX += emulex/
++#obj-$(CONFIG_NET_VENDOR_EXAR += neterion/
++#obj-$(CONFIG_NET_VENDOR_FARADAY += faraday/
++#obj-$(CONFIG_NET_VENDOR_FREESCALE += freescale/
++#obj-$(CONFIG_NET_VENDOR_FUJITSU += fujitsu/
++#obj-$(CONFIG_NET_VENDOR_HISILICON += hisilicon/
++#obj-$(CONFIG_NET_VENDOR_HP += hp/
++#obj-$(CONFIG_NET_VENDOR_IBM += ibm/
+ obj-$(CONFIG_BACKPORT_NET_VENDOR_INTEL) += intel/
+-obj-$(CONFIG_NET_VENDOR_I825XX) += i825xx/
+-obj-$(CONFIG_NET_VENDOR_XSCALE) += xscale/
+-obj-$(CONFIG_IP1000) += icplus/
+-obj-$(CONFIG_BACKPORT_JME) += jme.o
+-obj-$(CONFIG_BACKPORT_KORINA) += korina.o
+-obj-$(CONFIG_BACKPORT_LANTIQ_ETOP) += lantiq_etop.o
+-obj-$(CONFIG_NET_VENDOR_MARVELL) += marvell/
+-obj-$(CONFIG_NET_VENDOR_MELLANOX) += mellanox/
+-obj-$(CONFIG_NET_VENDOR_MICREL) += micrel/
+-obj-$(CONFIG_NET_VENDOR_MICROCHIP) += microchip/
+-obj-$(CONFIG_NET_VENDOR_MOXART) += moxa/
+-obj-$(CONFIG_NET_VENDOR_MYRI) += myricom/
+-obj-$(CONFIG_BACKPORT_FEALNX) += fealnx.o
+-obj-$(CONFIG_NET_VENDOR_NATSEMI) += natsemi/
+-obj-$(CONFIG_BACKPORT_NET_NETX) += netx-eth.o
+-obj-$(CONFIG_NET_VENDOR_NUVOTON) += nuvoton/
+-obj-$(CONFIG_NET_VENDOR_NVIDIA) += nvidia/
+-obj-$(CONFIG_LPC_ENET) += nxp/
+-obj-$(CONFIG_OCTEON_MGMT_ETHERNET) += octeon/
+-obj-$(CONFIG_NET_VENDOR_OKI) += oki-semi/
+-obj-$(CONFIG_BACKPORT_ETHOC) += ethoc.o
+-obj-$(CONFIG_NET_PACKET_ENGINE) += packetengines/
+-obj-$(CONFIG_NET_VENDOR_PASEMI) += pasemi/
+-obj-$(CONFIG_NET_VENDOR_QLOGIC) += qlogic/
+-obj-$(CONFIG_NET_VENDOR_QUALCOMM) += qualcomm/
+-obj-$(CONFIG_NET_VENDOR_REALTEK) += realtek/
+-obj-$(CONFIG_SH_ETH) += renesas/
+-obj-$(CONFIG_NET_VENDOR_RDC) += rdc/
+-obj-$(CONFIG_NET_VENDOR_ROCKER) += rocker/
+-obj-$(CONFIG_NET_VENDOR_SAMSUNG) += samsung/
+-obj-$(CONFIG_NET_VENDOR_SEEQ) += seeq/
+-obj-$(CONFIG_NET_VENDOR_SILAN) += silan/
+-obj-$(CONFIG_NET_VENDOR_SIS) += sis/
+-obj-$(CONFIG_SFC) += sfc/
+-obj-$(CONFIG_NET_VENDOR_SGI) += sgi/
+-obj-$(CONFIG_NET_VENDOR_SMSC) += smsc/
+-obj-$(CONFIG_NET_VENDOR_STMICRO) += stmicro/
+-obj-$(CONFIG_NET_VENDOR_SUN) += sun/
+-obj-$(CONFIG_NET_VENDOR_TEHUTI) += tehuti/
+-obj-$(CONFIG_NET_VENDOR_TI) += ti/
+-obj-$(CONFIG_TILE_NET) += tile/
+-obj-$(CONFIG_NET_VENDOR_TOSHIBA) += toshiba/
+-obj-$(CONFIG_NET_VENDOR_TUNDRA) += tundra/
+-obj-$(CONFIG_NET_VENDOR_VIA) += via/
+-obj-$(CONFIG_NET_VENDOR_WIZNET) += wiznet/
+-obj-$(CONFIG_NET_VENDOR_XILINX) += xilinx/
+-obj-$(CONFIG_NET_VENDOR_XIRCOM) += xircom/
++#obj-$(CONFIG_NET_VENDOR_I825XX += i825xx/
++#obj-$(CONFIG_NET_VENDOR_XSCALE += xscale/
++#obj-$(CONFIG_IP1000 += icplus/
++#obj-$(CONFIG_BACKPORT_JME += jme.o
++#obj-$(CONFIG_BACKPORT_KORINA += korina.o
++#obj-$(CONFIG_BACKPORT_LANTIQ_ETOP += lantiq_etop.o
++#obj-$(CONFIG_NET_VENDOR_MARVELL += marvell/
++#obj-$(CONFIG_NET_VENDOR_MELLANOX += mellanox/
++#obj-$(CONFIG_NET_VENDOR_MICREL += micrel/
++#obj-$(CONFIG_NET_VENDOR_MICROCHIP += microchip/
++#obj-$(CONFIG_NET_VENDOR_MOXART += moxa/
++#obj-$(CONFIG_NET_VENDOR_MYRI += myricom/
++#obj-$(CONFIG_BACKPORT_FEALNX += fealnx.o
++#obj-$(CONFIG_NET_VENDOR_NATSEMI += natsemi/
++#obj-$(CONFIG_BACKPORT_NET_NETX += netx-eth.o
++#obj-$(CONFIG_NET_VENDOR_NUVOTON += nuvoton/
++#obj-$(CONFIG_NET_VENDOR_NVIDIA += nvidia/
++#obj-$(CONFIG_LPC_ENET += nxp/
++#obj-$(CONFIG_OCTEON_MGMT_ETHERNET += octeon/
++#obj-$(CONFIG_NET_VENDOR_OKI += oki-semi/
++#obj-$(CONFIG_BACKPORT_ETHOC += ethoc.o
++#obj-$(CONFIG_NET_PACKET_ENGINE += packetengines/
++#obj-$(CONFIG_NET_VENDOR_PASEMI += pasemi/
++#obj-$(CONFIG_NET_VENDOR_QLOGIC += qlogic/
++#obj-$(CONFIG_NET_VENDOR_QUALCOMM += qualcomm/
++#obj-$(CONFIG_NET_VENDOR_REALTEK += realtek/
++#obj-$(CONFIG_SH_ETH += renesas/
++#obj-$(CONFIG_NET_VENDOR_RDC += rdc/
++#obj-$(CONFIG_NET_VENDOR_ROCKER += rocker/
++#obj-$(CONFIG_NET_VENDOR_SAMSUNG += samsung/
++#obj-$(CONFIG_NET_VENDOR_SEEQ += seeq/
++#obj-$(CONFIG_NET_VENDOR_SILAN += silan/
++#obj-$(CONFIG_NET_VENDOR_SIS += sis/
++#obj-$(CONFIG_SFC += sfc/
++#obj-$(CONFIG_NET_VENDOR_SGI += sgi/
++#obj-$(CONFIG_NET_VENDOR_SMSC += smsc/
++#obj-$(CONFIG_NET_VENDOR_STMICRO += stmicro/
++#obj-$(CONFIG_NET_VENDOR_SUN += sun/
++#obj-$(CONFIG_NET_VENDOR_TEHUTI += tehuti/
++#obj-$(CONFIG_NET_VENDOR_TI += ti/
++#obj-$(CONFIG_TILE_NET += tile/
++#obj-$(CONFIG_NET_VENDOR_TOSHIBA += toshiba/
++#obj-$(CONFIG_NET_VENDOR_TUNDRA += tundra/
++#obj-$(CONFIG_NET_VENDOR_VIA += via/
++#obj-$(CONFIG_NET_VENDOR_WIZNET += wiznet/
++#obj-$(CONFIG_NET_VENDOR_XILINX += xilinx/
++#obj-$(CONFIG_NET_VENDOR_XIRCOM += xircom/
+diff --git a/backports/drivers/net/ethernet/broadcom/Makefile b/backports/drivers/net/ethernet/broadcom/Makefile
+index 15845d6..e7ad072 100644
+--- a/backports/drivers/net/ethernet/broadcom/Makefile
++++ b/backports/drivers/net/ethernet/broadcom/Makefile
+@@ -3,12 +3,12 @@
+ #
+ 
+ obj-$(CONFIG_BACKPORT_B44) += b44.o
+-obj-$(CONFIG_BACKPORT_BCM63XX_ENET) += bcm63xx_enet.o
+-obj-$(CONFIG_BACKPORT_BCMGENET) += genet/
+-obj-$(CONFIG_BACKPORT_BNX2) += bnx2.o
+-obj-$(CONFIG_BACKPORT_CNIC) += cnic.o
+-obj-$(CONFIG_BACKPORT_BNX2X) += bnx2x/
+-obj-$(CONFIG_BACKPORT_SB1250_MAC) += sb1250-mac.o
+-obj-$(CONFIG_BACKPORT_TIGON3) += tg3.o
+-obj-$(CONFIG_BACKPORT_BGMAC) += bgmac.o
+-obj-$(CONFIG_BACKPORT_SYSTEMPORT) += bcmsysport.o
++#obj-$(CONFIG_BACKPORT_BCM63XX_ENET += bcm63xx_enet.o
++#obj-$(CONFIG_BACKPORT_BCMGENET += genet/
++#obj-$(CONFIG_BACKPORT_BNX2 += bnx2.o
++#obj-$(CONFIG_BACKPORT_CNIC += cnic.o
++#obj-$(CONFIG_BACKPORT_BNX2X += bnx2x/
++#obj-$(CONFIG_BACKPORT_SB1250_MAC += sb1250-mac.o
++#obj-$(CONFIG_BACKPORT_TIGON3 += tg3.o
++#obj-$(CONFIG_BACKPORT_BGMAC += bgmac.o
++#obj-$(CONFIG_BACKPORT_SYSTEMPORT += bcmsysport.o
+diff --git a/backports/drivers/net/ethernet/intel/Makefile b/backports/drivers/net/ethernet/intel/Makefile
+index abda9c0..0717df5 100644
+--- a/backports/drivers/net/ethernet/intel/Makefile
++++ b/backports/drivers/net/ethernet/intel/Makefile
+@@ -1,15 +1,15 @@
+ #
+ # Makefile for the Intel network device drivers.
+ #
+-
+-obj-$(CONFIG_BACKPORT_E100) += e100.o
+-obj-$(CONFIG_BACKPORT_E1000) += e1000/
+-obj-$(CONFIG_BACKPORT_E1000E) += e1000e/
++#
++#obj-$(CONFIG_BACKPORT_E100+= e100.o
++#obj-$(CONFIG_BACKPORT_E1000 += e1000/
++#obj-$(CONFIG_BACKPORT_E1000E += e1000e/
+ obj-$(CONFIG_BACKPORT_IGB) += igb/
+-obj-$(CONFIG_BACKPORT_IGBVF) += igbvf/
+-obj-$(CONFIG_BACKPORT_IXGBE) += ixgbe/
+-obj-$(CONFIG_BACKPORT_IXGBEVF) += ixgbevf/
+-obj-$(CONFIG_BACKPORT_I40E) += i40e/
+-obj-$(CONFIG_BACKPORT_IXGB) += ixgb/
+-obj-$(CONFIG_BACKPORT_I40EVF) += i40evf/
+-obj-$(CONFIG_BACKPORT_FM10K) += fm10k/
++#obj-$(CONFIG_BACKPORT_IGBVF += igbvf/
++#obj-$(CONFIG_BACKPORT_IXGBE += ixgbe/
++#obj-$(CONFIG_BACKPORT_IXGBEVF += ixgbevf/
++#obj-$(CONFIG_BACKPORT_I40E += i40e/
++#obj-$(CONFIG_BACKPORT_IXGB += ixgb/
++#obj-$(CONFIG_BACKPORT_I40EVF += i40evf/
++#obj-$(CONFIG_BACKPORT_FM10K += fm10k/
+diff --git a/backports/drivers/net/usb/Makefile b/backports/drivers/net/usb/Makefile
+index 1f27c91..a000228 100644
+--- a/backports/drivers/net/usb/Makefile
++++ b/backports/drivers/net/usb/Makefile
+@@ -1,38 +1,39 @@
+ #
+ # Makefile for USB Network drivers
+ #
+-
+-obj-$(CONFIG_BACKPORT_USB_CATC)		+= catc.o
+-obj-$(CONFIG_BACKPORT_USB_KAWETH)	+= kaweth.o
+-obj-$(CONFIG_BACKPORT_USB_PEGASUS)	+= pegasus.o
+-obj-$(CONFIG_BACKPORT_USB_RTL8150)	+= rtl8150.o
+-obj-$(CONFIG_BACKPORT_USB_RTL8152)	+= r8152.o
+-obj-$(CONFIG_BACKPORT_USB_HSO)		+= hso.o
+-obj-$(CONFIG_BACKPORT_USB_NET_AX8817X)	+= asix.o
+-obj-$(CONFIG_BACKPORT_USB_NET_AX88179_178A)      += ax88179_178a.o
++#
++#obj-$(CONFIG_BACKPORT_USB_CATC	+= catc.o
++#obj-$(CONFIG_BACKPORT_USB_KAWETH	+= kaweth.o
++#obj-$(CONFIG_BACKPORT_USB_PEGASUS	+= pegasus.o
++#obj-$(CONFIG_BACKPORT_USB_RTL8150	+= rtl8150.o
++#obj-$(CONFIG_BACKPORT_USB_RTL8152	+= r8152.o
++#obj-$(CONFIG_BACKPORT_USB_HSO		+= hso.o
++#obj-$(CONFIG_BACKPORT_USB_NET_AX8817X	+= asix.o
++#obj-$(CONFIG_BACKPORT_USB_NET_AX88179_178A      += ax88179_178a.o
+ obj-$(CONFIG_BACKPORT_USB_NET_CDCETHER)	+= cdc_ether.o
+-obj-$(CONFIG_BACKPORT_USB_NET_CDC_EEM)	+= cdc_eem.o
+-obj-$(CONFIG_BACKPORT_USB_NET_DM9601)	+= dm9601.o
+-obj-$(CONFIG_BACKPORT_USB_NET_SR9700)	+= sr9700.o
+-obj-$(CONFIG_BACKPORT_USB_NET_SR9800)	+= sr9800.o
+-obj-$(CONFIG_BACKPORT_USB_NET_SMSC75XX)	+= smsc75xx.o
+-obj-$(CONFIG_BACKPORT_USB_NET_SMSC95XX)	+= smsc95xx.o
+-obj-$(CONFIG_BACKPORT_USB_NET_GL620A)	+= gl620a.o
+-obj-$(CONFIG_BACKPORT_USB_NET_NET1080)	+= net1080.o
+-obj-$(CONFIG_BACKPORT_USB_NET_PLUSB)	+= plusb.o
++#obj-$(CONFIG_BACKPORT_USB_NET_CDC_EEM	+= cdc_eem.o
++#obj-$(CONFIG_BACKPORT_USB_NET_DM9601	+= dm9601.o
++#obj-$(CONFIG_BACKPORT_USB_NET_SR9700	+= sr9700.o
++#obj-$(CONFIG_BACKPORT_USB_NET_SR9800	+= sr9800.o
++#obj-$(CONFIG_BACKPORT_USB_NET_SMSC75XX	+= smsc75xx.o
++#obj-$(CONFIG_BACKPORT_USB_NET_SMSC95XX	+= smsc95xx.o
++#obj-$(CONFIG_BACKPORT_USB_NET_GL620A	+= gl620a.o
++#obj-$(CONFIG_BACKPORT_USB_NET_NET1080	+= net1080.o
++#obj-$(CONFIG_BACKPORT_USB_NET_PLUSB	+= plusb.o
+ obj-$(CONFIG_BACKPORT_USB_NET_RNDIS_HOST)	+= rndis_host.o
+-obj-$(CONFIG_BACKPORT_USB_NET_CDC_SUBSET)	+= cdc_subset.o
+-obj-$(CONFIG_BACKPORT_USB_NET_ZAURUS)	+= zaurus.o
+-obj-$(CONFIG_BACKPORT_USB_NET_MCS7830)	+= mcs7830.o
++#obj-$(CONFIG_BACKPORT_USB_NET_CDC_SUBSET	+= cdc_subset.o
++#obj-$(CONFIG_BACKPORT_USB_NET_ZAURUS	+= zaurus.o
++#obj-$(CONFIG_BACKPORT_USB_NET_MCS7830	+= mcs7830.o
+ obj-$(CONFIG_BACKPORT_USB_USBNET)	+= usbnet.o
+-obj-$(CONFIG_BACKPORT_USB_NET_INT51X1)	+= int51x1.o
+-obj-$(CONFIG_BACKPORT_USB_CDC_PHONET)	+= cdc-phonet.o
+-obj-$(CONFIG_BACKPORT_USB_NET_KALMIA)	+= kalmia.o
+-obj-$(CONFIG_BACKPORT_USB_IPHETH)	+= ipheth.o
++#obj-$(CONFIG_BACKPORT_USB_NET_INT51X1	+= int51x1.o
++#obj-$(CONFIG_BACKPORT_USB_CDC_PHONET	+= cdc-phonet.o
++#obj-$(CONFIG_BACKPORT_USB_NET_KALMIA	+= kalmia.o
++#obj-$(CONFIG_BACKPORT_USB_IPHETH	+= ipheth.o
+ obj-$(CONFIG_BACKPORT_USB_SIERRA_NET)	+= sierra_net.o
+-obj-$(CONFIG_BACKPORT_USB_NET_CX82310_ETH)	+= cx82310_eth.o
++#obj-$(CONFIG_BACKPORT_USB_NET_CX82310_ETH	+= cx82310_eth.o
+ obj-$(CONFIG_BACKPORT_USB_NET_CDC_NCM)	+= cdc_ncm.o
+-obj-$(CONFIG_BACKPORT_USB_NET_HUAWEI_CDC_NCM)	+= huawei_cdc_ncm.o
+-obj-$(CONFIG_BACKPORT_USB_VL600)		+= lg-vl600.o
++#obj-$(CONFIG_BACKPORT_USB_NET_HUAWEI_CDC_NCM	+= huawei_cdc_ncm.o
++#obj-$(CONFIG_BACKPORT_USB_VL600		+= lg-vl600.o
+ obj-$(CONFIG_BACKPORT_USB_NET_QMI_WWAN)	+= qmi_wwan.o
+ obj-$(CONFIG_BACKPORT_USB_NET_CDC_MBIM)	+= cdc_mbim.o
++
+diff --git a/backports/drivers/net/wireless/Makefile b/backports/drivers/net/wireless/Makefile
+index 3c447ab..c9f4386 100644
+--- a/backports/drivers/net/wireless/Makefile
++++ b/backports/drivers/net/wireless/Makefile
+@@ -15,10 +15,10 @@ obj-$(CONFIG_BACKPORT_PCI_ATMEL)         += atmel_pci.o
+ obj-$(CONFIG_BACKPORT_PCMCIA_ATMEL)      += atmel_cs.o
+ 
+ obj-$(CONFIG_BACKPORT_AT76C50X_USB)      += at76c50x-usb.o
+-
+-obj-$(CONFIG_BACKPORT_PRISM54)		+= prism54/
+-
+-obj-$(CONFIG_HOSTAP)		+= hostap/
++#
++#obj-$(CONFIG_BACKPORT_PRISM54	+= prism54/
++#
++#obj-$(CONFIG_HOSTAP	+= hostap/
+ obj-$(CONFIG_BACKPORT_B43)		+= b43/
+ obj-$(CONFIG_BACKPORT_B43LEGACY)		+= b43legacy/
+ obj-$(CONFIG_BACKPORT_ZD1211RW)		+= zd1211rw/
+@@ -27,8 +27,8 @@ obj-$(CONFIG_BACKPORT_RTL8187)		+= rtl818x/
+ obj-$(CONFIG_BACKPORT_RTLWIFI)		+= rtlwifi/
+ 
+ # 16-bit wireless PCMCIA client drivers
+-obj-$(CONFIG_BACKPORT_PCMCIA_RAYCS)	+= ray_cs.o
+-obj-$(CONFIG_BACKPORT_PCMCIA_WL3501)	+= wl3501_cs.o
++#obj-$(CONFIG_BACKPORT_PCMCIA_RAYCS	+= ray_cs.o
++#obj-$(CONFIG_BACKPORT_PCMCIA_WL3501	+= wl3501_cs.o
+ 
+ obj-$(CONFIG_BACKPORT_USB_NET_RNDIS_WLAN)	+= rndis_wlan.o
+ 
+diff --git a/backports/drivers/usb/class/Makefile b/backports/drivers/usb/class/Makefile
+index f9dcf3d..ff16099 100644
+--- a/backports/drivers/usb/class/Makefile
++++ b/backports/drivers/usb/class/Makefile
+@@ -2,8 +2,8 @@
+ # Makefile for USB Class drivers
+ # (one step up from the misc category)
+ #
+-
+-obj-$(CONFIG_BACKPORT_USB_ACM)		+= cdc-acm.o
+-obj-$(CONFIG_BACKPORT_USB_PRINTER)	+= usblp.o
++#
++#obj-$(CONFIG_BACKPORT_USB_ACM	+= cdc-acm.o
++#obj-$(CONFIG_BACKPORT_USB_PRINTER	+= usblp.o
+ obj-$(CONFIG_BACKPORT_USB_WDM)		+= cdc-wdm.o
+-obj-$(CONFIG_BACKPORT_USB_TMC)		+= usbtmc.o
++#obj-$(CONFIG_BACKPORT_USB_TMC		+= usbtmc.o
+-- 
+2.5.1
+

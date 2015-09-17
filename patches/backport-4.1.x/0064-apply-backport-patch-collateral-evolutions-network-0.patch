@@ -1,0 +1,32 @@
+From a81031dffce6b8937b2825d0d88d5bcba03cf314 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:36 -0500
+Subject: [PATCH 64/97] apply backport patch
+ collateral-evolutions/network/0053-possible_net_t.patch
+
+---
+ backports/include/net/cfg80211.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/backports/include/net/cfg80211.h b/backports/include/net/cfg80211.h
+index fd2e593..57be0ee 100644
+--- a/backports/include/net/cfg80211.h
++++ b/backports/include/net/cfg80211.h
+@@ -3243,12 +3243,12 @@ struct wiphy {
+ 
+ static inline struct net *wiphy_net(struct wiphy *wiphy)
+ {
+-	return read_pnet(&wiphy->_net);
++	return possible_read_pnet(&wiphy->_net);
+ }
+ 
+ static inline void wiphy_net_set(struct wiphy *wiphy, struct net *net)
+ {
+-	write_pnet(&wiphy->_net, net);
++	possible_write_pnet(&wiphy->_net, net);
+ }
+ 
+ /**
+-- 
+2.5.1
+

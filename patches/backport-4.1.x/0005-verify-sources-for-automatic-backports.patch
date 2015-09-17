@@ -1,0 +1,825 @@
+From 9386e934b28e613527dfd83cbabe878dbe392ad4 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:12 -0500
+Subject: [PATCH 05/97] verify sources for automatic backports
+
+---
+ backports/drivers/media/Kconfig               |  26 ++---
+ backports/drivers/media/common/Kconfig        |   6 +-
+ backports/drivers/media/dvb-frontends/Kconfig |   2 +-
+ backports/drivers/media/i2c/Kconfig           |   8 +-
+ backports/drivers/media/mmc/Kconfig           |   2 +-
+ backports/drivers/media/pci/Kconfig           |  48 ++++-----
+ backports/drivers/media/platform/Kconfig      |  20 ++--
+ backports/drivers/media/radio/Kconfig         |   6 +-
+ backports/drivers/media/rc/Kconfig            |   4 +-
+ backports/drivers/media/usb/Kconfig           |  54 +++++-----
+ backports/drivers/media/usb/gspca/Kconfig     |   6 +-
+ backports/drivers/net/ethernet/Kconfig        | 148 +++++++++++++-------------
+ backports/drivers/net/wireless/Kconfig        |  38 +++----
+ backports/drivers/net/wireless/ath/Kconfig    |  16 +--
+ backports/drivers/net/wireless/ti/Kconfig     |   8 +-
+ backports/drivers/nfc/Kconfig                 |  12 +--
+ backports/net/bluetooth/Kconfig               |  10 +-
+ backports/net/ieee802154/Kconfig              |   2 +-
+ backports/net/nfc/Kconfig                     |   6 +-
+ 19 files changed, 211 insertions(+), 211 deletions(-)
+
+diff --git a/backports/drivers/media/Kconfig b/backports/drivers/media/Kconfig
+index 1570992..5b3ea39 100644
+--- a/backports/drivers/media/Kconfig
++++ b/backports/drivers/media/Kconfig
+@@ -123,7 +123,7 @@ config VIDEO_V4L2_SUBDEV_API
+ 
+ 	  This API is mostly used by camera interfaces in embedded platforms.
+ 
+-source "drivers/media/v4l2-core/Kconfig"
++source "$BACKPORT_DIR/drivers/media/v4l2-core/Kconfig"
+ 
+ #
+ # DVB Core
+@@ -156,27 +156,27 @@ config TTPCI_EEPROM
+ 	depends on I2C
+ 	default n
+ 
+-source "drivers/media/dvb-core/Kconfig"
++source "$BACKPORT_DIR/drivers/media/dvb-core/Kconfig"
+ 
+ comment "Media drivers"
+-source "drivers/media/rc/Kconfig"
++source "$BACKPORT_DIR/drivers/media/rc/Kconfig"
+ 
+ #
+ # V4L platform/mem2mem drivers
+ #
+ 
+-source "drivers/media/usb/Kconfig"
+-source "drivers/media/pci/Kconfig"
+-source "drivers/media/platform/Kconfig"
+-source "drivers/media/mmc/Kconfig"
+-source "drivers/media/radio/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/Kconfig"
++source "$BACKPORT_DIR/drivers/media/mmc/Kconfig"
++source "$BACKPORT_DIR/drivers/media/radio/Kconfig"
+ 
+ comment "Supported FireWire (IEEE 1394) Adapters"
+ 	depends on DVB_CORE && FIREWIRE
+-source "drivers/media/firewire/Kconfig"
++source "$BACKPORT_DIR/drivers/media/firewire/Kconfig"
+ 
+ # Common driver options
+-source "drivers/media/common/Kconfig"
++source "$BACKPORT_DIR/drivers/media/common/Kconfig"
+ 
+ comment "Media ancillary drivers (tuners, sensors, i2c, frontends)"
+ 
+@@ -213,8 +213,8 @@ config MEDIA_ATTACH
+ 	depends on MODULES
+ 	default MODULES
+ 
+-source "drivers/media/i2c/Kconfig"
+-source "drivers/media/tuners/Kconfig"
+-source "drivers/media/dvb-frontends/Kconfig"
++source "$BACKPORT_DIR/drivers/media/i2c/Kconfig"
++source "$BACKPORT_DIR/drivers/media/tuners/Kconfig"
++source "$BACKPORT_DIR/drivers/media/dvb-frontends/Kconfig"
+ 
+ endif # MEDIA_SUPPORT
+diff --git a/backports/drivers/media/common/Kconfig b/backports/drivers/media/common/Kconfig
+index 21154dd..aef3f11 100644
+--- a/backports/drivers/media/common/Kconfig
++++ b/backports/drivers/media/common/Kconfig
+@@ -16,6 +16,6 @@ config CYPRESS_FIRMWARE
+ 	tristate "Cypress firmware helper routines"
+ 	depends on USB
+ 
+-source "drivers/media/common/b2c2/Kconfig"
+-source "drivers/media/common/saa7146/Kconfig"
+-source "drivers/media/common/siano/Kconfig"
++source "$BACKPORT_DIR/drivers/media/common/b2c2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/common/saa7146/Kconfig"
++source "$BACKPORT_DIR/drivers/media/common/siano/Kconfig"
+diff --git a/backports/drivers/media/dvb-frontends/Kconfig b/backports/drivers/media/dvb-frontends/Kconfig
+index 97c151d..4e4fc0a9 100644
+--- a/backports/drivers/media/dvb-frontends/Kconfig
++++ b/backports/drivers/media/dvb-frontends/Kconfig
+@@ -701,7 +701,7 @@ config DVB_TUNER_DIB0090
+ comment "SEC control devices for DVB-S"
+ 	depends on DVB_CORE
+ 
+-source "drivers/media/dvb-frontends/drx39xyj/Kconfig"
++source "$BACKPORT_DIR/drivers/media/dvb-frontends/drx39xyj/Kconfig"
+ 
+ config DVB_LNBP21
+ 	tristate "LNBP21/LNBH24 SEC controllers"
+diff --git a/backports/drivers/media/i2c/Kconfig b/backports/drivers/media/i2c/Kconfig
+index 6f30ea7..36095a1 100644
+--- a/backports/drivers/media/i2c/Kconfig
++++ b/backports/drivers/media/i2c/Kconfig
+@@ -363,7 +363,7 @@ config VIDEO_SAA717X
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called saa717x.
+ 
+-source "drivers/media/i2c/cx25840/Kconfig"
++source "$BACKPORT_DIR/drivers/media/i2c/cx25840/Kconfig"
+ 
+ comment "Video encoders"
+ 
+@@ -573,7 +573,7 @@ config VIDEO_NOON010PC30
+ 	---help---
+ 	  This driver supports NOON010PC30 CIF camera from Siliconfile
+ 
+-source "drivers/media/i2c/m5mols/Kconfig"
++source "$BACKPORT_DIR/drivers/media/i2c/m5mols/Kconfig"
+ 
+ config VIDEO_S5K6AA
+ 	tristate "Samsung S5K6AAFX sensor support"
+@@ -605,7 +605,7 @@ config VIDEO_S5K5BAF
+ 	  This is a V4L2 sensor-level driver for Samsung S5K5BAF 2M
+ 	  camera sensor with an embedded SoC image signal processor.
+ 
+-source "drivers/media/i2c/smiapp/Kconfig"
++source "$BACKPORT_DIR/drivers/media/i2c/smiapp/Kconfig"
+ 
+ config VIDEO_S5C73M3
+ 	tristate "Samsung S5C73M3 sensor support"
+@@ -712,7 +712,7 @@ endmenu
+ menu "Sensors used on soc_camera driver"
+ 
+ if SOC_CAMERA
+-	source "drivers/media/i2c/soc_camera/Kconfig"
++source "$BACKPORT_DIR/drivers/media/i2c/soc_camera/Kconfig"
+ endif
+ 
+ endmenu
+diff --git a/backports/drivers/media/mmc/Kconfig b/backports/drivers/media/mmc/Kconfig
+index 8c30ada..f28acfc 100644
+--- a/backports/drivers/media/mmc/Kconfig
++++ b/backports/drivers/media/mmc/Kconfig
+@@ -1,2 +1,2 @@
+ comment "Supported MMC/SDIO adapters"
+-source "drivers/media/mmc/siano/Kconfig"
++source "$BACKPORT_DIR/drivers/media/mmc/siano/Kconfig"
+diff --git a/backports/drivers/media/pci/Kconfig b/backports/drivers/media/pci/Kconfig
+index 218144a..51509a2d 100644
+--- a/backports/drivers/media/pci/Kconfig
++++ b/backports/drivers/media/pci/Kconfig
+@@ -10,43 +10,43 @@ if MEDIA_PCI_SUPPORT
+ 
+ if MEDIA_CAMERA_SUPPORT
+ 	comment "Media capture support"
+-source "drivers/media/pci/meye/Kconfig"
+-source "drivers/media/pci/sta2x11/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/meye/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/sta2x11/Kconfig"
+ endif
+ 
+ if MEDIA_ANALOG_TV_SUPPORT
+ 	comment "Media capture/analog TV support"
+-source "drivers/media/pci/ivtv/Kconfig"
+-source "drivers/media/pci/zoran/Kconfig"
+-source "drivers/media/pci/saa7146/Kconfig"
+-source "drivers/media/pci/solo6x10/Kconfig"
+-source "drivers/media/pci/tw68/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/ivtv/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/zoran/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/saa7146/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/solo6x10/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/tw68/Kconfig"
+ endif
+ 
+ if MEDIA_ANALOG_TV_SUPPORT || MEDIA_DIGITAL_TV_SUPPORT
+ 	comment "Media capture/analog/hybrid TV support"
+-source "drivers/media/pci/cx18/Kconfig"
+-source "drivers/media/pci/cx23885/Kconfig"
+-source "drivers/media/pci/cx25821/Kconfig"
+-source "drivers/media/pci/cx88/Kconfig"
+-source "drivers/media/pci/bt8xx/Kconfig"
+-source "drivers/media/pci/saa7134/Kconfig"
+-source "drivers/media/pci/saa7164/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/cx18/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/cx23885/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/cx25821/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/cx88/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/bt8xx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/saa7134/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/saa7164/Kconfig"
+ 
+ endif
+ 
+ if MEDIA_DIGITAL_TV_SUPPORT
+ 	comment "Media digital TV PCI Adapters"
+-source "drivers/media/pci/ttpci/Kconfig"
+-source "drivers/media/pci/b2c2/Kconfig"
+-source "drivers/media/pci/pluto2/Kconfig"
+-source "drivers/media/pci/dm1105/Kconfig"
+-source "drivers/media/pci/pt1/Kconfig"
+-source "drivers/media/pci/pt3/Kconfig"
+-source "drivers/media/pci/mantis/Kconfig"
+-source "drivers/media/pci/ngene/Kconfig"
+-source "drivers/media/pci/ddbridge/Kconfig"
+-source "drivers/media/pci/smipcie/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/ttpci/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/b2c2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/pluto2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/dm1105/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/pt1/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/pt3/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/mantis/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/ngene/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/ddbridge/Kconfig"
++source "$BACKPORT_DIR/drivers/media/pci/smipcie/Kconfig"
+ endif
+ 
+ endif #MEDIA_PCI_SUPPORT
+diff --git a/backports/drivers/media/platform/Kconfig b/backports/drivers/media/platform/Kconfig
+index 421f531..61402d1 100644
+--- a/backports/drivers/media/platform/Kconfig
++++ b/backports/drivers/media/platform/Kconfig
+@@ -11,7 +11,7 @@ menuconfig V4L_PLATFORM_DRIVERS
+ 
+ if V4L_PLATFORM_DRIVERS
+ 
+-source "drivers/media/platform/marvell-ccic/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/marvell-ccic/Kconfig"
+ 
+ config VIDEO_VIA_CAMERA
+ 	tristate "VIAFB camera controller support"
+@@ -27,11 +27,11 @@ config VIDEO_VIA_CAMERA
+ # Platform multimedia device configuration
+ #
+ 
+-source "drivers/media/platform/davinci/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/davinci/Kconfig"
+ 
+-source "drivers/media/platform/omap/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/omap/Kconfig"
+ 
+-source "drivers/media/platform/blackfin/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/blackfin/Kconfig"
+ 
+ config VIDEO_SH_VOU
+ 	tristate "SuperH VOU video output driver"
+@@ -114,11 +114,11 @@ config VIDEO_S3C_CAMIF
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called s3c-camif.
+ 
+-source "drivers/media/platform/soc_camera/Kconfig"
+-source "drivers/media/platform/exynos4-is/Kconfig"
+-source "drivers/media/platform/s5p-tv/Kconfig"
+-source "drivers/media/platform/am437x/Kconfig"
+-source "drivers/media/platform/xilinx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/soc_camera/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/exynos4-is/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/s5p-tv/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/am437x/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/xilinx/Kconfig"
+ 
+ endif # V4L_PLATFORM_DRIVERS
+ 
+@@ -258,7 +258,7 @@ menuconfig V4L_TEST_DRIVERS
+ 
+ if V4L_TEST_DRIVERS
+ 
+-source "drivers/media/platform/vivid/Kconfig"
++source "$BACKPORT_DIR/drivers/media/platform/vivid/Kconfig"
+ 
+ config VIDEO_VIM2M
+ 	tristate "Virtual Memory-to-Memory Driver"
+diff --git a/backports/drivers/media/radio/Kconfig b/backports/drivers/media/radio/Kconfig
+index 192f36f..5badccc 100644
+--- a/backports/drivers/media/radio/Kconfig
++++ b/backports/drivers/media/radio/Kconfig
+@@ -19,13 +19,13 @@ config RADIO_SI470X
+ 	bool "Silicon Labs Si470x FM Radio Receiver support"
+ 	depends on VIDEO_V4L2
+ 
+-source "drivers/media/radio/si470x/Kconfig"
++source "$BACKPORT_DIR/drivers/media/radio/si470x/Kconfig"
+ 
+ config RADIO_SI4713
+ 	tristate "Silicon Labs Si4713 FM Radio with RDS Transmitter support"
+ 	depends on VIDEO_V4L2
+ 
+-source "drivers/media/radio/si4713/Kconfig"
++source "$BACKPORT_DIR/drivers/media/radio/si4713/Kconfig"
+ 
+ config RADIO_SI476X
+ 	tristate "Silicon Laboratories Si476x I2C FM Radio"
+@@ -227,7 +227,7 @@ config RADIO_WL1273
+ 	  module will be called radio-wl1273.
+ 
+ # TI's ST based wl128x FM radio
+-source "drivers/media/radio/wl128x/Kconfig"
++source "$BACKPORT_DIR/drivers/media/radio/wl128x/Kconfig"
+ 
+ #
+ # ISA drivers configuration
+diff --git a/backports/drivers/media/rc/Kconfig b/backports/drivers/media/rc/Kconfig
+index ddfab25..81f6e85 100644
+--- a/backports/drivers/media/rc/Kconfig
++++ b/backports/drivers/media/rc/Kconfig
+@@ -4,7 +4,7 @@ config RC_CORE
+ 	depends on INPUT
+ 	default y
+ 
+-source "drivers/media/rc/keymaps/Kconfig"
++source "$BACKPORT_DIR/drivers/media/rc/keymaps/Kconfig"
+ 
+ menuconfig RC_DECODERS
+         bool "Remote controller decoders"
+@@ -343,7 +343,7 @@ config IR_RX51
+ 	   The driver uses omap DM timers for generating the carrier
+ 	   wave and pulses.
+ 
+-source "drivers/media/rc/img-ir/Kconfig"
++source "$BACKPORT_DIR/drivers/media/rc/img-ir/Kconfig"
+ 
+ config RC_LOOPBACK
+ 	tristate "Remote Control Loopback Driver"
+diff --git a/backports/drivers/media/usb/Kconfig b/backports/drivers/media/usb/Kconfig
+index 7496f33..154b12a 100644
+--- a/backports/drivers/media/usb/Kconfig
++++ b/backports/drivers/media/usb/Kconfig
+@@ -10,54 +10,54 @@ if MEDIA_USB_SUPPORT
+ 
+ if MEDIA_CAMERA_SUPPORT
+ 	comment "Webcam devices"
+-source "drivers/media/usb/uvc/Kconfig"
+-source "drivers/media/usb/gspca/Kconfig"
+-source "drivers/media/usb/pwc/Kconfig"
+-source "drivers/media/usb/cpia2/Kconfig"
+-source "drivers/media/usb/zr364xx/Kconfig"
+-source "drivers/media/usb/stkwebcam/Kconfig"
+-source "drivers/media/usb/s2255/Kconfig"
+-source "drivers/media/usb/usbtv/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/uvc/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/gspca/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/pwc/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/cpia2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/zr364xx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/stkwebcam/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/s2255/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/usbtv/Kconfig"
+ endif
+ 
+ if MEDIA_ANALOG_TV_SUPPORT
+ 	comment "Analog TV USB devices"
+-source "drivers/media/usb/pvrusb2/Kconfig"
+-source "drivers/media/usb/hdpvr/Kconfig"
+-source "drivers/media/usb/usbvision/Kconfig"
+-source "drivers/media/usb/stk1160/Kconfig"
+-source "drivers/media/usb/go7007/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/pvrusb2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/hdpvr/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/usbvision/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/stk1160/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/go7007/Kconfig"
+ endif
+ 
+ if (MEDIA_ANALOG_TV_SUPPORT || MEDIA_DIGITAL_TV_SUPPORT)
+ 	comment "Analog/digital TV USB devices"
+-source "drivers/media/usb/au0828/Kconfig"
+-source "drivers/media/usb/cx231xx/Kconfig"
+-source "drivers/media/usb/tm6000/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/au0828/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/cx231xx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/tm6000/Kconfig"
+ endif
+ 
+ 
+ if I2C && MEDIA_DIGITAL_TV_SUPPORT
+ 	comment "Digital TV USB devices"
+-source "drivers/media/usb/dvb-usb/Kconfig"
+-source "drivers/media/usb/dvb-usb-v2/Kconfig"
+-source "drivers/media/usb/ttusb-budget/Kconfig"
+-source "drivers/media/usb/ttusb-dec/Kconfig"
+-source "drivers/media/usb/siano/Kconfig"
+-source "drivers/media/usb/b2c2/Kconfig"
+-source "drivers/media/usb/as102/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/dvb-usb/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/dvb-usb-v2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/ttusb-budget/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/ttusb-dec/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/siano/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/b2c2/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/as102/Kconfig"
+ endif
+ 
+ if (MEDIA_CAMERA_SUPPORT || MEDIA_ANALOG_TV_SUPPORT || MEDIA_DIGITAL_TV_SUPPORT)
+ 	comment "Webcam, TV (analog/digital) USB devices"
+-source "drivers/media/usb/em28xx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/em28xx/Kconfig"
+ endif
+ 
+ if MEDIA_SDR_SUPPORT
+ 	comment "Software defined radio USB devices"
+-source "drivers/media/usb/airspy/Kconfig"
+-source "drivers/media/usb/hackrf/Kconfig"
+-source "drivers/media/usb/msi2500/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/airspy/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/hackrf/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/msi2500/Kconfig"
+ endif
+ 
+ endif #MEDIA_USB_SUPPORT
+diff --git a/backports/drivers/media/usb/gspca/Kconfig b/backports/drivers/media/usb/gspca/Kconfig
+index 3fd94fe..6a9c45f 100644
+--- a/backports/drivers/media/usb/gspca/Kconfig
++++ b/backports/drivers/media/usb/gspca/Kconfig
+@@ -18,9 +18,9 @@ menuconfig USB_GSPCA
+ 
+ if USB_GSPCA && VIDEO_V4L2
+ 
+-source "drivers/media/usb/gspca/m5602/Kconfig"
+-source "drivers/media/usb/gspca/stv06xx/Kconfig"
+-source "drivers/media/usb/gspca/gl860/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/gspca/m5602/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/gspca/stv06xx/Kconfig"
++source "$BACKPORT_DIR/drivers/media/usb/gspca/gl860/Kconfig"
+ 
+ config USB_GSPCA_BENQ
+ 	tristate "Benq USB Camera Driver"
+diff --git a/backports/drivers/net/ethernet/Kconfig b/backports/drivers/net/ethernet/Kconfig
+index eadcb05..b025298 100644
+--- a/backports/drivers/net/ethernet/Kconfig
++++ b/backports/drivers/net/ethernet/Kconfig
+@@ -17,26 +17,26 @@ config MDIO
+ config SUNGEM_PHY
+ 	tristate
+ 
+-source "drivers/net/ethernet/3com/Kconfig"
+-source "drivers/net/ethernet/adaptec/Kconfig"
+-source "drivers/net/ethernet/aeroflex/Kconfig"
+-source "drivers/net/ethernet/agere/Kconfig"
+-source "drivers/net/ethernet/allwinner/Kconfig"
+-source "drivers/net/ethernet/alteon/Kconfig"
+-source "drivers/net/ethernet/altera/Kconfig"
+-source "drivers/net/ethernet/amd/Kconfig"
+-source "drivers/net/ethernet/apm/Kconfig"
+-source "drivers/net/ethernet/apple/Kconfig"
+-source "drivers/net/ethernet/arc/Kconfig"
+-source "drivers/net/ethernet/atheros/Kconfig"
+-source "drivers/net/ethernet/cadence/Kconfig"
+-source "drivers/net/ethernet/adi/Kconfig"
+-source "drivers/net/ethernet/broadcom/Kconfig"
+-source "drivers/net/ethernet/brocade/Kconfig"
+-source "drivers/net/ethernet/calxeda/Kconfig"
+-source "drivers/net/ethernet/chelsio/Kconfig"
+-source "drivers/net/ethernet/cirrus/Kconfig"
+-source "drivers/net/ethernet/cisco/Kconfig"
++#source "drivers/net/ethernet/3com/Kconfig"
++#source "drivers/net/ethernet/adaptec/Kconfig"
++#source "drivers/net/ethernet/aeroflex/Kconfig"
++#source "drivers/net/ethernet/agere/Kconfig"
++#source "drivers/net/ethernet/allwinner/Kconfig"
++#source "drivers/net/ethernet/alteon/Kconfig"
++#source "drivers/net/ethernet/altera/Kconfig"
++#source "drivers/net/ethernet/amd/Kconfig"
++#source "drivers/net/ethernet/apm/Kconfig"
++#source "drivers/net/ethernet/apple/Kconfig"
++#source "drivers/net/ethernet/arc/Kconfig"
++source "$BACKPORT_DIR/drivers/net/ethernet/atheros/Kconfig"
++#source "drivers/net/ethernet/cadence/Kconfig"
++#source "drivers/net/ethernet/adi/Kconfig"
++source "$BACKPORT_DIR/drivers/net/ethernet/broadcom/Kconfig"
++#source "drivers/net/ethernet/brocade/Kconfig"
++#source "drivers/net/ethernet/calxeda/Kconfig"
++#source "drivers/net/ethernet/chelsio/Kconfig"
++#source "drivers/net/ethernet/cirrus/Kconfig"
++#source "drivers/net/ethernet/cisco/Kconfig"
+ 
+ config CX_ECAT
+ 	tristate "Beckhoff CX5020 EtherCAT master support"
+@@ -50,7 +50,7 @@ config CX_ECAT
+ 	  To compile this driver as a module, choose M here. The module
+ 	  will be called ec_bhf.
+ 
+-source "drivers/net/ethernet/davicom/Kconfig"
++#source "drivers/net/ethernet/davicom/Kconfig"
+ 
+ config DNET
+ 	tristate "Dave ethernet support (DNET)"
+@@ -63,20 +63,20 @@ config DNET
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called dnet.
+ 
+-source "drivers/net/ethernet/dec/Kconfig"
+-source "drivers/net/ethernet/dlink/Kconfig"
+-source "drivers/net/ethernet/emulex/Kconfig"
+-source "drivers/net/ethernet/neterion/Kconfig"
+-source "drivers/net/ethernet/faraday/Kconfig"
+-source "drivers/net/ethernet/freescale/Kconfig"
+-source "drivers/net/ethernet/fujitsu/Kconfig"
+-source "drivers/net/ethernet/hisilicon/Kconfig"
+-source "drivers/net/ethernet/hp/Kconfig"
+-source "drivers/net/ethernet/ibm/Kconfig"
+-source "drivers/net/ethernet/intel/Kconfig"
+-source "drivers/net/ethernet/i825xx/Kconfig"
+-source "drivers/net/ethernet/xscale/Kconfig"
+-source "drivers/net/ethernet/icplus/Kconfig"
++#source "drivers/net/ethernet/dec/Kconfig"
++#source "drivers/net/ethernet/dlink/Kconfig"
++#source "drivers/net/ethernet/emulex/Kconfig"
++#source "drivers/net/ethernet/neterion/Kconfig"
++#source "drivers/net/ethernet/faraday/Kconfig"
++#source "drivers/net/ethernet/freescale/Kconfig"
++#source "drivers/net/ethernet/fujitsu/Kconfig"
++#source "drivers/net/ethernet/hisilicon/Kconfig"
++#source "drivers/net/ethernet/hp/Kconfig"
++#source "drivers/net/ethernet/ibm/Kconfig"
++source "$BACKPORT_DIR/drivers/net/ethernet/intel/Kconfig"
++#source "drivers/net/ethernet/i825xx/Kconfig"
++#source "drivers/net/ethernet/xscale/Kconfig"
++#source "drivers/net/ethernet/icplus/Kconfig"
+ 
+ config JME
+ 	tristate "JMicron(R) PCI-Express Gigabit Ethernet support"
+@@ -103,12 +103,12 @@ config LANTIQ_ETOP
+ 	---help---
+ 	  Support for the MII0 inside the Lantiq SoC
+ 
+-source "drivers/net/ethernet/marvell/Kconfig"
+-source "drivers/net/ethernet/mellanox/Kconfig"
+-source "drivers/net/ethernet/micrel/Kconfig"
+-source "drivers/net/ethernet/microchip/Kconfig"
+-source "drivers/net/ethernet/moxa/Kconfig"
+-source "drivers/net/ethernet/myricom/Kconfig"
++#source "drivers/net/ethernet/marvell/Kconfig"
++#source "drivers/net/ethernet/mellanox/Kconfig"
++#source "drivers/net/ethernet/micrel/Kconfig"
++#source "drivers/net/ethernet/microchip/Kconfig"
++#source "drivers/net/ethernet/moxa/Kconfig"
++#source "drivers/net/ethernet/myricom/Kconfig"
+ 
+ config FEALNX
+ 	tristate "Myson MTD-8xx PCI Ethernet support"
+@@ -119,8 +119,8 @@ config FEALNX
+ 	  Say Y here to support the Myson MTD-800 family of PCI-based Ethernet
+ 	  cards. <http://www.myson.com.tw/>
+ 
+-source "drivers/net/ethernet/natsemi/Kconfig"
+-source "drivers/net/ethernet/8390/Kconfig"
++#source "drivers/net/ethernet/natsemi/Kconfig"
++#source "drivers/net/ethernet/8390/Kconfig"
+ 
+ config NET_NETX
+ 	tristate "NetX Ethernet support"
+@@ -132,11 +132,11 @@ config NET_NETX
+ 	  To compile this driver as a module, choose M here. The module
+ 	  will be called netx-eth.
+ 
+-source "drivers/net/ethernet/nuvoton/Kconfig"
+-source "drivers/net/ethernet/nvidia/Kconfig"
+-source "drivers/net/ethernet/nxp/Kconfig"
+-source "drivers/net/ethernet/octeon/Kconfig"
+-source "drivers/net/ethernet/oki-semi/Kconfig"
++#source "drivers/net/ethernet/nuvoton/Kconfig"
++#source "drivers/net/ethernet/nvidia/Kconfig"
++#source "drivers/net/ethernet/nxp/Kconfig"
++#source "drivers/net/ethernet/octeon/Kconfig"
++#source "drivers/net/ethernet/oki-semi/Kconfig"
+ 
+ config ETHOC
+ 	tristate "OpenCores 10/100 Mbps Ethernet MAC support"
+@@ -148,31 +148,31 @@ config ETHOC
+ 	---help---
+ 	  Say Y here if you want to use the OpenCores 10/100 Mbps Ethernet MAC.
+ 
+-source "drivers/net/ethernet/packetengines/Kconfig"
+-source "drivers/net/ethernet/pasemi/Kconfig"
+-source "drivers/net/ethernet/qlogic/Kconfig"
+-source "drivers/net/ethernet/qualcomm/Kconfig"
+-source "drivers/net/ethernet/realtek/Kconfig"
+-source "drivers/net/ethernet/renesas/Kconfig"
+-source "drivers/net/ethernet/rdc/Kconfig"
+-source "drivers/net/ethernet/rocker/Kconfig"
+-source "drivers/net/ethernet/samsung/Kconfig"
+-source "drivers/net/ethernet/seeq/Kconfig"
+-source "drivers/net/ethernet/silan/Kconfig"
+-source "drivers/net/ethernet/sis/Kconfig"
+-source "drivers/net/ethernet/sfc/Kconfig"
+-source "drivers/net/ethernet/sgi/Kconfig"
+-source "drivers/net/ethernet/smsc/Kconfig"
+-source "drivers/net/ethernet/stmicro/Kconfig"
+-source "drivers/net/ethernet/sun/Kconfig"
+-source "drivers/net/ethernet/tehuti/Kconfig"
+-source "drivers/net/ethernet/ti/Kconfig"
+-source "drivers/net/ethernet/tile/Kconfig"
+-source "drivers/net/ethernet/toshiba/Kconfig"
+-source "drivers/net/ethernet/tundra/Kconfig"
+-source "drivers/net/ethernet/via/Kconfig"
+-source "drivers/net/ethernet/wiznet/Kconfig"
+-source "drivers/net/ethernet/xilinx/Kconfig"
+-source "drivers/net/ethernet/xircom/Kconfig"
++#source "drivers/net/ethernet/packetengines/Kconfig"
++#source "drivers/net/ethernet/pasemi/Kconfig"
++#source "drivers/net/ethernet/qlogic/Kconfig"
++#source "drivers/net/ethernet/qualcomm/Kconfig"
++#source "drivers/net/ethernet/realtek/Kconfig"
++#source "drivers/net/ethernet/renesas/Kconfig"
++#source "drivers/net/ethernet/rdc/Kconfig"
++#source "drivers/net/ethernet/rocker/Kconfig"
++#source "drivers/net/ethernet/samsung/Kconfig"
++#source "drivers/net/ethernet/seeq/Kconfig"
++#source "drivers/net/ethernet/silan/Kconfig"
++#source "drivers/net/ethernet/sis/Kconfig"
++#source "drivers/net/ethernet/sfc/Kconfig"
++#source "drivers/net/ethernet/sgi/Kconfig"
++#source "drivers/net/ethernet/smsc/Kconfig"
++#source "drivers/net/ethernet/stmicro/Kconfig"
++#source "drivers/net/ethernet/sun/Kconfig"
++#source "drivers/net/ethernet/tehuti/Kconfig"
++#source "drivers/net/ethernet/ti/Kconfig"
++#source "drivers/net/ethernet/tile/Kconfig"
++#source "drivers/net/ethernet/toshiba/Kconfig"
++#source "drivers/net/ethernet/tundra/Kconfig"
++#source "drivers/net/ethernet/via/Kconfig"
++#source "drivers/net/ethernet/wiznet/Kconfig"
++#source "drivers/net/ethernet/xilinx/Kconfig"
++#source "drivers/net/ethernet/xircom/Kconfig"
+ 
+ endif # ETHERNET
+diff --git a/backports/drivers/net/wireless/Kconfig b/backports/drivers/net/wireless/Kconfig
+index 16604bd..818c54a 100644
+--- a/backports/drivers/net/wireless/Kconfig
++++ b/backports/drivers/net/wireless/Kconfig
+@@ -214,7 +214,7 @@ config USB_NET_RNDIS_WLAN
+ 
+ 	  If you choose to build a module, it'll be called rndis_wlan.
+ 
+-source "drivers/net/wireless/rtl818x/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/rtl818x/Kconfig"
+ 
+ config ADM8211
+ 	tristate "ADMtek ADM8211 support"
+@@ -265,23 +265,23 @@ config MWL8K
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called mwl8k.  If unsure, say N.
+ 
+-source "drivers/net/wireless/ath/Kconfig"
+-source "drivers/net/wireless/b43/Kconfig"
+-source "drivers/net/wireless/b43legacy/Kconfig"
+-source "drivers/net/wireless/brcm80211/Kconfig"
+-source "drivers/net/wireless/hostap/Kconfig"
+-source "drivers/net/wireless/ipw2x00/Kconfig"
+-source "drivers/net/wireless/iwlwifi/Kconfig"
+-source "drivers/net/wireless/iwlegacy/Kconfig"
+-source "drivers/net/wireless/libertas/Kconfig"
+-source "drivers/net/wireless/orinoco/Kconfig"
+-source "drivers/net/wireless/p54/Kconfig"
+-source "drivers/net/wireless/rt2x00/Kconfig"
+-source "drivers/net/wireless/rtlwifi/Kconfig"
+-source "drivers/net/wireless/ti/Kconfig"
+-source "drivers/net/wireless/zd1211rw/Kconfig"
+-source "drivers/net/wireless/mwifiex/Kconfig"
+-source "drivers/net/wireless/cw1200/Kconfig"
+-source "drivers/net/wireless/rsi/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/b43/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/b43legacy/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/brcm80211/Kconfig"
++#source "drivers/net/wireless/hostap/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ipw2x00/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/iwlwifi/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/iwlegacy/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/libertas/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/orinoco/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/p54/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/rt2x00/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/rtlwifi/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ti/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/zd1211rw/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/mwifiex/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/cw1200/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/rsi/Kconfig"
+ 
+ endif # WLAN
+diff --git a/backports/drivers/net/wireless/ath/Kconfig b/backports/drivers/net/wireless/ath/Kconfig
+index ce78260..9f759a5 100644
+--- a/backports/drivers/net/wireless/ath/Kconfig
++++ b/backports/drivers/net/wireless/ath/Kconfig
+@@ -50,13 +50,13 @@ config ATH_REG_DYNAMIC_USER_CERT_TESTING
+ 	  Say N. This should only be enabled on systems
+ 	  undergoing certification testing.
+ 
+-source "drivers/net/wireless/ath/ath5k/Kconfig"
+-source "drivers/net/wireless/ath/ath9k/Kconfig"
+-source "drivers/net/wireless/ath/carl9170/Kconfig"
+-source "drivers/net/wireless/ath/ath6kl/Kconfig"
+-source "drivers/net/wireless/ath/ar5523/Kconfig"
+-source "drivers/net/wireless/ath/wil6210/Kconfig"
+-source "drivers/net/wireless/ath/ath10k/Kconfig"
+-source "drivers/net/wireless/ath/wcn36xx/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/ath5k/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/ath9k/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/carl9170/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/ath6kl/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/ar5523/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/wil6210/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/ath10k/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ath/wcn36xx/Kconfig"
+ 
+ endif
+diff --git a/backports/drivers/net/wireless/ti/Kconfig b/backports/drivers/net/wireless/ti/Kconfig
+index cbe1e7f..b5ef017 100644
+--- a/backports/drivers/net/wireless/ti/Kconfig
++++ b/backports/drivers/net/wireless/ti/Kconfig
+@@ -6,12 +6,12 @@ menuconfig WL_TI
+ 	  family.
+ 
+ if WL_TI
+-source "drivers/net/wireless/ti/wl1251/Kconfig"
+-source "drivers/net/wireless/ti/wl12xx/Kconfig"
+-source "drivers/net/wireless/ti/wl18xx/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ti/wl1251/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ti/wl12xx/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ti/wl18xx/Kconfig"
+ 
+ # keep last for automatic dependencies
+-source "drivers/net/wireless/ti/wlcore/Kconfig"
++source "$BACKPORT_DIR/drivers/net/wireless/ti/wlcore/Kconfig"
+ 
+ config WILINK_PLATFORM_DATA
+ 	bool "TI WiLink platform data"
+diff --git a/backports/drivers/nfc/Kconfig b/backports/drivers/nfc/Kconfig
+index 107714e..b6be9ec 100644
+--- a/backports/drivers/nfc/Kconfig
++++ b/backports/drivers/nfc/Kconfig
+@@ -68,10 +68,10 @@ config NFC_PORT100
+ 
+ 	  If unsure, say N.
+ 
+-source "drivers/nfc/pn544/Kconfig"
+-source "drivers/nfc/microread/Kconfig"
+-source "drivers/nfc/nfcmrvl/Kconfig"
+-source "drivers/nfc/st21nfca/Kconfig"
+-source "drivers/nfc/st21nfcb/Kconfig"
+-source "drivers/nfc/nxp-nci/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/pn544/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/microread/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/nfcmrvl/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/st21nfca/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/st21nfcb/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/nxp-nci/Kconfig"
+ endmenu
+diff --git a/backports/net/bluetooth/Kconfig b/backports/net/bluetooth/Kconfig
+index 257c2a8..1b1ecb9 100644
+--- a/backports/net/bluetooth/Kconfig
++++ b/backports/net/bluetooth/Kconfig
+@@ -45,13 +45,13 @@ config BT_BREDR
+ 	depends on BT
+ 	default y
+ 
+-source "net/bluetooth/rfcomm/Kconfig"
++source "$BACKPORT_DIR/net/bluetooth/rfcomm/Kconfig"
+ 
+-source "net/bluetooth/bnep/Kconfig"
++source "$BACKPORT_DIR/net/bluetooth/bnep/Kconfig"
+ 
+-source "net/bluetooth/cmtp/Kconfig"
++source "$BACKPORT_DIR/net/bluetooth/cmtp/Kconfig"
+ 
+-source "net/bluetooth/hidp/Kconfig"
++source "$BACKPORT_DIR/net/bluetooth/hidp/Kconfig"
+ 
+ config BT_LE
+ 	bool "Bluetooth Low Energy (LE) features"
+@@ -99,4 +99,4 @@ config BT_DEBUGFS
+ 	  Provide extensive information about internal Bluetooth states
+ 	  in debugfs.
+ 
+-source "drivers/bluetooth/Kconfig"
++source "$BACKPORT_DIR/drivers/bluetooth/Kconfig"
+diff --git a/backports/net/ieee802154/Kconfig b/backports/net/ieee802154/Kconfig
+index 1370d5b..8f85f73c 100644
+--- a/backports/net/ieee802154/Kconfig
++++ b/backports/net/ieee802154/Kconfig
+@@ -20,6 +20,6 @@ config IEEE802154_SOCKET
+ 	  for 802.15.4 dataframes. Also RAW socket interface to build MAC
+ 	  header from userspace.
+ 
+-source "net/ieee802154/6lowpan/Kconfig"
++source "$BACKPORT_DIR/net/ieee802154/6lowpan/Kconfig"
+ 
+ endif
+diff --git a/backports/net/nfc/Kconfig b/backports/net/nfc/Kconfig
+index 6e0fa0c..ca65809 100644
+--- a/backports/net/nfc/Kconfig
++++ b/backports/net/nfc/Kconfig
+@@ -28,7 +28,7 @@ config NFC_DIGITAL
+ 	  To compile this support as a module, choose M here: the module will
+ 	  be called nfc_digital.
+ 
+-source "net/nfc/nci/Kconfig"
+-source "net/nfc/hci/Kconfig"
++source "$BACKPORT_DIR/net/nfc/nci/Kconfig"
++source "$BACKPORT_DIR/net/nfc/hci/Kconfig"
+ 
+-source "drivers/nfc/Kconfig"
++source "$BACKPORT_DIR/drivers/nfc/Kconfig"
+-- 
+2.5.1
+

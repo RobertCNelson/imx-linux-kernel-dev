@@ -1,0 +1,196 @@
+From f39574947e783e63562fb5d8b26caf914379f550 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:13 -0500
+Subject: [PATCH 75/97] apply backport SmPL patch
+ collateral-evolutions/network/0027-genl-const/genl-const.cocci
+
+---
+ backports/drivers/net/wireless/mac80211_hwsim.c |  4 ++--
+ backports/net/ieee802154/netlink.c              |  4 ++--
+ backports/net/ieee802154/nl802154.c             | 16 ++++++++++------
+ backports/net/nfc/netlink.c                     |  4 ++--
+ backports/net/wireless/nl80211.c                | 16 ++++++++++------
+ 5 files changed, 26 insertions(+), 18 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/mac80211_hwsim.c b/backports/drivers/net/wireless/mac80211_hwsim.c
+index 5499a68..639962f 100644
+--- a/backports/drivers/net/wireless/mac80211_hwsim.c
++++ b/backports/drivers/net/wireless/mac80211_hwsim.c
+@@ -570,7 +570,7 @@ enum hwsim_multicast_groups {
+ 	HWSIM_MCGRP_CONFIG,
+ };
+ 
+-static const struct genl_multicast_group hwsim_mcgrps[] = {
++static __genl_const struct genl_multicast_group hwsim_mcgrps[] = {
+ 	[HWSIM_MCGRP_CONFIG] = { .name = "config", },
+ };
+ 
+@@ -3026,7 +3026,7 @@ done:
+ }
+ 
+ /* Generic Netlink operations array */
+-static const struct genl_ops hwsim_ops[] = {
++static __genl_const struct genl_ops hwsim_ops[] = {
+ 	{
+ 		.cmd = HWSIM_CMD_REGISTER,
+ 		.policy = hwsim_genl_policy,
+diff --git a/backports/net/ieee802154/netlink.c b/backports/net/ieee802154/netlink.c
+index c8133c0..7b292fe 100644
+--- a/backports/net/ieee802154/netlink.c
++++ b/backports/net/ieee802154/netlink.c
+@@ -97,7 +97,7 @@ int ieee802154_nl_reply(struct sk_buff *msg, struct genl_info *info)
+ 	return genlmsg_reply(msg, info);
+ }
+ 
+-static const struct genl_ops ieee8021154_ops[] = {
++static __genl_const struct genl_ops ieee8021154_ops[] = {
+ 	/* see nl-phy.c */
+ 	IEEE802154_DUMP(IEEE802154_LIST_PHY, ieee802154_list_phy,
+ 			ieee802154_dump_phy),
+@@ -134,7 +134,7 @@ static const struct genl_ops ieee8021154_ops[] = {
+ 		      ieee802154_llsec_del_seclevel),
+ };
+ 
+-static const struct genl_multicast_group ieee802154_mcgrps[] = {
++static __genl_const struct genl_multicast_group ieee802154_mcgrps[] = {
+ 	[IEEE802154_COORD_MCGRP] = { .name = IEEE802154_MCAST_COORD_NAME, },
+ 	[IEEE802154_BEACON_MCGRP] = { .name = IEEE802154_MCAST_BEACON_NAME, },
+ };
+diff --git a/backports/net/ieee802154/nl802154.c b/backports/net/ieee802154/nl802154.c
+index e0f260e..de99a19 100644
+--- a/backports/net/ieee802154/nl802154.c
++++ b/backports/net/ieee802154/nl802154.c
+@@ -26,10 +26,12 @@
+ #include "rdev-ops.h"
+ #include "core.h"
+ 
+-static int nl802154_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static int nl802154_pre_doit(__genl_const struct genl_ops *ops,
++			     struct sk_buff *skb,
+ 			     struct genl_info *info);
+ 
+-static void nl802154_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static void nl802154_post_doit(__genl_const struct genl_ops *ops,
++			       struct sk_buff *skb,
+ 			       struct genl_info *info);
+ 
+ /* the netlink family */
+@@ -49,7 +51,7 @@ enum nl802154_multicast_groups {
+ 	NL802154_MCGRP_CONFIG,
+ };
+ 
+-static const struct genl_multicast_group nl802154_mcgrps[] = {
++static __genl_const struct genl_multicast_group nl802154_mcgrps[] = {
+ 	[NL802154_MCGRP_CONFIG] = { .name = "config", },
+ };
+ 
+@@ -804,7 +806,8 @@ static int nl802154_set_lbt_mode(struct sk_buff *skb, struct genl_info *info)
+ #define NL802154_FLAG_NEED_WPAN_DEV_UP	(NL802154_FLAG_NEED_WPAN_DEV |\
+ 					 NL802154_FLAG_CHECK_NETDEV_UP)
+ 
+-static int nl802154_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static int nl802154_pre_doit(__genl_const struct genl_ops *ops,
++			     struct sk_buff *skb,
+ 			     struct genl_info *info)
+ {
+ 	struct cfg802154_registered_device *rdev;
+@@ -866,7 +869,8 @@ static int nl802154_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
+ 	return 0;
+ }
+ 
+-static void nl802154_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static void nl802154_post_doit(__genl_const struct genl_ops *ops,
++			       struct sk_buff *skb,
+ 			       struct genl_info *info)
+ {
+ 	if (info->user_ptr[1]) {
+@@ -884,7 +888,7 @@ static void nl802154_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
+ 		rtnl_unlock();
+ }
+ 
+-static const struct genl_ops nl802154_ops[] = {
++static __genl_const struct genl_ops nl802154_ops[] = {
+ 	{
+ 		.cmd = NL802154_CMD_GET_WPAN_PHY,
+ 		.doit = nl802154_get_wpan_phy,
+diff --git a/backports/net/nfc/netlink.c b/backports/net/nfc/netlink.c
+index 2692488..a66729d 100644
+--- a/backports/net/nfc/netlink.c
++++ b/backports/net/nfc/netlink.c
+@@ -28,7 +28,7 @@
+ #include "nfc.h"
+ #include "llcp.h"
+ 
+-static const struct genl_multicast_group nfc_genl_mcgrps[] = {
++static __genl_const struct genl_multicast_group nfc_genl_mcgrps[] = {
+ 	{ .name = NFC_GENL_MCAST_EVENT_NAME, },
+ };
+ 
+@@ -1492,7 +1492,7 @@ static int nfc_genl_se_io(struct sk_buff *skb, struct genl_info *info)
+ 	return nfc_se_io(dev, se_idx, apdu, apdu_len, se_io_cb, ctx);
+ }
+ 
+-static const struct genl_ops nfc_genl_ops[] = {
++static __genl_const struct genl_ops nfc_genl_ops[] = {
+ 	{
+ 		.cmd = NFC_CMD_GET_DEVICE,
+ 		.doit = nfc_genl_get_device,
+diff --git a/backports/net/wireless/nl80211.c b/backports/net/wireless/nl80211.c
+index ee52923..bf146b6 100644
+--- a/backports/net/wireless/nl80211.c
++++ b/backports/net/wireless/nl80211.c
+@@ -31,9 +31,11 @@ static int nl80211_crypto_settings(struct cfg80211_registered_device *rdev,
+ 				   struct cfg80211_crypto_settings *settings,
+ 				   int cipher_limit);
+ 
+-static int nl80211_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static int nl80211_pre_doit(__genl_const struct genl_ops *ops,
++			    struct sk_buff *skb,
+ 			    struct genl_info *info);
+-static void nl80211_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static void nl80211_post_doit(__genl_const struct genl_ops *ops,
++			      struct sk_buff *skb,
+ 			      struct genl_info *info);
+ 
+ /* the netlink family */
+@@ -58,7 +60,7 @@ enum nl80211_multicast_groups {
+ 	NL80211_MCGRP_TESTMODE /* keep last - ifdef! */
+ };
+ 
+-static const struct genl_multicast_group nl80211_mcgrps[] = {
++static __genl_const struct genl_multicast_group nl80211_mcgrps[] = {
+ 	[NL80211_MCGRP_CONFIG] = { .name = NL80211_MULTICAST_GROUP_CONFIG },
+ 	[NL80211_MCGRP_SCAN] = { .name = NL80211_MULTICAST_GROUP_SCAN },
+ 	[NL80211_MCGRP_REGULATORY] = { .name = NL80211_MULTICAST_GROUP_REG },
+@@ -10247,7 +10249,8 @@ static int nl80211_tdls_cancel_channel_switch(struct sk_buff *skb,
+ 					 NL80211_FLAG_CHECK_NETDEV_UP)
+ #define NL80211_FLAG_CLEAR_SKB		0x20
+ 
+-static int nl80211_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static int nl80211_pre_doit(__genl_const struct genl_ops *ops,
++			    struct sk_buff *skb,
+ 			    struct genl_info *info)
+ {
+ 	struct cfg80211_registered_device *rdev;
+@@ -10316,7 +10319,8 @@ static int nl80211_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
+ 	return 0;
+ }
+ 
+-static void nl80211_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
++static void nl80211_post_doit(__genl_const struct genl_ops *ops,
++			      struct sk_buff *skb,
+ 			      struct genl_info *info)
+ {
+ 	if (info->user_ptr[1]) {
+@@ -10345,7 +10349,7 @@ static void nl80211_post_doit(const struct genl_ops *ops, struct sk_buff *skb,
+ 	}
+ }
+ 
+-static const struct genl_ops nl80211_ops[] = {
++static __genl_const struct genl_ops nl80211_ops[] = {
+ 	{
+ 		.cmd = NL80211_CMD_GET_WIPHY,
+ 		.doit = nl80211_get_wiphy,
+-- 
+2.5.1
+

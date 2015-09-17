@@ -1,0 +1,27 @@
+From be7d77324071e05628b488852b49f6495b6d789c Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:23 -0500
+Subject: [PATCH 31/97] apply backport patch
+ collateral-evolutions/network/0014-netlink_seq/net_wireless_nl80211.patch
+
+---
+ backports/net/wireless/nl80211.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/net/wireless/nl80211.c b/backports/net/wireless/nl80211.c
+index a4c8eeb..c223195 100644
+--- a/backports/net/wireless/nl80211.c
++++ b/backports/net/wireless/nl80211.c
+@@ -6649,7 +6649,9 @@ static int nl80211_dump_scan(struct sk_buff *skb, struct netlink_callback *cb)
+ 	spin_lock_bh(&rdev->bss_lock);
+ 	cfg80211_bss_expire(rdev);
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0))
+ 	cb->seq = rdev->bss_generation;
++#endif
+ 
+ 	list_for_each_entry(scan, &rdev->bss_list, list) {
+ 		if (++idx <= start)
+-- 
+2.5.1
+

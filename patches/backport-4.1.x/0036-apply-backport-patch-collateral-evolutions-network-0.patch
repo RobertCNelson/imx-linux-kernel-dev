@@ -1,0 +1,29 @@
+From bf344624a767242ff05a7b5b73a11a1ef592fd0b Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:25 -0500
+Subject: [PATCH 36/97] apply backport patch
+ collateral-evolutions/network/0020-tty-termios/net_bluetooth_rfcomm_tty.patch
+
+---
+ backports/net/bluetooth/rfcomm/tty.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/net/bluetooth/rfcomm/tty.c b/backports/net/bluetooth/rfcomm/tty.c
+index 8e385a0..2e23cc1 100644
+--- a/backports/net/bluetooth/rfcomm/tty.c
++++ b/backports/net/bluetooth/rfcomm/tty.c
+@@ -869,7 +869,11 @@ static int rfcomm_tty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned l
+ 
+ static void rfcomm_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+ {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0))
+ 	struct ktermios *new = &tty->termios;
++#else
++	struct ktermios *new = tty->termios;
++#endif
+ 	int old_baud_rate = tty_termios_baud_rate(old);
+ 	int new_baud_rate = tty_termios_baud_rate(new);
+ 
+-- 
+2.5.1
+

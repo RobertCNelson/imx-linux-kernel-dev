@@ -1,0 +1,29 @@
+From 145f2808f28dbe24fb3407c861440e5c1933973d Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:17 -0500
+Subject: [PATCH 15/97] apply backport patch
+ collateral-evolutions/media/0003-devnode_param_type/rc.patch
+
+---
+ backports/drivers/media/rc/rc-main.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/media/rc/rc-main.c b/backports/drivers/media/rc/rc-main.c
+index f8c5e47..0269c37 100644
+--- a/backports/drivers/media/rc/rc-main.c
++++ b/backports/drivers/media/rc/rc-main.c
+@@ -761,7 +761,11 @@ static void ir_close(struct input_dev *idev)
+ }
+ 
+ /* class for /sys/class/rc */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+ static char *rc_devnode(struct device *dev, umode_t *mode)
++#else
++static char *rc_devnode(struct device *dev, mode_t *mode)
++#endif
+ {
+ 	return kasprintf(GFP_KERNEL, "rc/%s", dev_name(dev));
+ }
+-- 
+2.5.1
+

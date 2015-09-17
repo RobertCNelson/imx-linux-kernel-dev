@@ -1,0 +1,94 @@
+From e32f1caeee859542293afdf11b5df8f510faaaa2 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:24 -0500
+Subject: [PATCH 35/97] apply backport patch
+ collateral-evolutions/network/0018-pv-trace-fixes/net_mac80211_trace.patch
+
+---
+ backports/net/mac80211/trace.c | 38 +++++++++++++++++++++++++++++---------
+ 1 file changed, 29 insertions(+), 9 deletions(-)
+
+diff --git a/backports/net/mac80211/trace.c b/backports/net/mac80211/trace.c
+index edfe0c1..b63bfbd 100644
+--- a/backports/net/mac80211/trace.c
++++ b/backports/net/mac80211/trace.c
+@@ -16,12 +16,16 @@ void __sdata_info(const char *fmt, ...)
+ 	struct va_format vaf = {
+ 		.fmt = fmt,
+ 	};
+-	va_list args;
++	va_list args, args2;
+ 
+ 	va_start(args, fmt);
+-	vaf.va = &args;
+ 
++	va_copy(args2, args);
++	vaf.va = &args2;
+ 	pr_info("%pV", &vaf);
++	va_end(args2);
++
++	vaf.va = &args;
+ 	trace_mac80211_info(&vaf);
+ 	va_end(args);
+ }
+@@ -34,10 +38,16 @@ void __sdata_dbg(bool print, const char *fmt, ...)
+ 	va_list args;
+ 
+ 	va_start(args, fmt);
+-	vaf.va = &args;
+ 
+-	if (print)
++	if (print) {
++		va_list args2;
++
++		va_copy(args2, args);
++		vaf.va = &args2;
+ 		pr_debug("%pV", &vaf);
++		va_end(args2);
++	}
++	vaf.va = &args;
+ 	trace_mac80211_dbg(&vaf);
+ 	va_end(args);
+ }
+@@ -47,12 +57,16 @@ void __sdata_err(const char *fmt, ...)
+ 	struct va_format vaf = {
+ 		.fmt = fmt,
+ 	};
+-	va_list args;
++	va_list args, args2;
+ 
+ 	va_start(args, fmt);
+-	vaf.va = &args;
+ 
++	va_copy(args2, args);
++	vaf.va = &args2;
+ 	pr_err("%pV", &vaf);
++	va_end(args2);
++
++	vaf.va = &args;
+ 	trace_mac80211_err(&vaf);
+ 	va_end(args);
+ }
+@@ -65,10 +79,16 @@ void __wiphy_dbg(struct wiphy *wiphy, bool print, const char *fmt, ...)
+ 	va_list args;
+ 
+ 	va_start(args, fmt);
+-	vaf.va = &args;
+ 
+-	if (print)
+-		wiphy_dbg(wiphy, "%pV", &vaf);
++	if (print) {
++		va_list args2;
++
++		va_copy(args2, args);
++		vaf.va = &args2;
++		pr_debug("%pV", &vaf);
++		va_end(args2);
++	}
++	vaf.va = &args;
+ 	trace_mac80211_dbg(&vaf);
+ 	va_end(args);
+ }
+-- 
+2.5.1
+

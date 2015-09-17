@@ -1,0 +1,25 @@
+From 3c3cb14ae6d38d74b08a04f4fc62661e6cc21b92 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:26 -0500
+Subject: [PATCH 40/97] apply backport patch
+ collateral-evolutions/network/0022-define-tracing/cfg80211.patch
+
+---
+ backports/net/wireless/trace.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/backports/net/wireless/trace.c b/backports/net/wireless/trace.c
+index 95f997f..36f9b88 100644
+--- a/backports/net/wireless/trace.c
++++ b/backports/net/wireless/trace.c
+@@ -1,4 +1,7 @@
+ #include <linux/module.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,1,0)
++#include <linux/interrupt.h>
++#endif
+ 
+ #ifndef __CHECKER__
+ #define CREATE_TRACE_POINTS
+-- 
+2.5.1
+

@@ -1,0 +1,25 @@
+From af2f1c23e9a58f067910b7b84270181471c1c004 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:17 -0500
+Subject: [PATCH 16/97] apply backport patch
+ collateral-evolutions/media/0004-missing-include/airspy.patch
+
+---
+ backports/drivers/media/usb/airspy/airspy.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/backports/drivers/media/usb/airspy/airspy.c b/backports/drivers/media/usb/airspy/airspy.c
+index 4069234..7ae8d41 100644
+--- a/backports/drivers/media/usb/airspy/airspy.c
++++ b/backports/drivers/media/usb/airspy/airspy.c
+@@ -16,6 +16,7 @@
+ 
+ #include <linux/module.h>
+ #include <linux/slab.h>
++#include <linux/mm.h>
+ #include <linux/usb.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-ioctl.h>
+-- 
+2.5.1
+

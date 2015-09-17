@@ -1,0 +1,40 @@
+From b1f76d029f2cdca22305dc1adcddbfec64f5bd33 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:14 -0500
+Subject: [PATCH 08/97] apply backport patch
+ 0000-upstream-backport-changes/0005-uapi-compromise/mwifiex.patch
+
+---
+ backports/drivers/net/wireless/mwifiex/decl.h   | 2 +-
+ backports/drivers/net/wireless/mwifiex/sta_rx.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/mwifiex/decl.h b/backports/drivers/net/wireless/mwifiex/decl.h
+index 38f24e0..e16e564 100644
+--- a/backports/drivers/net/wireless/mwifiex/decl.h
++++ b/backports/drivers/net/wireless/mwifiex/decl.h
+@@ -26,7 +26,7 @@
+ #include <linux/wait.h>
+ #include <linux/timer.h>
+ #include <linux/ieee80211.h>
+-#include <uapi/linux/if_arp.h>
++#include <linux/if_arp.h>
+ #include <net/mac80211.h>
+ 
+ 
+diff --git a/backports/drivers/net/wireless/mwifiex/sta_rx.c b/backports/drivers/net/wireless/mwifiex/sta_rx.c
+index b8729c9..e93e8f7 100644
+--- a/backports/drivers/net/wireless/mwifiex/sta_rx.c
++++ b/backports/drivers/net/wireless/mwifiex/sta_rx.c
+@@ -17,7 +17,7 @@
+  * this warranty disclaimer.
+  */
+ 
+-#include <uapi/linux/ipv6.h>
++#include <linux/ipv6.h>
+ #include <net/ndisc.h>
+ #include "decl.h"
+ #include "ioctl.h"
+-- 
+2.5.1
+

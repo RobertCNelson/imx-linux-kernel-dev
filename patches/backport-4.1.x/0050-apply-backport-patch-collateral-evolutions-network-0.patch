@@ -1,0 +1,63 @@
+From 2058c58144e6ed772329bbde5115c0dd00361717 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:30 -0500
+Subject: [PATCH 50/97] apply backport patch
+ collateral-evolutions/network/0033-ndo_vlan_rx_vid/cdc_mbim.patch
+
+---
+ backports/drivers/net/usb/cdc_mbim.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/backports/drivers/net/usb/cdc_mbim.c b/backports/drivers/net/usb/cdc_mbim.c
+index 0b8037d..35cd525 100644
+--- a/backports/drivers/net/usb/cdc_mbim.c
++++ b/backports/drivers/net/usb/cdc_mbim.c
+@@ -70,7 +70,13 @@ static int cdc_mbim_wdm_manage_power(struct usb_interface *intf, int status)
+ 	return cdc_mbim_manage_power(dev, status);
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+ static int cdc_mbim_rx_add_vid(struct net_device *netdev, __be16 proto, u16 vid)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
++static int cdc_mbim_rx_add_vid(struct net_device *netdev, u16 vid)
++#else
++static void cdc_mbim_rx_add_vid(struct net_device *netdev, u16 vid)
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) */
+ {
+ 	struct usbnet *dev = netdev_priv(netdev);
+ 	struct cdc_mbim_state *info = (void *)&dev->data;
+@@ -78,13 +84,21 @@ static int cdc_mbim_rx_add_vid(struct net_device *netdev, __be16 proto, u16 vid)
+ 	/* creation of this VLAN is a request to tag IP session 0 */
+ 	if (vid == MBIM_IPS0_VID)
+ 		info->flags |= FLAG_IPS0_VLAN;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+ 	else
+ 		if (vid >= 512)	/* we don't map these to MBIM session */
+ 			return -EINVAL;
+ 	return 0;
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0) */
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+ static int cdc_mbim_rx_kill_vid(struct net_device *netdev, __be16 proto, u16 vid)
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
++static int cdc_mbim_rx_kill_vid(struct net_device *netdev, u16 vid)
++#else
++static void cdc_mbim_rx_kill_vid(struct net_device *netdev, u16 vid)
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) */
+ {
+ 	struct usbnet *dev = netdev_priv(netdev);
+ 	struct cdc_mbim_state *info = (void *)&dev->data;
+@@ -92,7 +106,9 @@ static int cdc_mbim_rx_kill_vid(struct net_device *netdev, __be16 proto, u16 vid
+ 	/* this is a request for an untagged IP session 0 */
+ 	if (vid == MBIM_IPS0_VID)
+ 		info->flags &= ~FLAG_IPS0_VLAN;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+ 	return 0;
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0) */
+ }
+ 
+ static const struct net_device_ops cdc_mbim_netdev_ops = {
+-- 
+2.5.1
+

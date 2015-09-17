@@ -1,0 +1,59 @@
+From c3ac72219cdde3bd6ffc579efb9b43265d873212 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:29 -0500
+Subject: [PATCH 80/97] apply backport SmPL patch
+ collateral-evolutions/network/0037-ethtool_get_module/get_module.cocci
+
+---
+ backports/drivers/net/ethernet/intel/igb/igb_ethtool.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c b/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
+index b6c4876..b76494a 100644
+--- a/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
++++ b/backports/drivers/net/ethernet/intel/igb/igb_ethtool.c
+@@ -2753,7 +2753,9 @@ static int igb_set_eee(struct net_device *netdev,
+ 
+ 	return 0;
+ }
+-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0) */
++#endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
++/* LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0) */
+ 
+ static int igb_get_module_info(struct net_device *netdev,
+ 			       struct ethtool_modinfo *modinfo)
+@@ -2796,7 +2798,9 @@ static int igb_get_module_info(struct net_device *netdev,
+ 
+ 	return 0;
+ }
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ static int igb_get_module_eeprom(struct net_device *netdev,
+ 				 struct ethtool_eeprom *ee, u8 *data)
+ {
+@@ -2835,6 +2839,7 @@ static int igb_get_module_eeprom(struct net_device *netdev,
+ 
+ 	return 0;
+ }
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ 
+ static int igb_ethtool_begin(struct net_device *netdev)
+ {
+@@ -3086,8 +3091,12 @@ static const struct ethtool_ops igb_ethtool_ops = {
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+ 	.set_eee		= igb_set_eee,
+ #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0) */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ 	.get_module_info	= igb_get_module_info,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)
+ 	.get_module_eeprom	= igb_get_module_eeprom,
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0) */
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+ 	.get_rxfh_indir_size	= igb_get_rxfh_indir_size,
+ 	.get_rxfh		= igb_get_rxfh,
+-- 
+2.5.1
+

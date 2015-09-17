@@ -1,0 +1,29 @@
+From 2d31d5dd4c3f7bb426521a78db90004755fd7763 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:16 -0500
+Subject: [PATCH 13/97] apply backport patch
+ collateral-evolutions/media/0003-devnode_param_type/ddbridge.patch
+
+---
+ backports/drivers/media/pci/ddbridge/ddbridge-core.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/media/pci/ddbridge/ddbridge-core.c b/backports/drivers/media/pci/ddbridge/ddbridge-core.c
+index 9e3492e..9c00ff1 100644
+--- a/backports/drivers/media/pci/ddbridge/ddbridge-core.c
++++ b/backports/drivers/media/pci/ddbridge/ddbridge-core.c
+@@ -1476,7 +1476,11 @@ static const struct file_operations ddb_fops = {
+ 	.open           = ddb_open,
+ };
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
+ static char *ddb_devnode(struct device *device, umode_t *mode)
++#else
++static char *ddb_devnode(struct device *device, mode_t *mode)
++#endif
+ {
+ 	struct ddb *dev = dev_get_drvdata(device);
+ 
+-- 
+2.5.1
+

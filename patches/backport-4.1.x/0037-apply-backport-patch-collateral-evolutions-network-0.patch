@@ -1,0 +1,29 @@
+From f9a7771bf2a357af95ec8305860704fab7e8ad9b Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:25 -0500
+Subject: [PATCH 37/97] apply backport patch
+ collateral-evolutions/network/0021-umode_t-api-change/ath10k.patch
+
+---
+ backports/drivers/net/wireless/ath/ath10k/spectral.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ath/ath10k/spectral.c b/backports/drivers/net/wireless/ath/ath10k/spectral.c
+index d22addf..8732673 100644
+--- a/backports/drivers/net/wireless/ath/ath10k/spectral.c
++++ b/backports/drivers/net/wireless/ath/ath10k/spectral.c
+@@ -469,7 +469,11 @@ static const struct file_operations fops_spectral_bins = {
+ 
+ static struct dentry *create_buf_file_handler(const char *filename,
+ 					      struct dentry *parent,
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0))
+ 					      umode_t mode,
++#else
++					      int mode,
++#endif
+ 					      struct rchan_buf *buf,
+ 					      int *is_global)
+ {
+-- 
+2.5.1
+

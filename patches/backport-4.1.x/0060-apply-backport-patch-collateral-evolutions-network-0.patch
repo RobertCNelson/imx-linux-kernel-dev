@@ -1,0 +1,29 @@
+From a47438dae75b5d643c191ab587462d2734e8a00f Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:34 -0500
+Subject: [PATCH 60/97] apply backport patch
+ collateral-evolutions/network/0049-no-pfmemalloc/igb.patch
+
+---
+ backports/drivers/net/ethernet/intel/igb/igb_main.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/backports/drivers/net/ethernet/intel/igb/igb_main.c b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+index 444f769..4b2ddeb 100644
+--- a/backports/drivers/net/ethernet/intel/igb/igb_main.c
++++ b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+@@ -6596,7 +6596,11 @@ static void igb_reuse_rx_page(struct igb_ring *rx_ring,
+ 
+ static inline bool igb_page_is_reserved(struct page *page)
+ {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+ 	return (page_to_nid(page) != numa_mem_id()) || page->pfmemalloc;
++#else
++	return (page_to_nid(page) != numa_mem_id());
++#endif
+ }
+ 
+ static bool igb_can_reuse_rx_page(struct igb_rx_buffer *rx_buffer,
+-- 
+2.5.1
+

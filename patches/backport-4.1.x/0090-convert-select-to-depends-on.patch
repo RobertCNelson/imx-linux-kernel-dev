@@ -1,0 +1,2322 @@
+From 717abc8415c5f6aed82bc2289c5514ff1111d84c Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:45:48 -0500
+Subject: [PATCH 90/97] convert select to depends on
+
+---
+ backports/drivers/bluetooth/Kconfig                | 16 +++---
+ backports/drivers/media/Kconfig                    |  6 +-
+ backports/drivers/media/dvb-frontends/Kconfig      |  6 +-
+ backports/drivers/media/i2c/Kconfig                | 10 ++--
+ backports/drivers/media/pci/bt8xx/Kconfig          |  2 +-
+ backports/drivers/media/pci/cx18/Kconfig           |  4 +-
+ backports/drivers/media/pci/cx23885/Kconfig        |  6 +-
+ backports/drivers/media/pci/cx25821/Kconfig        |  4 +-
+ backports/drivers/media/pci/cx88/Kconfig           |  4 +-
+ backports/drivers/media/pci/ivtv/Kconfig           | 10 ++--
+ backports/drivers/media/pci/pluto2/Kconfig         |  2 +-
+ backports/drivers/media/pci/saa7134/Kconfig        |  4 +-
+ backports/drivers/media/pci/saa7164/Kconfig        |  4 +-
+ backports/drivers/media/pci/smipcie/Kconfig        |  2 +-
+ backports/drivers/media/pci/solo6x10/Kconfig       | 10 ++--
+ backports/drivers/media/platform/Kconfig           | 10 ++--
+ .../drivers/media/platform/exynos4-is/Kconfig      |  6 +-
+ .../drivers/media/platform/marvell-ccic/Kconfig    |  2 +-
+ backports/drivers/media/platform/vivid/Kconfig     | 10 ++--
+ backports/drivers/media/radio/Kconfig              | 12 ++--
+ backports/drivers/media/rc/Kconfig                 | 44 +++++++--------
+ backports/drivers/media/tuners/Kconfig             |  8 +--
+ backports/drivers/media/usb/as102/Kconfig          |  2 +-
+ backports/drivers/media/usb/au0828/Kconfig         |  2 +-
+ backports/drivers/media/usb/cx231xx/Kconfig        |  4 +-
+ backports/drivers/media/usb/em28xx/Kconfig         |  2 +-
+ backports/drivers/media/usb/go7007/Kconfig         |  2 +-
+ backports/drivers/media/usb/tm6000/Kconfig         |  2 +-
+ backports/drivers/media/usb/ttusb-dec/Kconfig      |  2 +-
+ backports/drivers/media/usb/usbtv/Kconfig          |  2 +-
+ backports/drivers/net/ethernet/Kconfig             | 20 +++----
+ backports/drivers/net/ethernet/atheros/Kconfig     | 18 +++---
+ backports/drivers/net/ethernet/broadcom/Kconfig    | 46 +++++++--------
+ backports/drivers/net/ethernet/intel/Kconfig       | 18 +++---
+ backports/drivers/net/ieee802154/Kconfig           |  2 +-
+ backports/drivers/net/usb/Kconfig                  | 38 ++++++-------
+ backports/drivers/net/wireless/Kconfig             | 66 +++++++++++-----------
+ backports/drivers/net/wireless/ath/ar5523/Kconfig  |  2 +-
+ backports/drivers/net/wireless/ath/ath10k/Kconfig  |  2 +-
+ backports/drivers/net/wireless/ath/ath5k/Kconfig   |  6 +-
+ backports/drivers/net/wireless/ath/ath9k/Kconfig   | 14 ++---
+ .../drivers/net/wireless/ath/carl9170/Kconfig      |  8 +--
+ backports/drivers/net/wireless/b43/Kconfig         |  4 +-
+ backports/drivers/net/wireless/b43legacy/Kconfig   |  4 +-
+ backports/drivers/net/wireless/brcm80211/Kconfig   | 10 ++--
+ backports/drivers/net/wireless/ipw2x00/Kconfig     | 34 +++++------
+ backports/drivers/net/wireless/iwlegacy/Kconfig    |  8 +--
+ backports/drivers/net/wireless/iwlwifi/Kconfig     |  6 +-
+ backports/drivers/net/wireless/libertas/Kconfig    |  6 +-
+ backports/drivers/net/wireless/mwifiex/Kconfig     |  6 +-
+ backports/drivers/net/wireless/orinoco/Kconfig     | 14 ++---
+ backports/drivers/net/wireless/p54/Kconfig         |  6 +-
+ backports/drivers/net/wireless/rt2x00/Kconfig      | 20 +++----
+ backports/drivers/net/wireless/rtl818x/Kconfig     |  4 +-
+ backports/drivers/net/wireless/rtlwifi/Kconfig     | 10 ++--
+ backports/drivers/net/wireless/ti/wl1251/Kconfig   |  4 +-
+ backports/drivers/net/wireless/ti/wlcore/Kconfig   |  4 +-
+ backports/drivers/net/wireless/zd1211rw/Kconfig    |  2 +-
+ backports/drivers/nfc/microread/Kconfig            |  2 +-
+ backports/drivers/nfc/pn544/Kconfig                |  2 +-
+ backports/drivers/nfc/st21nfca/Kconfig             |  2 +-
+ backports/net/bluetooth/Kconfig                    | 14 ++---
+ backports/net/bluetooth/bnep/Kconfig               |  2 +-
+ backports/net/bluetooth/hidp/Kconfig               |  2 +-
+ backports/net/mac80211/Kconfig                     | 16 +++---
+ backports/net/mac802154/Kconfig                    | 10 ++--
+ backports/net/nfc/Kconfig                          |  4 +-
+ backports/net/nfc/hci/Kconfig                      |  2 +-
+ backports/net/nfc/nci/Kconfig                      |  2 +-
+ 69 files changed, 320 insertions(+), 320 deletions(-)
+
+diff --git a/backports/drivers/bluetooth/Kconfig b/backports/drivers/bluetooth/Kconfig
+index d92ba5f..7a13ba0 100644
+--- a/backports/drivers/bluetooth/Kconfig
++++ b/backports/drivers/bluetooth/Kconfig
+@@ -9,7 +9,7 @@ config BACKPORT_BT_INTEL
+ config BACKPORT_BT_BCM
+ 	tristate
+ 	depends on !BT_BCM
+-	select FW_LOADER
++	depends on FW_LOADER
+ 
+ config BACKPORT_BT_HCIBTUSB
+ 	tristate "HCI USB driver"
+@@ -77,7 +77,7 @@ config BACKPORT_BT_HCIUART_BCSP
+ 	bool "BCSP protocol support"
+ 	depends on !BT_HCIUART_BCSP
+ 	depends on BACKPORT_BT_HCIUART
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	help
+ 	  BCSP (BlueCore Serial Protocol) is serial protocol for communication
+ 	  between Bluetooth device and host. This protocol is required for non
+@@ -152,7 +152,7 @@ config BACKPORT_BT_HCIBCM203X
+ 	tristate "HCI BCM203x USB driver"
+ 	depends on !BT_HCIBCM203X
+ 	depends on USB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  Bluetooth HCI BCM203x USB driver.
+ 	  This driver provides the firmware loading mechanism for the Broadcom
+@@ -177,7 +177,7 @@ config BACKPORT_BT_HCIBFUSB
+ 	tristate "HCI BlueFRITZ! USB driver"
+ 	depends on !BT_HCIBFUSB
+ 	depends on USB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  Bluetooth HCI BlueFRITZ! USB driver.
+ 	  This driver provides support for Bluetooth USB devices with AVM
+@@ -205,7 +205,7 @@ config BACKPORT_BT_HCIBT3C
+ 	tristate "HCI BT3C (PC Card) driver"
+ 	depends on !BT_HCIBT3C
+ 	depends on PCMCIA
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  Bluetooth HCI BACKPORT_BT3C (PC Card) driver.
+ 	  This driver provides support for Bluetooth PCMCIA devices with
+@@ -273,8 +273,8 @@ config BACKPORT_BT_MRVL_SDIO
+ 	tristate "Marvell BT-over-SDIO driver"
+ 	depends on !BT_MRVL_SDIO
+ 	depends on BACKPORT_BT_MRVL && MMC
+-	select FW_LOADER
+-	select WANT_DEV_COREDUMP
++	depends on FW_LOADER
++	depends on WANT_DEV_COREDUMP
+ 	help
+ 	  The driver for Marvell Bluetooth chipsets with SDIO interface.
+ 
+@@ -289,7 +289,7 @@ config BACKPORT_BT_ATH3K
+ 	tristate "Atheros firmware download driver"
+ 	depends on !BT_ATH3K
+ 	depends on BACKPORT_BT_HCIBTUSB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  Bluetooth firmware download driver.
+ 	  This driver loads the firmware into the Atheros Bluetooth
+diff --git a/backports/drivers/media/Kconfig b/backports/drivers/media/Kconfig
+index 1c2d5b1..9ed3d8d 100644
+--- a/backports/drivers/media/Kconfig
++++ b/backports/drivers/media/Kconfig
+@@ -147,7 +147,7 @@ config BACKPORT_DVB_CORE
+ 	depends on BACKPORT_MEDIA_SUPPORT
+ 	depends on BACKPORT_MEDIA_DIGITAL_TV_SUPPORT
+ 	default y
+-	select CRC32
++	depends on CRC32
+ 
+ config BACKPORT_DVB_NET
+ 	bool "DVB Network Support"
+@@ -203,8 +203,8 @@ config BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	depends on !MEDIA_SUBDRV_AUTOSELECT
+ 	depends on MEDIA_ANALOG_TV_SUPPORT || MEDIA_DIGITAL_TV_SUPPORT || BACKPORT_MEDIA_CAMERA_SUPPORT || MEDIA_SDR_SUPPORT
+ 	depends on HAS_IOMEM
+-	select I2C
+-	select I2C_MUX
++	depends on I2C
++	depends on I2C_MUX
+ 	default y
+ 	help
+ 	  By default, a media driver auto-selects all possible ancillary
+diff --git a/backports/drivers/media/dvb-frontends/Kconfig b/backports/drivers/media/dvb-frontends/Kconfig
+index 6295ab0..c2874d8 100644
+--- a/backports/drivers/media/dvb-frontends/Kconfig
++++ b/backports/drivers/media/dvb-frontends/Kconfig
+@@ -501,7 +501,7 @@ config BACKPORT_DVB_RTL2830
+ 	tristate "Realtek RTL2830 DVB-T"
+ 	depends on !DVB_RTL2830
+ 	depends on BACKPORT_DVB_CORE && I2C && I2C_MUX
+-	select REGMAP
++	depends on REGMAP
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  Say Y when you want to support this frontend.
+@@ -510,7 +510,7 @@ config BACKPORT_DVB_RTL2832
+ 	tristate "Realtek RTL2832 DVB-T"
+ 	depends on !DVB_RTL2832
+ 	depends on BACKPORT_DVB_CORE && I2C && I2C_MUX
+-	select REGMAP
++	depends on REGMAP
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  Say Y when you want to support this frontend.
+@@ -857,7 +857,7 @@ config BACKPORT_DVB_LGS8GXX
+ 	tristate "Legend Silicon LGS8913/LGS8GL5/LGS8GXX DMB-TH demodulator"
+ 	depends on !DVB_LGS8GXX
+ 	depends on BACKPORT_DVB_CORE && I2C
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  A DMB-TH tuner module. Say Y when you want to support this frontend.
+diff --git a/backports/drivers/media/i2c/Kconfig b/backports/drivers/media/i2c/Kconfig
+index e80b661..a4dbfa0 100644
+--- a/backports/drivers/media/i2c/Kconfig
++++ b/backports/drivers/media/i2c/Kconfig
+@@ -229,7 +229,7 @@ config BACKPORT_VIDEO_ADV7842
+ 	tristate "Analog Devices ADV7842 decoder"
+ 	depends on !VIDEO_ADV7842
+ 	depends on VIDEO_V4L2 && I2C && BACKPORT_VIDEO_V4L2_SUBDEV_API
+-	select HDMI
++	depends on HDMI
+ 	---help---
+ 	  Support for the Analog Devices ADV7842 video decoder.
+ 
+@@ -611,7 +611,7 @@ config BACKPORT_VIDEO_MT9V032
+ 	depends on !VIDEO_MT9V032
+ 	depends on I2C && VIDEO_V4L2 && BACKPORT_VIDEO_V4L2_SUBDEV_API
+ 	depends on BACKPORT_MEDIA_CAMERA_SUPPORT
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	---help---
+ 	  This is a Video4Linux2 sensor-level driver for the Micron
+ 	  MT9V032 752x480 CMOS sensor.
+@@ -703,7 +703,7 @@ config BACKPORT_VIDEO_LM3560
+ 	depends on !VIDEO_LM3560
+ 	depends on I2C && VIDEO_V4L2 && BACKPORT_MEDIA_CONTROLLER
+ 	depends on BACKPORT_MEDIA_CAMERA_SUPPORT
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	---help---
+ 	  This is a driver for the lm3560 dual flash controllers. It controls
+ 	  flash, torch LEDs.
+@@ -713,7 +713,7 @@ config BACKPORT_VIDEO_LM3646
+ 	depends on !VIDEO_LM3646
+ 	depends on I2C && VIDEO_V4L2 && BACKPORT_MEDIA_CONTROLLER
+ 	depends on BACKPORT_MEDIA_CAMERA_SUPPORT
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	---help---
+ 	  This is a driver for the lm3646 dual flash controllers. It controls
+ 	  flash, torch LEDs.
+@@ -751,7 +751,7 @@ config BACKPORT_VIDEO_SAA6752HS
+ 	tristate "Philips SAA6752HS MPEG-2 Audio/Video Encoder"
+ 	depends on !VIDEO_SAA6752HS
+ 	depends on BACKPORT_VIDEO_V4L2 && I2C
+-	select CRC32
++	depends on CRC32
+ 	---help---
+ 	  Support for the Philips SAA6752HS MPEG-2 video and MPEG-audio/AC-3
+ 	  audio encoder with multiplexer.
+diff --git a/backports/drivers/media/pci/bt8xx/Kconfig b/backports/drivers/media/pci/bt8xx/Kconfig
+index 31508e8..61b6601 100644
+--- a/backports/drivers/media/pci/bt8xx/Kconfig
++++ b/backports/drivers/media/pci/bt8xx/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_BT848
+ 	tristate "BT848 Video For Linux"
+ 	depends on !VIDEO_BT848
+ 	depends on BACKPORT_VIDEO_DEV && PCI && I2C && VIDEO_V4L2
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEOBUF_DMA_SG
+ 	depends on BACKPORT_RC_CORE
+ 	depends on BACKPORT_MEDIA_RADIO_SUPPORT
+diff --git a/backports/drivers/media/pci/cx18/Kconfig b/backports/drivers/media/pci/cx18/Kconfig
+index 44dad9d..38f3d39 100644
+--- a/backports/drivers/media/pci/cx18/Kconfig
++++ b/backports/drivers/media/pci/cx18/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_CX18
+ 	tristate "Conexant cx23418 MPEG encoder support"
+ 	depends on !VIDEO_CX18
+ 	depends on VIDEO_V4L2 && BACKPORT_DVB_CORE && PCI && I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEOBUF_VMALLOC
+ 	depends on BACKPORT_RC_CORE
+ 	select BACKPORT_VIDEO_TUNER
+@@ -28,7 +28,7 @@ config BACKPORT_VIDEO_CX18_ALSA
+ 	tristate "Conexant 23418 DMA audio support"
+ 	depends on !VIDEO_CX18_ALSA
+ 	depends on BACKPORT_VIDEO_CX18 && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This is a video4linux driver for direct (DMA) audio on
+ 	  Conexant 23418 based TV cards using ALSA.
+diff --git a/backports/drivers/media/pci/cx23885/Kconfig b/backports/drivers/media/pci/cx23885/Kconfig
+index c80ba38..9bfa892 100644
+--- a/backports/drivers/media/pci/cx23885/Kconfig
++++ b/backports/drivers/media/pci/cx23885/Kconfig
+@@ -2,8 +2,8 @@ config BACKPORT_VIDEO_CX23885
+ 	tristate "Conexant cx23885 (2388x successor) support"
+ 	depends on !VIDEO_CX23885
+ 	depends on DVB_CORE && BACKPORT_VIDEO_DEV && PCI && I2C && INPUT && SND
+-	select SND_PCM
+-	select I2C_ALGOBIT
++	depends on SND_PCM
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_VIDEO_TVEEPROM
+ 	depends on BACKPORT_RC_CORE
+@@ -54,7 +54,7 @@ config BACKPORT_MEDIA_ALTERA_CI
+ 	tristate "Altera FPGA based CI module"
+ 	depends on !MEDIA_ALTERA_CI
+ 	depends on VIDEO_CX23885 && BACKPORT_DVB_CORE
+-	select ALTERA_STAPL
++	depends on ALTERA_STAPL
+ 	---help---
+ 	  An Altera FPGA CI module for NetUP Dual DVB-T/C RF CI card.
+ 
+diff --git a/backports/drivers/media/pci/cx25821/Kconfig b/backports/drivers/media/pci/cx25821/Kconfig
+index 46a7dcf..22befcc 100644
+--- a/backports/drivers/media/pci/cx25821/Kconfig
++++ b/backports/drivers/media/pci/cx25821/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_CX25821
+ 	tristate "Conexant cx25821 support"
+ 	depends on !VIDEO_CX25821
+ 	depends on BACKPORT_VIDEO_DEV && PCI && I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEOBUF2_DMA_SG
+ 	---help---
+ 	  This is a video4linux driver for Conexant 25821 based
+@@ -15,7 +15,7 @@ config BACKPORT_VIDEO_CX25821_ALSA
+ 	tristate "Conexant 25821 DMA audio support"
+ 	depends on !VIDEO_CX25821_ALSA
+ 	depends on BACKPORT_VIDEO_CX25821 && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This is a video4linux driver for direct (DMA) audio on
+ 	  Conexant 25821 based capture cards using ALSA.
+diff --git a/backports/drivers/media/pci/cx88/Kconfig b/backports/drivers/media/pci/cx88/Kconfig
+index b75fb4d..b7c89db 100644
+--- a/backports/drivers/media/pci/cx88/Kconfig
++++ b/backports/drivers/media/pci/cx88/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_CX88
+ 	tristate "Conexant 2388x (bt878 successor) support"
+ 	depends on !VIDEO_CX88
+ 	depends on BACKPORT_VIDEO_DEV && PCI && I2C && RC_CORE
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEOBUF2_DMA_SG
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_VIDEO_TVEEPROM
+@@ -18,7 +18,7 @@ config BACKPORT_VIDEO_CX88_ALSA
+ 	tristate "Conexant 2388x DMA audio support"
+ 	depends on !VIDEO_CX88_ALSA
+ 	depends on BACKPORT_VIDEO_CX88 && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This is a video4linux driver for direct (DMA) audio on
+ 	  Conexant 2388x based TV cards using ALSA.
+diff --git a/backports/drivers/media/pci/ivtv/Kconfig b/backports/drivers/media/pci/ivtv/Kconfig
+index 1193083..ffeb54b 100644
+--- a/backports/drivers/media/pci/ivtv/Kconfig
++++ b/backports/drivers/media/pci/ivtv/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_IVTV
+ 	tristate "Conexant cx23416/cx23415 MPEG encoder/decoder support"
+ 	depends on !VIDEO_IVTV
+ 	depends on BACKPORT_VIDEO_V4L2 && PCI && I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	depends on BACKPORT_RC_CORE
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_VIDEO_TVEEPROM
+@@ -33,7 +33,7 @@ config BACKPORT_VIDEO_IVTV_ALSA
+ 	tristate "Conexant cx23415/cx23416 ALSA interface for PCM audio capture"
+ 	depends on !VIDEO_IVTV_ALSA
+ 	depends on BACKPORT_VIDEO_IVTV && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This driver provides an ALSA interface as another method for user
+ 	  applications to obtain PCM audio data from Conexant cx23415/cx23416
+@@ -50,9 +50,9 @@ config BACKPORT_VIDEO_FB_IVTV
+ 	tristate "Conexant cx23415 framebuffer support"
+ 	depends on !VIDEO_FB_IVTV
+ 	depends on BACKPORT_VIDEO_IVTV && FB
+-	select FB_CFB_FILLRECT
+-	select FB_CFB_COPYAREA
+-	select FB_CFB_IMAGEBLIT
++	depends on FB_CFB_FILLRECT
++	depends on FB_CFB_COPYAREA
++	depends on FB_CFB_IMAGEBLIT
+ 	---help---
+ 	  This is a framebuffer driver for the Conexant cx23415 MPEG
+ 	  encoder/decoder.
+diff --git a/backports/drivers/media/pci/pluto2/Kconfig b/backports/drivers/media/pci/pluto2/Kconfig
+index 3862ea8..ec3459d 100644
+--- a/backports/drivers/media/pci/pluto2/Kconfig
++++ b/backports/drivers/media/pci/pluto2/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_DVB_PLUTO2
+ 	tristate "Pluto2 cards"
+ 	depends on !DVB_PLUTO2
+ 	depends on BACKPORT_DVB_CORE && PCI && I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_DVB_TDA1004X
+ 	help
+ 	  Support for PCI cards based on the Pluto2 FPGA like the Satelco
+diff --git a/backports/drivers/media/pci/saa7134/Kconfig b/backports/drivers/media/pci/saa7134/Kconfig
+index 94204f2..d5253d5 100644
+--- a/backports/drivers/media/pci/saa7134/Kconfig
++++ b/backports/drivers/media/pci/saa7134/Kconfig
+@@ -5,7 +5,7 @@ config BACKPORT_VIDEO_SAA7134
+ 	select BACKPORT_VIDEOBUF2_DMA_SG
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_VIDEO_TVEEPROM
+-	select CRC32
++	depends on CRC32
+ 	select VIDEO_SAA6588 if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	select VIDEO_SAA6752HS if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	---help---
+@@ -19,7 +19,7 @@ config BACKPORT_VIDEO_SAA7134_ALSA
+ 	tristate "Philips SAA7134 DMA audio support"
+ 	depends on !VIDEO_SAA7134_ALSA
+ 	depends on BACKPORT_VIDEO_SAA7134 && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This is a video4linux driver for direct (DMA) audio in
+ 	  Philips SAA713x based TV cards using ALSA
+diff --git a/backports/drivers/media/pci/saa7164/Kconfig b/backports/drivers/media/pci/saa7164/Kconfig
+index a629693..28969cb 100644
+--- a/backports/drivers/media/pci/saa7164/Kconfig
++++ b/backports/drivers/media/pci/saa7164/Kconfig
+@@ -2,8 +2,8 @@ config BACKPORT_VIDEO_SAA7164
+ 	tristate "NXP SAA7164 support"
+ 	depends on !VIDEO_SAA7164
+ 	depends on DVB_CORE && BACKPORT_VIDEO_DEV && PCI && I2C
+-	select I2C_ALGOBIT
+-	select FW_LOADER
++	depends on I2C_ALGOBIT
++	depends on FW_LOADER
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_VIDEO_TVEEPROM
+ 	select BACKPORT_VIDEOBUF_DVB
+diff --git a/backports/drivers/media/pci/smipcie/Kconfig b/backports/drivers/media/pci/smipcie/Kconfig
+index a4f8ff6..d20a37e 100644
+--- a/backports/drivers/media/pci/smipcie/Kconfig
++++ b/backports/drivers/media/pci/smipcie/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_DVB_SMIPCIE
+ 	tristate "SMI PCIe DVBSky cards"
+ 	depends on !DVB_SMIPCIE
+ 	depends on BACKPORT_DVB_CORE && PCI && I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select DVB_M88DS3103 if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	select DVB_SI2168 if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	select DVB_TS2020 if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+diff --git a/backports/drivers/media/pci/solo6x10/Kconfig b/backports/drivers/media/pci/solo6x10/Kconfig
+index eeb9482..307665c 100644
+--- a/backports/drivers/media/pci/solo6x10/Kconfig
++++ b/backports/drivers/media/pci/solo6x10/Kconfig
+@@ -3,13 +3,13 @@ config BACKPORT_VIDEO_SOLO6X10
+ 	depends on !VIDEO_SOLO6X10
+ 	depends on PCI && BACKPORT_VIDEO_DEV && SND && I2C
+ 	depends on HAS_DMA
+-	select BITREVERSE
+-	select FONT_SUPPORT
+-	select FONT_8x16
++	depends on BITREVERSE
++	depends on FONT_SUPPORT
++	depends on FONT_8x16
+ 	select BACKPORT_VIDEOBUF2_DMA_SG
+ 	select BACKPORT_VIDEOBUF2_DMA_CONTIG
+-	select SND_PCM
+-	select FONT_8x16
++	depends on SND_PCM
++	depends on FONT_8x16
+ 	---help---
+ 	  This driver supports the Bluecherry H.264 and MPEG-4 hardware
+ 	  compression capture cards and other Softlogic-based ones.
+diff --git a/backports/drivers/media/platform/Kconfig b/backports/drivers/media/platform/Kconfig
+index d296751..a78dec1 100644
+--- a/backports/drivers/media/platform/Kconfig
++++ b/backports/drivers/media/platform/Kconfig
+@@ -95,10 +95,10 @@ config BACKPORT_VIDEO_OMAP3
+ 	depends on !VIDEO_OMAP3
+ 	depends on VIDEO_V4L2 && I2C && BACKPORT_VIDEO_V4L2_SUBDEV_API && ARCH_OMAP3
+ 	depends on HAS_DMA
+-	select ARM_DMA_USE_IOMMU
+-	select OMAP_IOMMU
++	depends on ARM_DMA_USE_IOMMU
++	depends on OMAP_IOMMU
+ 	select BACKPORT_VIDEOBUF2_DMA_CONTIG
+-	select MFD_SYSCON
++	depends on MFD_SYSCON
+ 	---help---
+ 	  Driver for an OMAP 3 camera controller.
+ 
+@@ -151,11 +151,11 @@ config BACKPORT_VIDEO_CODA
+ 	depends on !VIDEO_CODA
+ 	depends on BACKPORT_VIDEO_DEV && VIDEO_V4L2 && ARCH_MXC
+ 	depends on HAS_DMA
+-	select SRAM
++	depends on SRAM
+ 	select BACKPORT_VIDEOBUF2_DMA_CONTIG
+ 	select BACKPORT_VIDEOBUF2_VMALLOC
+ 	select BACKPORT_V4L2_MEM2MEM_DEV
+-	select GENERIC_ALLOCATOR
++	depends on GENERIC_ALLOCATOR
+ 	---help---
+ 	   Coda is a range of video codec IPs that supports
+ 	   H.264, MPEG-4, and other video formats.
+diff --git a/backports/drivers/media/platform/exynos4-is/Kconfig b/backports/drivers/media/platform/exynos4-is/Kconfig
+index 0772f578..9dcd77c 100644
+--- a/backports/drivers/media/platform/exynos4-is/Kconfig
++++ b/backports/drivers/media/platform/exynos4-is/Kconfig
+@@ -22,7 +22,7 @@ config BACKPORT_VIDEO_S5P_FIMC
+ 	depends on HAS_DMA
+ 	select BACKPORT_VIDEOBUF2_DMA_CONTIG
+ 	select BACKPORT_V4L2_MEM2MEM_DEV
+-	select MFD_SYSCON
++	depends on MFD_SYSCON
+ 	select BACKPORT_VIDEO_EXYNOS4_IS_COMMON
+ 	help
+ 	  This is a V4L2 driver for Samsung S5P and EXYNOS4 SoC camera host
+@@ -35,7 +35,7 @@ config BACKPORT_VIDEO_S5P_MIPI_CSIS
+ 	tristate "S5P/EXYNOS MIPI-CSI2 receiver (MIPI-CSIS) driver"
+ 	depends on !VIDEO_S5P_MIPI_CSIS
+ 	depends on REGULATOR
+-	select GENERIC_PHY
++	depends on GENERIC_PHY
+ 	help
+ 	  This is a V4L2 driver for Samsung S5P and EXYNOS4 SoC MIPI-CSI2
+ 	  receiver (MIPI-CSIS) devices.
+@@ -66,7 +66,7 @@ config BACKPORT_VIDEO_EXYNOS4_FIMC_IS
+ 	depends on HAS_DMA
+ 	select BACKPORT_VIDEOBUF2_DMA_CONTIG
+ 	depends on OF
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  This is a V4L2 driver for Samsung EXYNOS4x12 SoC series
+ 	  FIMC-IS (Imaging Subsystem).
+diff --git a/backports/drivers/media/platform/marvell-ccic/Kconfig b/backports/drivers/media/platform/marvell-ccic/Kconfig
+index 338b433..a9445d4 100644
+--- a/backports/drivers/media/platform/marvell-ccic/Kconfig
++++ b/backports/drivers/media/platform/marvell-ccic/Kconfig
+@@ -18,7 +18,7 @@ config BACKPORT_VIDEO_MMP_CAMERA
+ 	depends on ARCH_MMP && I2C && BACKPORT_VIDEO_V4L2
+ 	depends on HAS_DMA && BROKEN
+ 	select BACKPORT_VIDEO_OV7670
+-	select I2C_GPIO
++	depends on I2C_GPIO
+ 	select BACKPORT_VIDEOBUF2_DMA_SG
+ 	---help---
+ 	  This is a Video4Linux2 driver for the integrated camera
+diff --git a/backports/drivers/media/platform/vivid/Kconfig b/backports/drivers/media/platform/vivid/Kconfig
+index 05e4383..5dda312 100644
+--- a/backports/drivers/media/platform/vivid/Kconfig
++++ b/backports/drivers/media/platform/vivid/Kconfig
+@@ -2,11 +2,11 @@ config BACKPORT_VIDEO_VIVID
+ 	tristate "Virtual Video Test Driver"
+ 	depends on !VIDEO_VIVID
+ 	depends on BACKPORT_VIDEO_DEV && VIDEO_V4L2 && !SPARC32 && !SPARC64 && FB
+-	select FONT_SUPPORT
+-	select FONT_8x16
+-	select FB_CFB_FILLRECT
+-	select FB_CFB_COPYAREA
+-	select FB_CFB_IMAGEBLIT
++	depends on FONT_SUPPORT
++	depends on FONT_8x16
++	depends on FB_CFB_FILLRECT
++	depends on FB_CFB_COPYAREA
++	depends on FB_CFB_IMAGEBLIT
+ 	select BACKPORT_VIDEOBUF2_VMALLOC
+ 	default n
+ 	---help---
+diff --git a/backports/drivers/media/radio/Kconfig b/backports/drivers/media/radio/Kconfig
+index 1cb52ec..65591c5 100644
+--- a/backports/drivers/media/radio/Kconfig
++++ b/backports/drivers/media/radio/Kconfig
+@@ -37,7 +37,7 @@ config BACKPORT_RADIO_SI476X
+ 	depends on I2C && BACKPORT_VIDEO_V4L2
+ 	depends on MFD_SI476X_CORE
+ 	depends on SND_SOC
+-	select SND_SOC_SI476X
++	depends on SND_SOC_SI476X
+ 	---help---
+ 	  Choose Y here if you have this FM radio chip.
+ 
+@@ -231,9 +231,9 @@ config BACKPORT_RADIO_WL1273
+ 	tristate "Texas Instruments WL1273 I2C FM Radio"
+ 	depends on !RADIO_WL1273
+ 	depends on I2C && BACKPORT_VIDEO_V4L2
+-	select MFD_CORE
+-	select MFD_WL1273_CORE
+-	select FW_LOADER
++	depends on MFD_CORE
++	depends on MFD_WL1273_CORE
++	depends on FW_LOADER
+ 	---help---
+ 	  Choose Y here if you have this FM radio chip.
+ 
+@@ -405,8 +405,8 @@ config BACKPORT_RADIO_MIROPCM20
+ 	tristate "miroSOUND PCM20 radio"
+ 	depends on !RADIO_MIROPCM20
+ 	depends on ISA && ISA_DMA_API && BACKPORT_VIDEO_V4L2 && SND
+-	select SND_ISA
+-	select SND_MIRO
++	depends on SND_ISA
++	depends on SND_MIRO
+ 	---help---
+ 	  Choose Y here if you have this FM radio card. You also need to enable
+ 	  the ALSA sound system. This choice automatically selects the ALSA
+diff --git a/backports/drivers/media/rc/Kconfig b/backports/drivers/media/rc/Kconfig
+index 1293b83..cf08499 100644
+--- a/backports/drivers/media/rc/Kconfig
++++ b/backports/drivers/media/rc/Kconfig
+@@ -42,7 +42,7 @@ config BACKPORT_IR_NEC_DECODER
+ 	tristate "Enable IR raw decoder for the NEC protocol"
+ 	depends on !IR_NEC_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -53,7 +53,7 @@ config BACKPORT_IR_RC5_DECODER
+ 	tristate "Enable IR raw decoder for the RC-5 protocol"
+ 	depends on !IR_RC5_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -64,7 +64,7 @@ config BACKPORT_IR_RC6_DECODER
+ 	tristate "Enable IR raw decoder for the RC6 protocol"
+ 	depends on !IR_RC6_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -75,7 +75,7 @@ config BACKPORT_IR_JVC_DECODER
+ 	tristate "Enable IR raw decoder for the JVC protocol"
+ 	depends on !IR_JVC_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -86,7 +86,7 @@ config BACKPORT_IR_SONY_DECODER
+ 	tristate "Enable IR raw decoder for the Sony protocol"
+ 	depends on !IR_SONY_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -118,7 +118,7 @@ config BACKPORT_IR_MCE_KBD_DECODER
+ 	tristate "Enable IR raw decoder for the MCE keyboard/mouse protocol"
+ 	depends on !IR_MCE_KBD_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -130,7 +130,7 @@ config BACKPORT_IR_XMP_DECODER
+ 	tristate "Enable IR raw decoder for the XMP protocol"
+ 	depends on !IR_XMP_DECODER
+ 	depends on BACKPORT_RC_CORE
+-	select BITREVERSE
++	depends on BITREVERSE
+ 	default y
+ 
+ 	---help---
+@@ -150,7 +150,7 @@ config BACKPORT_RC_ATI_REMOTE
+ 	depends on !RC_ATI_REMOTE
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	help
+ 	   Say Y here if you want to use an X10 based USB remote control.
+ 	   These are RF remotes with USB receivers.
+@@ -196,7 +196,7 @@ config BACKPORT_IR_IMON
+ 	depends on !IR_IMON
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use a SoundGraph iMON (aka Antec Veris)
+ 	   IR Receiver and/or LCD/VFD/VGA display.
+@@ -209,7 +209,7 @@ config BACKPORT_IR_MCEUSB
+ 	depends on !IR_MCEUSB
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use a Windows Media Center Edition
+ 	   eHome Infrared Transceiver.
+@@ -275,9 +275,9 @@ config BACKPORT_IR_REDRAT3
+ 	depends on !IR_REDRAT3
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select NEW_LEDS
+-	select LEDS_CLASS
+-	select USB
++	depends on NEW_LEDS
++	depends on LEDS_CLASS
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use a RedRat3 Infrared Transceiver.
+ 
+@@ -289,7 +289,7 @@ config BACKPORT_IR_STREAMZAP
+ 	depends on !IR_STREAMZAP
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use a Streamzap PC Remote
+ 	   Infrared Receiver.
+@@ -302,9 +302,9 @@ config BACKPORT_IR_WINBOND_CIR
+ 	depends on !IR_WINBOND_CIR
+ 	depends on X86 && PNP
+ 	depends on BACKPORT_RC_CORE
+-	select NEW_LEDS
+-	select LEDS_CLASS
+-	select BITREVERSE
++	depends on NEW_LEDS
++	depends on LEDS_CLASS
++	depends on BITREVERSE
+ 	---help---
+ 	   Say Y here if you want to use the IR remote functionality found
+ 	   in some Winbond SuperI/O chips. Currently only the WPCD376I
+@@ -319,7 +319,7 @@ config BACKPORT_IR_IGORPLUGUSB
+ 	depends on !IR_IGORPLUGUSB
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use the IgorPlug-USB IR Receiver by
+ 	   Igor Cesko. This device is included on the Fit-PC2.
+@@ -335,7 +335,7 @@ config BACKPORT_IR_IGUANA
+ 	depends on !IR_IGUANA
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
++	depends on USB
+ 	---help---
+ 	   Say Y here if you want to use the IguanaWorks USB IR Transceiver.
+ 	   Both infrared receive and send are supported. If you want to
+@@ -352,9 +352,9 @@ config BACKPORT_IR_TTUSBIR
+ 	depends on !IR_TTUSBIR
+ 	depends on USB_ARCH_HAS_HCD
+ 	depends on BACKPORT_RC_CORE
+-	select USB
+-	select NEW_LEDS
+-	select LEDS_CLASS
++	depends on USB
++	depends on NEW_LEDS
++	depends on LEDS_CLASS
+ 	---help---
+ 	   Say Y here if you want to use the TechnoTrend USB IR Receiver. The
+ 	   driver can control the led.
+diff --git a/backports/drivers/media/tuners/Kconfig b/backports/drivers/media/tuners/Kconfig
+index d7e916e..08dba93 100644
+--- a/backports/drivers/media/tuners/Kconfig
++++ b/backports/drivers/media/tuners/Kconfig
+@@ -231,7 +231,7 @@ config BACKPORT_MEDIA_TUNER_TDA18212
+ 	tristate "NXP TDA18212 silicon tuner"
+ 	depends on !MEDIA_TUNER_TDA18212
+ 	depends on BACKPORT_MEDIA_SUPPORT && I2C
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  NXP TDA18212 silicon tuner driver.
+@@ -240,7 +240,7 @@ config BACKPORT_MEDIA_TUNER_E4000
+ 	tristate "Elonics E4000 silicon tuner"
+ 	depends on !MEDIA_TUNER_E4000
+ 	depends on BACKPORT_MEDIA_SUPPORT && I2C
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  Elonics E4000 silicon tuner driver.
+@@ -257,7 +257,7 @@ config BACKPORT_MEDIA_TUNER_M88RS6000T
+ 	tristate "Montage M88RS6000 internal tuner"
+ 	depends on !MEDIA_TUNER_M88RS6000T
+ 	depends on BACKPORT_MEDIA_SUPPORT && I2C
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  Montage M88RS6000 internal tuner.
+@@ -282,7 +282,7 @@ config BACKPORT_MEDIA_TUNER_IT913X
+ 	tristate "ITE Tech IT913x silicon tuner"
+ 	depends on !MEDIA_TUNER_IT913X
+ 	depends on BACKPORT_MEDIA_SUPPORT && I2C
+-	select REGMAP_I2C
++	depends on REGMAP_I2C
+ 	default m if !MEDIA_SUBDRV_AUTOSELECT
+ 	help
+ 	  ITE Tech IT913x silicon tuner driver.
+diff --git a/backports/drivers/media/usb/as102/Kconfig b/backports/drivers/media/usb/as102/Kconfig
+index 41aa4c4..ba706d1 100644
+--- a/backports/drivers/media/usb/as102/Kconfig
++++ b/backports/drivers/media/usb/as102/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_DVB_AS102
+ 	tristate "Abilis AS102 DVB receiver"
+ 	depends on !DVB_AS102
+ 	depends on BACKPORT_DVB_CORE && USB && I2C && INPUT
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	help
+ 	  Choose Y or M here if you have a device containing an AS102
+ 
+diff --git a/backports/drivers/media/usb/au0828/Kconfig b/backports/drivers/media/usb/au0828/Kconfig
+index ba72ea2..d94b0de 100644
+--- a/backports/drivers/media/usb/au0828/Kconfig
++++ b/backports/drivers/media/usb/au0828/Kconfig
+@@ -3,7 +3,7 @@ config BACKPORT_VIDEO_AU0828
+ 	tristate "Auvitek AU0828 support"
+ 	depends on !VIDEO_AU0828
+ 	depends on I2C && INPUT && BACKPORT_DVB_CORE && USB
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT
+ 	select BACKPORT_VIDEO_TVEEPROM
+ 	select BACKPORT_VIDEOBUF2_VMALLOC
+ 	select DVB_AU8522_DTV if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+diff --git a/backports/drivers/media/usb/cx231xx/Kconfig b/backports/drivers/media/usb/cx231xx/Kconfig
+index 79e16f6..2dded61 100644
+--- a/backports/drivers/media/usb/cx231xx/Kconfig
++++ b/backports/drivers/media/usb/cx231xx/Kconfig
+@@ -8,7 +8,7 @@ config BACKPORT_VIDEO_CX231XX
+ 	select BACKPORT_VIDEOBUF_VMALLOC
+ 	select BACKPORT_VIDEO_CX25840
+ 	select BACKPORT_VIDEO_CX2341X
+-	select I2C_MUX
++	depends on I2C_MUX
+ 
+ 	---help---
+ 	  This is a video4linux driver for Conexant 231xx USB based TV cards.
+@@ -34,7 +34,7 @@ config BACKPORT_VIDEO_CX231XX_ALSA
+ 	tristate "Conexant Cx231xx ALSA audio module"
+ 	depends on !VIDEO_CX231XX_ALSA
+ 	depends on BACKPORT_VIDEO_CX231XX && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 
+ 	---help---
+ 	  This is an ALSA driver for Cx231xx USB based TV cards.
+diff --git a/backports/drivers/media/usb/em28xx/Kconfig b/backports/drivers/media/usb/em28xx/Kconfig
+index 866cee3..b291fd3 100644
+--- a/backports/drivers/media/usb/em28xx/Kconfig
++++ b/backports/drivers/media/usb/em28xx/Kconfig
+@@ -24,7 +24,7 @@ config BACKPORT_VIDEO_EM28XX_V4L2
+ config BACKPORT_VIDEO_EM28XX_ALSA
+ 	depends on VIDEO_EM28XX && SND
+ 	depends on !VIDEO_EM28XX_ALSA
+-	select SND_PCM
++	depends on SND_PCM
+ 	tristate "Empia EM28xx ALSA audio module"
+ 	---help---
+ 	  This is an ALSA driver for some Empia 28xx based TV cards.
+diff --git a/backports/drivers/media/usb/go7007/Kconfig b/backports/drivers/media/usb/go7007/Kconfig
+index 3f3cbdd..8a2bf9a 100644
+--- a/backports/drivers/media/usb/go7007/Kconfig
++++ b/backports/drivers/media/usb/go7007/Kconfig
+@@ -6,7 +6,7 @@ config BACKPORT_VIDEO_GO7007
+ 	select BACKPORT_VIDEOBUF2_VMALLOC
+ 	select BACKPORT_VIDEO_TUNER
+ 	select BACKPORT_CYPRESS_FIRMWARE
+-	select SND_PCM
++	depends on SND_PCM
+ 	select VIDEO_SONY_BTF_MPX if MEDIA_SUBDRV_AUTOSELECT
+ 	select VIDEO_SAA711X if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+ 	select VIDEO_TW2804 if BACKPORT_MEDIA_SUBDRV_AUTOSELECT
+diff --git a/backports/drivers/media/usb/tm6000/Kconfig b/backports/drivers/media/usb/tm6000/Kconfig
+index b50182a..5534175 100644
+--- a/backports/drivers/media/usb/tm6000/Kconfig
++++ b/backports/drivers/media/usb/tm6000/Kconfig
+@@ -19,7 +19,7 @@ config BACKPORT_VIDEO_TM6000_ALSA
+ 	tristate "TV Master TM5600/6000/6010 audio support"
+ 	depends on !VIDEO_TM6000_ALSA
+ 	depends on BACKPORT_VIDEO_TM6000 && SND
+-	select SND_PCM
++	depends on SND_PCM
+ 	---help---
+ 	  This is a video4linux driver for direct (DMA) audio for
+ 	  TM5600/TM6000/TM6010 USB Devices.
+diff --git a/backports/drivers/media/usb/ttusb-dec/Kconfig b/backports/drivers/media/usb/ttusb-dec/Kconfig
+index ec7b963..312d485 100644
+--- a/backports/drivers/media/usb/ttusb-dec/Kconfig
++++ b/backports/drivers/media/usb/ttusb-dec/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_DVB_TTUSB_DEC
+ 	tristate "Technotrend/Hauppauge USB DEC devices"
+ 	depends on !DVB_TTUSB_DEC
+ 	depends on BACKPORT_DVB_CORE && USB && INPUT && PCI
+-	select CRC32
++	depends on CRC32
+ 	help
+ 	  Support for external USB adapters designed by Technotrend and
+ 	  produced by Hauppauge, shipped under the brand name 'DEC2000-t'
+diff --git a/backports/drivers/media/usb/usbtv/Kconfig b/backports/drivers/media/usb/usbtv/Kconfig
+index 94b73d8..4f1fcdb 100644
+--- a/backports/drivers/media/usb/usbtv/Kconfig
++++ b/backports/drivers/media/usb/usbtv/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_VIDEO_USBTV
+         tristate "USBTV007 video capture support"
+ 	depends on !VIDEO_USBTV
+         depends on BACKPORT_VIDEO_V4L2 && SND
+-        select SND_PCM
++        depends on SND_PCM
+         select BACKPORT_VIDEOBUF2_VMALLOC
+ 
+         ---help---
+diff --git a/backports/drivers/net/ethernet/Kconfig b/backports/drivers/net/ethernet/Kconfig
+index 1cdc03f..9845f12 100644
+--- a/backports/drivers/net/ethernet/Kconfig
++++ b/backports/drivers/net/ethernet/Kconfig
+@@ -60,7 +60,7 @@ config BACKPORT_DNET
+ 	tristate "Dave ethernet support (DNET)"
+ 	depends on !DNET
+ 	depends on HAS_IOMEM
+-	select PHYLIB
++	depends on PHYLIB
+ 	---help---
+ 	  The Dave ethernet interface (DNET) is found on Qong Board FPGA.
+ 	  Say Y to include support for the BACKPORT_DNET chip.
+@@ -87,8 +87,8 @@ config BACKPORT_JME
+ 	tristate "JMicron(R) PCI-Express Gigabit Ethernet support"
+ 	depends on !JME
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  This driver supports the PCI-Express gigabit ethernet adapters
+ 	  based on JMicron JMC250 chipset.
+@@ -122,8 +122,8 @@ config BACKPORT_FEALNX
+ 	tristate "Myson MTD-8xx PCI Ethernet support"
+ 	depends on !FEALNX
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  Say Y here to support the Myson MTD-800 family of PCI-based Ethernet
+ 	  cards. <http://www.myson.com.tw/>
+@@ -134,7 +134,7 @@ config BACKPORT_FEALNX
+ config BACKPORT_NET_NETX
+ 	tristate "NetX Ethernet support"
+ 	depends on !NET_NETX
+-	select MII
++	depends on MII
+ 	depends on ARCH_NETX
+ 	---help---
+ 	  This is support for the Hilscher netX builtin Ethernet ports
+@@ -152,10 +152,10 @@ config BACKPORT_ETHOC
+ 	tristate "OpenCores 10/100 Mbps Ethernet MAC support"
+ 	depends on !ETHOC
+ 	depends on HAS_IOMEM && HAS_DMA
+-	select MII
+-	select PHYLIB
+-	select CRC32
+-	select BITREVERSE
++	depends on MII
++	depends on PHYLIB
++	depends on CRC32
++	depends on BITREVERSE
+ 	---help---
+ 	  Say Y here if you want to use the OpenCores 10/100 Mbps Ethernet MAC.
+ 
+diff --git a/backports/drivers/net/ethernet/atheros/Kconfig b/backports/drivers/net/ethernet/atheros/Kconfig
+index a388f53..1430abe 100644
+--- a/backports/drivers/net/ethernet/atheros/Kconfig
++++ b/backports/drivers/net/ethernet/atheros/Kconfig
+@@ -23,8 +23,8 @@ config BACKPORT_ATL2
+ 	tristate "Atheros L2 Fast Ethernet support"
+ 	depends on !ATL2
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  This driver supports the Atheros L2 fast ethernet adapter.
+ 
+@@ -35,8 +35,8 @@ config BACKPORT_ATL1
+ 	tristate "Atheros/Attansic L1 Gigabit Ethernet support"
+ 	depends on !ATL1
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  This driver supports the Atheros/Attansic L1 gigabit ethernet
+ 	  adapter.
+@@ -48,8 +48,8 @@ config BACKPORT_ATL1E
+ 	tristate "Atheros L1E Gigabit Ethernet support"
+ 	depends on !ATL1E
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  This driver supports the Atheros L1E gigabit ethernet adapter.
+ 
+@@ -60,8 +60,8 @@ config BACKPORT_ATL1C
+ 	tristate "Atheros L1C Gigabit Ethernet support"
+ 	depends on !ATL1C
+ 	depends on PCI
+-	select CRC32
+-	select MII
++	depends on CRC32
++	depends on MII
+ 	---help---
+ 	  This driver supports the Atheros L1C gigabit ethernet adapter.
+ 
+@@ -72,7 +72,7 @@ config BACKPORT_ALX
+ 	tristate "Qualcomm Atheros AR816x/AR817x support"
+ 	depends on !ALX
+ 	depends on PCI
+-	select CRC32
++	depends on CRC32
+ 	select BACKPORT_MDIO
+ 	help
+ 	  This driver supports the Qualcomm Atheros L1F ethernet adapter,
+diff --git a/backports/drivers/net/ethernet/broadcom/Kconfig b/backports/drivers/net/ethernet/broadcom/Kconfig
+index eaeb166..dcc58df 100644
+--- a/backports/drivers/net/ethernet/broadcom/Kconfig
++++ b/backports/drivers/net/ethernet/broadcom/Kconfig
+@@ -24,8 +24,8 @@ config BACKPORT_B44
+ 	depends on !B44
+ 	depends on BACKPORT_SSB_POSSIBLE && HAS_DMA
+ 	select BACKPORT_SSB
+-	select MII
+-	select PHYLIB
++	depends on MII
++	depends on PHYLIB
+ 	---help---
+ 	  If you have a network (Ethernet) controller of this type, say Y
+ 	  or M and read the Ethernet-HOWTO, available from
+@@ -60,8 +60,8 @@ config BACKPORT_BCM63XX_ENET
+ 	tristate "Broadcom 63xx internal mac support"
+ 	depends on !BCM63XX_ENET
+ 	depends on BCM63XX
+-	select MII
+-	select PHYLIB
++	depends on MII
++	depends on PHYLIB
+ 	help
+ 	  This driver supports the ethernet MACs in the Broadcom 63xx
+ 	  MIPS chipset family (BCM63XX).
+@@ -69,10 +69,10 @@ config BACKPORT_BCM63XX_ENET
+ config BACKPORT_BCMGENET
+ 	tristate "Broadcom GENET internal MAC support"
+ 	depends on !BCMGENET
+-	select MII
+-	select PHYLIB
+-	select FIXED_PHY
+-	select BCM7XXX_PHY
++	depends on MII
++	depends on PHYLIB
++	depends on FIXED_PHY
++	depends on BCM7XXX_PHY
+ 	help
+ 	  This driver supports the built-in Ethernet MACs found in the
+ 	  Broadcom BCM7xxx Set Top Box family chipset.
+@@ -81,8 +81,8 @@ config BACKPORT_BNX2
+ 	tristate "QLogic bnx2 support"
+ 	depends on !BNX2
+ 	depends on PCI
+-	select CRC32
+-	select FW_LOADER
++	depends on CRC32
++	depends on FW_LOADER
+ 	---help---
+ 	  This driver supports QLogic bnx2 gigabit Ethernet cards.
+ 
+@@ -94,7 +94,7 @@ config BACKPORT_CNIC
+ 	depends on !CNIC
+ 	depends on PCI && (IPV6 || IPV6=n)
+ 	select BACKPORT_BNX2
+-	select UIO
++	depends on UIO
+ 	---help---
+ 	  This driver supports offload features of QLogic bnx2 gigabit
+ 	  Ethernet cards.
+@@ -106,7 +106,7 @@ config BACKPORT_SB1250_MAC
+ 	tristate "SB1250 Gigabit Ethernet support"
+ 	depends on !SB1250_MAC
+ 	depends on SIBYTE_SB1xxx_SOC
+-	select PHYLIB
++	depends on PHYLIB
+ 	---help---
+ 	  This driver supports Gigabit Ethernet interfaces based on the
+ 	  Broadcom SiByte family of System-On-a-Chip parts.  They include
+@@ -120,9 +120,9 @@ config BACKPORT_TIGON3
+ 	tristate "Broadcom Tigon3 support"
+ 	depends on !TIGON3
+ 	depends on PCI
+-	select PHYLIB
+-	select HWMON
+-	select PTP_1588_CLOCK
++	depends on PHYLIB
++	depends on HWMON
++	depends on PTP_1588_CLOCK
+ 	---help---
+ 	  This driver supports Broadcom Tigon3 based gigabit Ethernet cards.
+ 
+@@ -133,10 +133,10 @@ config BACKPORT_BNX2X
+ 	tristate "Broadcom NetXtremeII 10Gb support"
+ 	depends on !BNX2X
+ 	depends on PCI
+-	select PTP_1588_CLOCK
+-	select FW_LOADER
+-	select ZLIB_INFLATE
+-	select LIBCRC32C
++	depends on PTP_1588_CLOCK
++	depends on FW_LOADER
++	depends on ZLIB_INFLATE
++	depends on LIBCRC32C
+ 	select BACKPORT_MDIO
+ 	---help---
+ 	  This driver supports Broadcom NetXtremeII 10 gigabit Ethernet cards.
+@@ -157,7 +157,7 @@ config BACKPORT_BGMAC
+ 	tristate "BCMA bus GBit core support"
+ 	depends on !BGMAC
+ 	depends on BACKPORT_BCMA_HOST_SOC && HAS_DMA && (BCM47XX || ARCH_BCM_5301X)
+-	select PHYLIB
++	depends on PHYLIB
+ 	---help---
+ 	  This driver supports GBit MAC and BCM4706 GBit MAC cores on BACKPORT_BCMA bus.
+ 	  They can be found on BCM47xx SoCs and provide gigabit ethernet.
+@@ -168,9 +168,9 @@ config BACKPORT_SYSTEMPORT
+ 	tristate "Broadcom SYSTEMPORT internal MAC support"
+ 	depends on !SYSTEMPORT
+ 	depends on OF
+-	select MII
+-	select PHYLIB
+-	select FIXED_PHY
++	depends on MII
++	depends on PHYLIB
++	depends on FIXED_PHY
+ 	help
+ 	  This driver supports the built-in Ethernet MACs found in the
+ 	  Broadcom BCM7xxx Set Top Box family chipset using an internal
+diff --git a/backports/drivers/net/ethernet/intel/Kconfig b/backports/drivers/net/ethernet/intel/Kconfig
+index 9111cea..7774440 100644
+--- a/backports/drivers/net/ethernet/intel/Kconfig
++++ b/backports/drivers/net/ethernet/intel/Kconfig
+@@ -22,7 +22,7 @@ config BACKPORT_E100
+ 	tristate "Intel(R) PRO/100+ support"
+ 	depends on !E100
+ 	depends on PCI
+-	select MII
++	depends on MII
+ 	---help---
+ 	  This driver supports Intel(R) PRO/100 family of adapters.
+ 	  To verify that your adapter is supported, find the board ID number
+@@ -71,8 +71,8 @@ config BACKPORT_E1000E
+ 	tristate "Intel(R) PRO/1000 PCI-Express Gigabit Ethernet support"
+ 	depends on !E1000E
+ 	depends on PCI && (!SPARC32 || BROKEN)
+-	select CRC32
+-	select PTP_1588_CLOCK
++	depends on CRC32
++	depends on PTP_1588_CLOCK
+ 	---help---
+ 	  This driver supports the PCI-Express Intel(R) PRO/1000 gigabit
+ 	  ethernet family of adapters. For PCI or PCI-X e1000 adapters,
+@@ -93,9 +93,9 @@ config BACKPORT_IGB
+ 	tristate "Intel(R) 82575/82576 PCI-Express Gigabit Ethernet support"
+ 	depends on !IGB
+ 	depends on PCI
+-	select PTP_1588_CLOCK
+-	select I2C
+-	select I2C_ALGOBIT
++	depends on PTP_1588_CLOCK
++	depends on I2C
++	depends on I2C_ALGOBIT
+ 	---help---
+ 	  This driver supports Intel(R) 82575/82576 gigabit ethernet family of
+ 	  adapters.  For more information on how to identify your adapter, go
+@@ -186,7 +186,7 @@ config BACKPORT_IXGBE
+ 	depends on !IXGBE
+ 	depends on PCI
+ 	select BACKPORT_MDIO
+-	select PTP_1588_CLOCK
++	depends on PTP_1588_CLOCK
+ 	---help---
+ 	  This driver supports Intel(R) 10GbE PCI Express family of
+ 	  adapters.  For more information on how to identify your adapter, go
+@@ -270,7 +270,7 @@ config BACKPORT_IXGBEVF
+ config BACKPORT_I40E
+ 	tristate "Intel(R) Ethernet Controller XL710 Family support"
+ 	depends on !I40E
+-	select PTP_1588_CLOCK
++	depends on PTP_1588_CLOCK
+ 	depends on PCI
+ 	---help---
+ 	  This driver supports Intel(R) Ethernet Controller XL710 Family of
+@@ -347,7 +347,7 @@ config BACKPORT_FM10K
+ 	depends on !FM10K
+ 	default n
+ 	depends on PCI_MSI
+-	select PTP_1588_CLOCK
++	depends on PTP_1588_CLOCK
+ 	---help---
+ 	  This driver supports Intel(R) FM10000 Ethernet Switch Host
+ 	  Interface.  For more information on how to identify your adapter,
+diff --git a/backports/drivers/net/ieee802154/Kconfig b/backports/drivers/net/ieee802154/Kconfig
+index 87e82ba..4bb01f0c 100644
+--- a/backports/drivers/net/ieee802154/Kconfig
++++ b/backports/drivers/net/ieee802154/Kconfig
+@@ -27,7 +27,7 @@ config BACKPORT_IEEE802154_AT86RF230
+ 	depends on !IEEE802154_AT86RF230
+ 	tristate "AT86RF230/231/233/212 transceiver driver"
+ 	depends on SPI
+-	select REGMAP_SPI
++	depends on REGMAP_SPI
+ 	---help---
+ 	  Say Y here to enable the at86rf230/231/233/212 SPI 802.15.4 wireless
+ 	  controller.
+diff --git a/backports/drivers/net/usb/Kconfig b/backports/drivers/net/usb/Kconfig
+index f03a668..7adf39d 100644
+--- a/backports/drivers/net/usb/Kconfig
++++ b/backports/drivers/net/usb/Kconfig
+@@ -15,7 +15,7 @@ if BACKPORT_USB_NET_DRIVERS
+ config BACKPORT_USB_CATC
+ 	tristate "USB CATC NetMate-based Ethernet device support"
+ 	depends on !USB_CATC
+-	select CRC32
++	depends on CRC32
+ 	---help---
+ 	  Say Y if you want to use one of the following 10Mbps USB Ethernet
+ 	  device based on the EL1210A chip. Supported devices are:
+@@ -75,7 +75,7 @@ config BACKPORT_USB_KAWETH
+ config BACKPORT_USB_PEGASUS
+ 	tristate "USB Pegasus/Pegasus-II based ethernet device support"
+ 	depends on !USB_PEGASUS
+-	select MII
++	depends on MII
+ 	---help---
+ 	  Say Y here if you know you have Pegasus or Pegasus-II based adapter.
+ 	  If in doubt then look at <file:drivers/net/usb/pegasus.h> for the
+@@ -91,7 +91,7 @@ config BACKPORT_USB_PEGASUS
+ config BACKPORT_USB_RTL8150
+ 	tristate "USB RTL8150 based ethernet device support"
+ 	depends on !USB_RTL8150
+-	select MII
++	depends on MII
+ 	help
+ 	  Say Y here if you have RTL8150 based usb-ethernet adapter.
+ 	  Send me <petkan@users.sourceforge.net> any comments you may have.
+@@ -103,7 +103,7 @@ config BACKPORT_USB_RTL8150
+ config BACKPORT_USB_RTL8152
+ 	tristate "Realtek RTL8152/RTL8153 Based USB Ethernet Adapters"
+ 	depends on !USB_RTL8152
+-	select MII
++	depends on MII
+ 	help
+ 	  This option adds support for Realtek RTL8152 based USB 2.0
+ 	  10/100 Ethernet adapters and RTL8153 based USB 3.0 10/100/1000
+@@ -115,7 +115,7 @@ config BACKPORT_USB_RTL8152
+ config BACKPORT_USB_USBNET
+ 	tristate "Multi-purpose USB Networking Framework"
+ 	depends on !USB_USBNET
+-	select MII
++	depends on MII
+ 	---help---
+ 	  This driver supports several kinds of network links over USB,
+ 	  with "minidrivers" built around a common network driver core
+@@ -151,8 +151,8 @@ config BACKPORT_USB_NET_AX8817X
+ 	tristate "ASIX AX88xxx Based USB 2.0 Ethernet Adapters"
+ 	depends on !USB_NET_AX8817X
+ 	depends on BACKPORT_USB_USBNET
+-	select CRC32
+-	select PHYLIB
++	depends on CRC32
++	depends on PHYLIB
+ 	default y
+ 	help
+ 	  This option adds support for ASIX AX88xxx based USB 2.0
+@@ -181,8 +181,8 @@ config BACKPORT_USB_NET_AX88179_178A
+ 	tristate "ASIX AX88179/178A USB 3.0/2.0 to Gigabit Ethernet"
+ 	depends on !USB_NET_AX88179_178A
+ 	depends on BACKPORT_USB_USBNET
+-	select CRC32
+-	select PHYLIB
++	depends on CRC32
++	depends on PHYLIB
+ 	default y
+ 	help
+ 	  This option adds support for ASIX AX88179 based USB 3.0/2.0
+@@ -299,7 +299,7 @@ config BACKPORT_USB_NET_DM9601
+ 	tristate "Davicom DM96xx based USB 10/100 ethernet devices"
+ 	depends on !USB_NET_DM9601
+ 	depends on BACKPORT_USB_USBNET
+-	select CRC32
++	depends on CRC32
+ 	help
+ 	  This option adds support for Davicom DM9601/DM9620/DM9621A
+ 	  based USB 10/100 Ethernet adapters.
+@@ -308,7 +308,7 @@ config BACKPORT_USB_NET_SR9700
+ 	tristate "CoreChip-sz SR9700 based USB 1.1 10/100 ethernet devices"
+ 	depends on !USB_NET_SR9700
+ 	depends on BACKPORT_USB_USBNET
+-	select CRC32
++	depends on CRC32
+ 	help
+ 	  This option adds support for CoreChip-sz SR9700 based USB 1.1
+ 	  10/100 Ethernet adapters.
+@@ -317,7 +317,7 @@ config BACKPORT_USB_NET_SR9800
+ 	tristate "CoreChip-sz SR9800 based USB 2.0 10/100 ethernet devices"
+ 	depends on !USB_NET_SR9800
+ 	depends on BACKPORT_USB_USBNET
+-	select CRC32
++	depends on CRC32
+ 	---help---
+ 	  Say Y if you want to use one of the following 100Mbps USB Ethernet
+ 	  device based on the CoreChip-sz SR9800 chip.
+@@ -333,9 +333,9 @@ config BACKPORT_USB_NET_SMSC75XX
+ 	tristate "SMSC LAN75XX based USB 2.0 gigabit ethernet devices"
+ 	depends on !USB_NET_SMSC75XX
+ 	depends on BACKPORT_USB_USBNET
+-	select BITREVERSE
+-	select CRC16
+-	select CRC32
++	depends on BITREVERSE
++	depends on CRC16
++	depends on CRC32
+ 	help
+ 	  This option adds support for SMSC LAN75XX based USB 2.0
+ 	  Gigabit Ethernet adapters.
+@@ -344,9 +344,9 @@ config BACKPORT_USB_NET_SMSC95XX
+ 	tristate "SMSC LAN95XX based USB 2.0 10/100 ethernet devices"
+ 	depends on !USB_NET_SMSC95XX
+ 	depends on BACKPORT_USB_USBNET
+-	select BITREVERSE
+-	select CRC16
+-	select CRC32
++	depends on BITREVERSE
++	depends on CRC16
++	depends on CRC32
+ 	help
+ 	  This option adds support for SMSC LAN95XX based USB 2.0
+ 	  10/100 Ethernet adapters.
+@@ -488,7 +488,7 @@ config BACKPORT_USB_NET_ZAURUS
+ 	depends on !USB_NET_ZAURUS
+ 	depends on BACKPORT_USB_USBNET
+ 	select BACKPORT_USB_NET_CDCETHER
+-	select CRC32
++	depends on CRC32
+ 	default y
+ 	help
+ 	  Choose this option to support the usb networking links used by
+diff --git a/backports/drivers/net/wireless/Kconfig b/backports/drivers/net/wireless/Kconfig
+index e4c2d79..3ed49ae 100644
+--- a/backports/drivers/net/wireless/Kconfig
++++ b/backports/drivers/net/wireless/Kconfig
+@@ -7,7 +7,7 @@ menuconfig BACKPORT_WLAN
+ 	depends on !WLAN
+ 	depends on !S390
+ 	depends on NET
+-	select WIRELESS
++	depends on WIRELESS
+ 	default y
+ 	---help---
+ 	  This section contains all the pre 802.11 and 802.11 wireless
+@@ -22,9 +22,9 @@ config BACKPORT_PCMCIA_RAYCS
+ 	tristate "Aviator/Raytheon 2.4GHz wireless support"
+ 	depends on !PCMCIA_RAYCS
+ 	depends on PCMCIA
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
+ 	---help---
+ 	  Say Y here if you intend to attach an Aviator/Raytheon PCMCIA
+ 	  (PC-card) wireless Ethernet networking card to your computer.
+@@ -38,7 +38,7 @@ config BACKPORT_LIBERTAS_THINFIRM
+ 	tristate "Marvell 8xxx Libertas WLAN driver support with thin firmware"
+ 	depends on !LIBERTAS_THINFIRM
+ 	depends on BACKPORT_MAC80211
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  A library for Marvell Libertas 8xxx devices using thinfirm.
+ 
+@@ -60,10 +60,10 @@ config BACKPORT_AIRO
+ 	tristate "Cisco/Aironet 34X/35X/4500/4800 ISA and PCI cards"
+ 	depends on !AIRO
+ 	depends on BACKPORT_CFG80211 && ISA_DMA_API && (PCI || BROKEN)
+-	select WIRELESS_EXT
+-	select CRYPTO
+-	select WEXT_SPY
+-	select WEXT_PRIV
++	depends on WIRELESS_EXT
++	depends on CRYPTO
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
+ 	---help---
+ 	  This is the standard Linux driver to support Cisco/Aironet ISA and
+ 	  PCI 802.11 wireless cards.
+@@ -81,10 +81,10 @@ config BACKPORT_ATMEL
+       tristate "Atmel at76c50x chipset  802.11b support"
+ 	depends on !ATMEL
+       depends on BACKPORT_CFG80211 && (PCI || PCMCIA)
+-      select WIRELESS_EXT
+-      select WEXT_PRIV
+-      select FW_LOADER
+-      select CRC32
++      depends on WIRELESS_EXT
++      depends on WEXT_PRIV
++      depends on FW_LOADER
++      depends on CRC32
+        ---help---
+         A driver 802.11b wireless cards based on the Atmel fast-vnet
+         chips. This driver supports standard Linux wireless extensions.
+@@ -108,9 +108,9 @@ config BACKPORT_PCMCIA_ATMEL
+ 	tristate "Atmel at76c502/at76c504 PCMCIA cards"
+ 	depends on !PCMCIA_ATMEL
+ 	depends on BACKPORT_ATMEL && PCMCIA
+-	select WIRELESS_EXT
+-	select FW_LOADER
+-	select CRC32
++	depends on WIRELESS_EXT
++	depends on FW_LOADER
++	depends on CRC32
+ 	---help---
+ 	  Enable support for PCMCIA cards containing the
+ 	  Atmel at76c502 and at76c504 chips.
+@@ -119,7 +119,7 @@ config BACKPORT_AT76C50X_USB
+         tristate "Atmel at76c503/at76c505/at76c505a USB cards"
+ 	depends on !AT76C50X_USB
+         depends on BACKPORT_MAC80211 && USB
+-        select FW_LOADER
++        depends on FW_LOADER
+         ---help---
+           Enable support for USB Wireless devices using Atmel at76c503,
+           at76c505 or at76c505a chips.
+@@ -128,11 +128,11 @@ config BACKPORT_AIRO_CS
+ 	tristate "Cisco/Aironet 34X/35X/4500/4800 PCMCIA cards"
+ 	depends on !AIRO_CS
+ 	depends on BACKPORT_CFG80211 && PCMCIA && (BROKEN || !M32R)
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
+-	select CRYPTO
+-	select CRYPTO_AES
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
++	depends on CRYPTO
++	depends on CRYPTO_AES
+ 	---help---
+ 	  This is the standard Linux driver to support Cisco/Aironet PCMCIA
+ 	  802.11 wireless cards.  This driver is the same as the Aironet
+@@ -151,8 +151,8 @@ config BACKPORT_PCMCIA_WL3501
+ 	tristate "Planet WL3501 PCMCIA cards"
+ 	depends on !PCMCIA_WL3501
+ 	depends on BACKPORT_CFG80211 && PCMCIA
+-	select WIRELESS_EXT
+-	select WEXT_SPY
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
+ 	help
+ 	  A driver for WL3501 PCMCIA 802.11 wireless cards made by Planet.
+ 	  It has basic support for Linux wireless extensions and initial
+@@ -162,10 +162,10 @@ config BACKPORT_PRISM54
+ 	tristate 'Intersil Prism GT/Duette/Indigo PCI/Cardbus (DEPRECATED)'
+ 	depends on !PRISM54
+ 	depends on PCI
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
+-	select FW_LOADER
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
++	depends on FW_LOADER
+ 	---help---
+ 	  This enables support for FullMAC PCI/Cardbus prism54 devices. This
+ 	  driver is now deprecated in favor for the SoftMAC driver, p54pci.
+@@ -183,9 +183,9 @@ config BACKPORT_USB_ZD1201
+ 	tristate "USB ZD1201 based Wireless device support"
+ 	depends on !USB_ZD1201
+ 	depends on BACKPORT_CFG80211 && USB
+-	select WIRELESS_EXT
+-	select WEXT_PRIV
+-	select FW_LOADER
++	depends on WIRELESS_EXT
++	depends on WEXT_PRIV
++	depends on FW_LOADER
+ 	---help---
+ 	  Say Y if you want to use wireless LAN adapters based on the ZyDAS
+ 	  ZD1201 chip.
+@@ -235,8 +235,8 @@ config BACKPORT_ADM8211
+ 	tristate "ADMtek ADM8211 support"
+ 	depends on !ADM8211
+ 	depends on BACKPORT_MAC80211 && PCI
+-	select CRC32
+-	select EEPROM_93CX6
++	depends on CRC32
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This driver is for BACKPORT_ADM8211A, BACKPORT_ADM8211B, and BACKPORT_ADM8211C based cards.
+ 	  These are PCI/mini-PCI/Cardbus 802.11b chips found in cards such as:
+diff --git a/backports/drivers/net/wireless/ath/ar5523/Kconfig b/backports/drivers/net/wireless/ath/ar5523/Kconfig
+index bfb52f4..fcc62ad 100644
+--- a/backports/drivers/net/wireless/ath/ar5523/Kconfig
++++ b/backports/drivers/net/wireless/ath/ar5523/Kconfig
+@@ -3,7 +3,7 @@ config BACKPORT_AR5523
+ 	depends on !AR5523
+        depends on BACKPORT_MAC80211 && USB
+        select BACKPORT_ATH_COMMON
+-       select FW_LOADER
++       depends on FW_LOADER
+        ---help---
+          This module add support for BACKPORT_AR5523 based USB dongles such as D-Link
+          DWL-G132, Netgear WPN111 and many more.
+diff --git a/backports/drivers/net/wireless/ath/ath10k/Kconfig b/backports/drivers/net/wireless/ath/ath10k/Kconfig
+index 483af44..9e7fefb 100644
+--- a/backports/drivers/net/wireless/ath/ath10k/Kconfig
++++ b/backports/drivers/net/wireless/ath/ath10k/Kconfig
+@@ -29,7 +29,7 @@ config BACKPORT_ATH10K_DEBUGFS
+ 	bool "Atheros ath10k debugfs support"
+ 	depends on !ATH10K_DEBUGFS
+ 	depends on BACKPORT_ATH10K && DEBUG_FS
+-	select RELAY
++	depends on RELAY
+ 	---help---
+ 	  Enabled debugfs support
+ 
+diff --git a/backports/drivers/net/wireless/ath/ath5k/Kconfig b/backports/drivers/net/wireless/ath/ath5k/Kconfig
+index 7660a91..abafd17 100644
+--- a/backports/drivers/net/wireless/ath/ath5k/Kconfig
++++ b/backports/drivers/net/wireless/ath/ath5k/Kconfig
+@@ -4,9 +4,9 @@ config BACKPORT_ATH5K
+ 	depends on (PCI || ATH25) && BACKPORT_MAC80211
+ 	select BACKPORT_ATH_COMMON
+ 	select BACKPORT_MAC80211_LEDS
+-	select LEDS_CLASS
+-	select NEW_LEDS
+-	select AVERAGE
++	depends on LEDS_CLASS
++	depends on NEW_LEDS
++	depends on AVERAGE
+ 	select BACKPORT_ATH5K_AHB if ATH25
+ 	select BACKPORT_ATH5K_PCI if !ATH25
+ 	---help---
+diff --git a/backports/drivers/net/wireless/ath/ath9k/Kconfig b/backports/drivers/net/wireless/ath/ath9k/Kconfig
+index 220ffdf..74b2dd7 100644
+--- a/backports/drivers/net/wireless/ath/ath9k/Kconfig
++++ b/backports/drivers/net/wireless/ath/ath9k/Kconfig
+@@ -5,8 +5,8 @@ config BACKPORT_ATH9K_COMMON
+ 	tristate
+ 	depends on !ATH9K_COMMON
+ 	select BACKPORT_ATH_COMMON
+-	select DEBUG_FS
+-	select RELAY
++	depends on DEBUG_FS
++	depends on RELAY
+ config BACKPORT_ATH9K_DFS_DEBUGFS
+ 	def_bool y
+ 	depends on !ATH9K_DFS_DEBUGFS
+@@ -27,8 +27,8 @@ config BACKPORT_ATH9K
+ 	depends on BACKPORT_MAC80211 && HAS_DMA
+ 	select BACKPORT_ATH9K_HW
+ 	select BACKPORT_MAC80211_LEDS
+-	select LEDS_CLASS
+-	select NEW_LEDS
++	depends on LEDS_CLASS
++	depends on NEW_LEDS
+ 	select BACKPORT_ATH9K_COMMON
+ 	---help---
+ 	  This module adds support for wireless adapters based on
+@@ -68,7 +68,7 @@ config BACKPORT_ATH9K_DEBUGFS
+ 	depends on !ATH9K_DEBUGFS
+ 	depends on BACKPORT_ATH9K && DEBUG_FS
+ 	select BACKPORT_MAC80211_DEBUGFS
+-	select RELAY
++	depends on RELAY
+ 	---help---
+ 	  Say Y, if you need access to ath9k's statistics for
+ 	  interrupts, rate control, etc.
+@@ -177,8 +177,8 @@ config BACKPORT_ATH9K_HTC
+        depends on USB && BACKPORT_MAC80211
+        select BACKPORT_ATH9K_HW
+        select BACKPORT_MAC80211_LEDS
+-       select LEDS_CLASS
+-       select NEW_LEDS
++       depends on LEDS_CLASS
++       depends on NEW_LEDS
+        select BACKPORT_ATH9K_COMMON
+        ---help---
+ 	 Support for Atheros HTC based cards.
+diff --git a/backports/drivers/net/wireless/ath/carl9170/Kconfig b/backports/drivers/net/wireless/ath/carl9170/Kconfig
+index da54292..b5cd866 100644
+--- a/backports/drivers/net/wireless/ath/carl9170/Kconfig
++++ b/backports/drivers/net/wireless/ath/carl9170/Kconfig
+@@ -3,8 +3,8 @@ config BACKPORT_CARL9170
+ 	depends on !CARL9170
+ 	depends on USB && BACKPORT_MAC80211
+ 	select BACKPORT_ATH_COMMON
+-	select FW_LOADER
+-	select CRC32
++	depends on FW_LOADER
++	depends on CRC32
+ 	help
+ 	  This is another driver for the Atheros "otus" 802.11n USB devices.
+ 
+@@ -21,8 +21,8 @@ config BACKPORT_CARL9170_LEDS
+ 	depends on !CARL9170_LEDS
+ 	depends on BACKPORT_CARL9170
+ 	select BACKPORT_MAC80211_LEDS
+-	select LEDS_CLASS
+-	select NEW_LEDS
++	depends on LEDS_CLASS
++	depends on NEW_LEDS
+ 	default y
+ 	help
+ 	  This option is necessary, if you want your device' LEDs to blink
+diff --git a/backports/drivers/net/wireless/b43/Kconfig b/backports/drivers/net/wireless/b43/Kconfig
+index 7958fbb..1b3efe5 100644
+--- a/backports/drivers/net/wireless/b43/Kconfig
++++ b/backports/drivers/net/wireless/b43/Kconfig
+@@ -4,7 +4,7 @@ config BACKPORT_B43
+ 	depends on (BCMA_POSSIBLE || SSB_POSSIBLE) && BACKPORT_MAC80211 && HAS_DMA
+ 	select BCMA if BACKPORT_B43_BCMA
+ 	select SSB if BACKPORT_B43_SSB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  b43 is a driver for the Broadcom 43xx series wireless devices.
+ 
+@@ -68,7 +68,7 @@ config BACKPORT_B43_PCI_AUTOSELECT
+ 	depends on !B43_PCI_AUTOSELECT
+ 	depends on BACKPORT_B43 && SSB_PCIHOST_POSSIBLE
+ 	select BACKPORT_SSB_PCIHOST
+-	select SSB_B43_PCI_BRIDGE
++	depends on SSB_B43_PCI_BRIDGE
+ 	default y
+ 
+ # Auto-select BACKPORT_SSB PCICORE driver, if possible
+diff --git a/backports/drivers/net/wireless/b43legacy/Kconfig b/backports/drivers/net/wireless/b43legacy/Kconfig
+index 5778837..ee71267 100644
+--- a/backports/drivers/net/wireless/b43legacy/Kconfig
++++ b/backports/drivers/net/wireless/b43legacy/Kconfig
+@@ -3,7 +3,7 @@ config BACKPORT_B43LEGACY
+ 	depends on !B43LEGACY
+ 	depends on SSB_POSSIBLE && BACKPORT_MAC80211 && HAS_DMA
+ 	select BACKPORT_SSB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  b43legacy is a driver for 802.11b devices from Broadcom (BCM4301 and
+ 	  BCM4303) and early model 802.11g chips (BCM4306 Ver. 2) used in the
+@@ -26,7 +26,7 @@ config BACKPORT_B43LEGACY_PCI_AUTOSELECT
+ 	depends on !B43LEGACY_PCI_AUTOSELECT
+ 	depends on BACKPORT_B43LEGACY && SSB_PCIHOST_POSSIBLE
+ 	select BACKPORT_SSB_PCIHOST
+-	select SSB_B43_PCI_BRIDGE
++	depends on SSB_B43_PCI_BRIDGE
+ 	default y
+ 
+ # Auto-select BACKPORT_SSB PCICORE driver, if possible
+diff --git a/backports/drivers/net/wireless/brcm80211/Kconfig b/backports/drivers/net/wireless/brcm80211/Kconfig
+index d57b24f..f709601 100644
+--- a/backports/drivers/net/wireless/brcm80211/Kconfig
++++ b/backports/drivers/net/wireless/brcm80211/Kconfig
+@@ -11,8 +11,8 @@ config BACKPORT_BRCMSMAC
+ 	select NEW_LEDS if BACKPORT_BCMA_DRIVER_GPIO
+ 	select LEDS_CLASS if BACKPORT_BCMA_DRIVER_GPIO
+ 	select BACKPORT_BRCMUTIL
+-	select FW_LOADER
+-	select CORDIC
++	depends on FW_LOADER
++	depends on CORDIC
+ 	---help---
+ 	  This module adds support for PCIe wireless adapters based on Broadcom
+ 	  IEEE802.11n SoftMAC chipsets. It also has BACKPORT_WLAN led support, which will
+@@ -44,7 +44,7 @@ config BACKPORT_BRCMFMAC_SDIO
+ 	depends on (MMC = y || MMC = BACKPORT_BRCMFMAC)
+ 	depends on BACKPORT_BRCMFMAC
+ 	select BACKPORT_BRCMFMAC_PROTO_BCDC
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	default y
+ 	---help---
+ 	  This option enables the SDIO bus interface support for Broadcom
+@@ -57,7 +57,7 @@ config BACKPORT_BRCMFMAC_USB
+ 	depends on (USB = y || USB = BACKPORT_BRCMFMAC)
+ 	depends on BACKPORT_BRCMFMAC
+ 	select BACKPORT_BRCMFMAC_PROTO_BCDC
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This option enables the USB bus interface support for Broadcom
+ 	  IEEE802.11n embedded FullMAC BACKPORT_WLAN driver. Say Y if you want to
+@@ -70,7 +70,7 @@ config BACKPORT_BRCMFMAC_PCIE
+ 	depends on PCI
+ 	depends on HAS_DMA
+ 	select BACKPORT_BRCMFMAC_PROTO_MSGBUF
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This option enables the PCIE bus interface support for Broadcom
+ 	  IEEE802.11ac embedded FullMAC BACKPORT_WLAN driver. Say Y if you want to
+diff --git a/backports/drivers/net/wireless/ipw2x00/Kconfig b/backports/drivers/net/wireless/ipw2x00/Kconfig
+index 90d851f..bafa3f6 100644
+--- a/backports/drivers/net/wireless/ipw2x00/Kconfig
++++ b/backports/drivers/net/wireless/ipw2x00/Kconfig
+@@ -6,10 +6,10 @@ config BACKPORT_IPW2100
+ 	tristate "Intel PRO/Wireless 2100 Network Connection"
+ 	depends on !IPW2100
+ 	depends on PCI && BACKPORT_CFG80211
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
+-	select FW_LOADER
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
++	depends on FW_LOADER
+ 	select BACKPORT_LIB80211
+ 	select BACKPORT_LIBIPW
+ 	---help---
+@@ -71,10 +71,10 @@ config BACKPORT_IPW2200
+ 	depends on !IPW2200
+ 	depends on PCI && BACKPORT_CFG80211
+ 	select BACKPORT_CFG80211_WEXT_EXPORT
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
+-	select FW_LOADER
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
++	depends on FW_LOADER
+ 	select BACKPORT_LIB80211
+ 	select BACKPORT_LIBIPW
+ 	---help---
+@@ -166,15 +166,15 @@ config BACKPORT_LIBIPW
+ 	tristate
+ 	depends on !LIBIPW
+ 	depends on PCI && BACKPORT_CFG80211
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select CRYPTO
+-	select CRYPTO_ARC4
+-	select CRYPTO_ECB
+-	select CRYPTO_AES
+-	select CRYPTO_MICHAEL_MIC
+-	select CRYPTO_ECB
+-	select CRC32
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on CRYPTO
++	depends on CRYPTO_ARC4
++	depends on CRYPTO_ECB
++	depends on CRYPTO_AES
++	depends on CRYPTO_MICHAEL_MIC
++	depends on CRYPTO_ECB
++	depends on CRC32
+ 	select BACKPORT_LIB80211
+ 	select BACKPORT_LIB80211_CRYPT_WEP
+ 	select BACKPORT_LIB80211_CRYPT_TKIP
+diff --git a/backports/drivers/net/wireless/iwlegacy/Kconfig b/backports/drivers/net/wireless/iwlegacy/Kconfig
+index 0ac2a58..bac9194 100644
+--- a/backports/drivers/net/wireless/iwlegacy/Kconfig
++++ b/backports/drivers/net/wireless/iwlegacy/Kconfig
+@@ -1,10 +1,10 @@
+ config BACKPORT_IWLEGACY
+ 	tristate
+ 	depends on !IWLEGACY
+-	select FW_LOADER
+-	select NEW_LEDS
+-	select LEDS_CLASS
+-	select LEDS_TRIGGERS
++	depends on FW_LOADER
++	depends on NEW_LEDS
++	depends on LEDS_CLASS
++	depends on LEDS_TRIGGERS
+ 	select BACKPORT_MAC80211_LEDS
+ 
+ config BACKPORT_IWL4965
+diff --git a/backports/drivers/net/wireless/iwlwifi/Kconfig b/backports/drivers/net/wireless/iwlwifi/Kconfig
+index bb3fde8..bfe55ae 100644
+--- a/backports/drivers/net/wireless/iwlwifi/Kconfig
++++ b/backports/drivers/net/wireless/iwlwifi/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_IWLWIFI
+ 	tristate "Intel Wireless WiFi Next Gen AGN - Wireless-N/Advanced-N/Ultimate-N (iwlwifi) "
+ 	depends on !IWLWIFI
+ 	depends on PCI && BACKPORT_MAC80211 && HAS_IOMEM
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  Select to build the driver supporting the:
+ 
+@@ -48,7 +48,7 @@ config BACKPORT_IWLWIFI_LEDS
+ 	bool
+ 	depends on !IWLWIFI_LEDS
+ 	depends on LEDS_CLASS=y || LEDS_CLASS=IWLWIFI
+-	select LEDS_TRIGGERS
++	depends on LEDS_TRIGGERS
+ 	select BACKPORT_MAC80211_LEDS
+ 	default y
+ 
+@@ -64,7 +64,7 @@ config BACKPORT_IWLDVM
+ config BACKPORT_IWLMVM
+ 	tristate "Intel Wireless WiFi MVM Firmware support"
+ 	depends on !IWLMVM
+-	select WANT_DEV_COREDUMP
++	depends on WANT_DEV_COREDUMP
+ 	help
+ 	  This is the driver that supports the MVM firmware which is
+ 	  currently only available for 7260 and 3160 devices.
+diff --git a/backports/drivers/net/wireless/libertas/Kconfig b/backports/drivers/net/wireless/libertas/Kconfig
+index ad639aa..dfbb28b 100644
+--- a/backports/drivers/net/wireless/libertas/Kconfig
++++ b/backports/drivers/net/wireless/libertas/Kconfig
+@@ -2,10 +2,10 @@ config BACKPORT_LIBERTAS
+ 	tristate "Marvell 8xxx Libertas WLAN driver support"
+ 	depends on !LIBERTAS
+ 	depends on BACKPORT_CFG80211
+-	select WIRELESS_EXT
+-	select WEXT_SPY
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
+ 	select BACKPORT_LIB80211
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  A library for Marvell Libertas 8xxx devices.
+ 
+diff --git a/backports/drivers/net/wireless/mwifiex/Kconfig b/backports/drivers/net/wireless/mwifiex/Kconfig
+index 489cdf1..d1f5240 100644
+--- a/backports/drivers/net/wireless/mwifiex/Kconfig
++++ b/backports/drivers/net/wireless/mwifiex/Kconfig
+@@ -13,7 +13,7 @@ config BACKPORT_MWIFIEX_SDIO
+ 	tristate "Marvell WiFi-Ex Driver for SD8786/SD8787/SD8797/SD8887/SD8897"
+ 	depends on !MWIFIEX_SDIO
+ 	depends on BACKPORT_MWIFIEX && MMC
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This adds support for wireless adapters based on Marvell
+ 	  8786/8787/8797/8887/8897 chipsets with SDIO interface.
+@@ -25,7 +25,7 @@ config BACKPORT_MWIFIEX_PCIE
+ 	tristate "Marvell WiFi-Ex Driver for PCIE 8766/8897"
+ 	depends on !MWIFIEX_PCIE
+ 	depends on BACKPORT_MWIFIEX && PCI
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This adds support for wireless adapters based on Marvell
+ 	  8766/8897 chipsets with PCIe interface.
+@@ -37,7 +37,7 @@ config BACKPORT_MWIFIEX_USB
+ 	tristate "Marvell WiFi-Ex Driver for USB8766/8797/8897"
+ 	depends on !MWIFIEX_USB
+ 	depends on BACKPORT_MWIFIEX && USB
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This adds support for wireless adapters based on Marvell
+ 	  8797/8897 chipset with USB interface.
+diff --git a/backports/drivers/net/wireless/orinoco/Kconfig b/backports/drivers/net/wireless/orinoco/Kconfig
+index 21ec6a8..b53cb09 100644
+--- a/backports/drivers/net/wireless/orinoco/Kconfig
++++ b/backports/drivers/net/wireless/orinoco/Kconfig
+@@ -4,12 +4,12 @@ config BACKPORT_HERMES
+ 	depends on (PPC_PMAC || PCI || PCMCIA)
+ 	depends on BACKPORT_CFG80211
+ 	select BACKPORT_CFG80211_WEXT_EXPORT
+-	select WIRELESS_EXT
+-	select WEXT_SPY
+-	select WEXT_PRIV
+-	select FW_LOADER
+-	select CRYPTO
+-	select CRYPTO_MICHAEL_MIC
++	depends on WIRELESS_EXT
++	depends on WEXT_SPY
++	depends on WEXT_PRIV
++	depends on FW_LOADER
++	depends on CRYPTO
++	depends on CRYPTO_MICHAEL_MIC
+ 	---help---
+ 	  A driver for 802.11b wireless cards based on the "Hermes" or
+ 	  Intersil HFA384x (Prism 2) MAC controller.  This includes the vast
+@@ -148,6 +148,6 @@ config BACKPORT_ORINOCO_USB
+ 	tristate "Agere Orinoco USB support"
+ 	depends on !ORINOCO_USB
+ 	depends on USB && BACKPORT_HERMES
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This driver is for USB versions of the Agere Orinoco card.
+diff --git a/backports/drivers/net/wireless/p54/Kconfig b/backports/drivers/net/wireless/p54/Kconfig
+index 2f19da0..f2a2da6 100644
+--- a/backports/drivers/net/wireless/p54/Kconfig
++++ b/backports/drivers/net/wireless/p54/Kconfig
+@@ -2,8 +2,8 @@ config BACKPORT_P54_COMMON
+ 	tristate "Softmac Prism54 support"
+ 	depends on !P54_COMMON
+ 	depends on BACKPORT_MAC80211
+-	select FW_LOADER
+-	select CRC_CCITT
++	depends on FW_LOADER
++	depends on CRC_CCITT
+ 	---help---
+ 	  This is common code for isl38xx/stlc45xx based modules.
+ 	  This module does nothing by itself - the USB/PCI/SPI front-ends
+@@ -18,7 +18,7 @@ config BACKPORT_P54_USB
+ 	tristate "Prism54 USB support"
+ 	depends on !P54_USB
+ 	depends on BACKPORT_P54_COMMON && USB
+-	select CRC32
++	depends on CRC32
+ 	---help---
+ 	  This driver is for USB isl38xx based wireless cards.
+ 
+diff --git a/backports/drivers/net/wireless/rt2x00/Kconfig b/backports/drivers/net/wireless/rt2x00/Kconfig
+index efdce83..2188014 100644
+--- a/backports/drivers/net/wireless/rt2x00/Kconfig
++++ b/backports/drivers/net/wireless/rt2x00/Kconfig
+@@ -24,7 +24,7 @@ config BACKPORT_RT2400PCI
+ 	depends on PCI
+ 	select BACKPORT_RT2X00_LIB_MMIO
+ 	select BACKPORT_RT2X00_LIB_PCI
+-	select EEPROM_93CX6
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This adds support for rt2400 wireless chipset family.
+ 	  Supported chips: RT2460.
+@@ -37,7 +37,7 @@ config BACKPORT_RT2500PCI
+ 	depends on PCI
+ 	select BACKPORT_RT2X00_LIB_MMIO
+ 	select BACKPORT_RT2X00_LIB_PCI
+-	select EEPROM_93CX6
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This adds support for rt2500 wireless chipset family.
+ 	  Supported chips: RT2560.
+@@ -52,8 +52,8 @@ config BACKPORT_RT61PCI
+ 	select BACKPORT_RT2X00_LIB_MMIO
+ 	select BACKPORT_RT2X00_LIB_FIRMWARE
+ 	select BACKPORT_RT2X00_LIB_CRYPTO
+-	select CRC_ITU_T
+-	select EEPROM_93CX6
++	depends on CRC_ITU_T
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This adds support for rt2501 wireless chipset family.
+ 	  Supported chips: RT2561, RT2561S & RT2661.
+@@ -70,8 +70,8 @@ config BACKPORT_RT2800PCI
+ 	select BACKPORT_RT2X00_LIB_PCI
+ 	select BACKPORT_RT2X00_LIB_FIRMWARE
+ 	select BACKPORT_RT2X00_LIB_CRYPTO
+-	select CRC_CCITT
+-	select EEPROM_93CX6
++	depends on CRC_CCITT
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This adds support for rt27xx/rt28xx/rt30xx wireless chipset family.
+ 	  Supported chips: RT2760, RT2790, RT2860, RT2880, RT2890, RT3052,
+@@ -138,7 +138,7 @@ config BACKPORT_RT73USB
+ 	select BACKPORT_RT2X00_LIB_USB
+ 	select BACKPORT_RT2X00_LIB_FIRMWARE
+ 	select BACKPORT_RT2X00_LIB_CRYPTO
+-	select CRC_ITU_T
++	depends on CRC_ITU_T
+ 	---help---
+ 	  This adds support for rt2501 wireless chipset family.
+ 	  Supported chips: RT2571W, RT2573 & RT2671.
+@@ -153,7 +153,7 @@ config BACKPORT_RT2800USB
+ 	select BACKPORT_RT2X00_LIB_USB
+ 	select BACKPORT_RT2X00_LIB_FIRMWARE
+ 	select BACKPORT_RT2X00_LIB_CRYPTO
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	---help---
+ 	  This adds support for rt27xx/rt28xx/rt30xx wireless chipset family.
+ 	  Supported chips: RT2770, RT2870 & RT3070, RT3071 & RT3072
+@@ -266,12 +266,12 @@ config BACKPORT_RT2X00_LIB_USB
+ config BACKPORT_RT2X00_LIB
+ 	tristate
+ 	depends on !RT2X00_LIB
+-	select AVERAGE
++	depends on AVERAGE
+ 
+ config BACKPORT_RT2X00_LIB_FIRMWARE
+ 	bool
+ 	depends on !RT2X00_LIB_FIRMWARE
+-	select FW_LOADER
++	depends on FW_LOADER
+ 
+ config BACKPORT_RT2X00_LIB_CRYPTO
+ 	bool
+diff --git a/backports/drivers/net/wireless/rtl818x/Kconfig b/backports/drivers/net/wireless/rtl818x/Kconfig
+index 420c29d..c0686b5 100644
+--- a/backports/drivers/net/wireless/rtl818x/Kconfig
++++ b/backports/drivers/net/wireless/rtl818x/Kconfig
+@@ -5,7 +5,7 @@ config BACKPORT_RTL8180
+ 	tristate "Realtek 8180/8185/8187SE PCI support"
+ 	depends on !RTL8180
+ 	depends on BACKPORT_MAC80211 && PCI
+-	select EEPROM_93CX6
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This is a driver for BACKPORT_RTL8180, RTL8185 and RTL8187SE based cards.
+ 	  These are PCI based chips found in cards such as:
+@@ -62,7 +62,7 @@ config BACKPORT_RTL8187
+ 	tristate "Realtek 8187 and 8187B USB support"
+ 	depends on !RTL8187
+ 	depends on BACKPORT_MAC80211 && USB
+-	select EEPROM_93CX6
++	depends on EEPROM_93CX6
+ 	---help---
+ 	  This is a driver for BACKPORT_RTL8187 and BACKPORT_RTL8187B based cards.
+ 	  These are USB based chips found in devices such as:
+diff --git a/backports/drivers/net/wireless/rtlwifi/Kconfig b/backports/drivers/net/wireless/rtlwifi/Kconfig
+index f8cf996..8fed000 100644
+--- a/backports/drivers/net/wireless/rtlwifi/Kconfig
++++ b/backports/drivers/net/wireless/rtlwifi/Kconfig
+@@ -55,7 +55,7 @@ config BACKPORT_RTL8723AE
+ 	select BACKPORT_RTLWIFI
+ 	select BACKPORT_RTLWIFI_PCI
+ 	select BACKPORT_RTL8723_COMMON
+-	select RTLBTCOEXIST
++	depends on RTLBTCOEXIST
+ 	---help---
+ 	This is the driver for Realtek BACKPORT_RTL8723AE 802.11n PCIe
+ 	wireless network adapters.
+@@ -69,7 +69,7 @@ config BACKPORT_RTL8723BE
+ 	select BACKPORT_RTLWIFI
+ 	select BACKPORT_RTLWIFI_PCI
+ 	select BACKPORT_RTL8723_COMMON
+-	select RTLBTCOEXIST
++	depends on RTLBTCOEXIST
+ 	---help---
+ 	This is the driver for Realtek BACKPORT_RTL8723BE 802.11n PCIe
+ 	wireless network adapters.
+@@ -94,7 +94,7 @@ config BACKPORT_RTL8192EE
+ 	depends on PCI
+ 	select BACKPORT_RTLWIFI
+ 	select BACKPORT_RTLWIFI_PCI
+-	select RTLBTCOEXIST
++	depends on RTLBTCOEXIST
+ 	---help---
+ 	This is the driver for Realtek BACKPORT_RTL8192EE 802.11n PCIe
+ 	wireless network adapters.
+@@ -107,7 +107,7 @@ config BACKPORT_RTL8821AE
+ 	depends on PCI
+ 	select BACKPORT_RTLWIFI
+ 	select BACKPORT_RTLWIFI_PCI
+-	select RTLBTCOEXIST
++	depends on RTLBTCOEXIST
+ 	---help---
+ 	This is the driver for Realtek RTL8i821AE/RTL8812AE 802.11av PCIe
+ 	wireless network adapters.
+@@ -130,7 +130,7 @@ config BACKPORT_RTL8192CU
+ config BACKPORT_RTLWIFI
+ 	tristate
+ 	depends on !RTLWIFI
+-	select FW_LOADER
++	depends on FW_LOADER
+ 
+ config BACKPORT_RTLWIFI_PCI
+ 	tristate
+diff --git a/backports/drivers/net/wireless/ti/wl1251/Kconfig b/backports/drivers/net/wireless/ti/wl1251/Kconfig
+index 12574b9..c649581 100644
+--- a/backports/drivers/net/wireless/ti/wl1251/Kconfig
++++ b/backports/drivers/net/wireless/ti/wl1251/Kconfig
+@@ -2,8 +2,8 @@ menuconfig BACKPORT_WL1251
+ 	tristate "TI wl1251 driver support"
+ 	depends on !WL1251
+ 	depends on BACKPORT_MAC80211
+-	select FW_LOADER
+-	select CRC7
++	depends on FW_LOADER
++	depends on CRC7
+ 	---help---
+ 	  This will enable TI wl1251 driver support. The drivers make
+ 	  use of the mac80211 stack.
+diff --git a/backports/drivers/net/wireless/ti/wlcore/Kconfig b/backports/drivers/net/wireless/ti/wlcore/Kconfig
+index 4e40f2b..101e0fa 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/Kconfig
++++ b/backports/drivers/net/wireless/ti/wlcore/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_WLCORE
+ 	tristate "TI wlcore support"
+ 	depends on !WLCORE
+ 	depends on WL_TI && BACKPORT_MAC80211
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This module contains the main code for TI BACKPORT_WLAN chips.  It abstracts
+ 	  hardware-specific differences among different chipset families.
+@@ -16,7 +16,7 @@ config BACKPORT_WLCORE_SPI
+ 	tristate "TI wlcore SPI support"
+ 	depends on !WLCORE_SPI
+ 	depends on BACKPORT_WLCORE && SPI_MASTER
+-	select CRC7
++	depends on CRC7
+ 	---help---
+ 	  This module adds support for the SPI interface of adapters using
+ 	  TI BACKPORT_WLAN chipsets.  Select this if your platform is using
+diff --git a/backports/drivers/net/wireless/zd1211rw/Kconfig b/backports/drivers/net/wireless/zd1211rw/Kconfig
+index 482913c..fcde9f2 100644
+--- a/backports/drivers/net/wireless/zd1211rw/Kconfig
++++ b/backports/drivers/net/wireless/zd1211rw/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_ZD1211RW
+ 	tristate "ZyDAS ZD1211/ZD1211B USB-wireless support"
+ 	depends on !ZD1211RW
+ 	depends on USB && BACKPORT_MAC80211
+-	select FW_LOADER
++	depends on FW_LOADER
+ 	---help---
+ 	  This is a driver for the ZyDAS ZD1211/ZD1211B wireless
+ 	  chip, present in many USB-wireless adapters.
+diff --git a/backports/drivers/nfc/microread/Kconfig b/backports/drivers/nfc/microread/Kconfig
+index 9b7d6e5..764808d 100644
+--- a/backports/drivers/nfc/microread/Kconfig
++++ b/backports/drivers/nfc/microread/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_NFC_MICROREAD
+ 	tristate "Inside Secure microread NFC driver"
+ 	depends on !NFC_MICROREAD
+ 	depends on BACKPORT_NFC_HCI
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	default n
+ 	---help---
+ 	  This module contains the main code for Inside Secure microread
+diff --git a/backports/drivers/nfc/pn544/Kconfig b/backports/drivers/nfc/pn544/Kconfig
+index d5511bb..e1a75ba 100644
+--- a/backports/drivers/nfc/pn544/Kconfig
++++ b/backports/drivers/nfc/pn544/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_NFC_PN544
+ 	tristate "NXP PN544 NFC driver"
+ 	depends on !NFC_PN544
+ 	depends on BACKPORT_NFC_HCI
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	default n
+ 	---help---
+ 	  NXP PN544 core driver.
+diff --git a/backports/drivers/nfc/st21nfca/Kconfig b/backports/drivers/nfc/st21nfca/Kconfig
+index 55af7e7..75560ad 100644
+--- a/backports/drivers/nfc/st21nfca/Kconfig
++++ b/backports/drivers/nfc/st21nfca/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_NFC_ST21NFCA
+ 	tristate "STMicroelectronics ST21NFCA NFC driver"
+ 	depends on !NFC_ST21NFCA
+ 	depends on BACKPORT_NFC_HCI
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	default n
+ 	---help---
+ 	  STMicroelectronics ST21NFCA core driver. It implements the chipset
+diff --git a/backports/net/bluetooth/Kconfig b/backports/net/bluetooth/Kconfig
+index a7d4fa6..a4f009e 100644
+--- a/backports/net/bluetooth/Kconfig
++++ b/backports/net/bluetooth/Kconfig
+@@ -7,13 +7,13 @@ menuconfig BACKPORT_BT
+ 	depends on !BT
+ 	depends on NET && !S390
+ 	depends on RFKILL || !RFKILL
+-	select CRC16
+-	select CRYPTO
+-	select CRYPTO_BLKCIPHER
+-	select CRYPTO_AES
+-	select CRYPTO_CMAC
+-	select CRYPTO_ECB
+-	select CRYPTO_SHA256
++	depends on CRC16
++	depends on CRYPTO
++	depends on CRYPTO_BLKCIPHER
++	depends on CRYPTO_AES
++	depends on CRYPTO_CMAC
++	depends on CRYPTO_ECB
++	depends on CRYPTO_SHA256
+ 	help
+ 	  Bluetooth is low-cost, low-power, short-range wireless technology.
+ 	  It was designed as a replacement for cables and other short-range
+diff --git a/backports/net/bluetooth/bnep/Kconfig b/backports/net/bluetooth/bnep/Kconfig
+index ec210c1..fe40595 100644
+--- a/backports/net/bluetooth/bnep/Kconfig
++++ b/backports/net/bluetooth/bnep/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_BT_BNEP
+ 	tristate "BNEP protocol support"
+ 	depends on !BT_BNEP
+ 	depends on BACKPORT_BT_BREDR
+-	select CRC32
++	depends on CRC32
+ 	help
+ 	  BNEP (Bluetooth Network Encapsulation Protocol) is Ethernet
+ 	  emulation layer on top of Bluetooth.  BNEP is required for
+diff --git a/backports/net/bluetooth/hidp/Kconfig b/backports/net/bluetooth/hidp/Kconfig
+index 353013a..ae1777a 100644
+--- a/backports/net/bluetooth/hidp/Kconfig
++++ b/backports/net/bluetooth/hidp/Kconfig
+@@ -2,7 +2,7 @@ config BACKPORT_BT_HIDP
+ 	tristate "HIDP protocol support"
+ 	depends on !BT_HIDP
+ 	depends on BACKPORT_BT_BREDR && INPUT
+-	select HID
++	depends on HID
+ 	help
+ 	  HIDP (Human Interface Device Protocol) is a transport layer
+ 	  for HID reports.  HIDP is required for the Bluetooth Human
+diff --git a/backports/net/mac80211/Kconfig b/backports/net/mac80211/Kconfig
+index 9270837..87acaa4 100644
+--- a/backports/net/mac80211/Kconfig
++++ b/backports/net/mac80211/Kconfig
+@@ -2,13 +2,13 @@ config BACKPORT_MAC80211
+ 	tristate "Generic IEEE 802.11 Networking Stack (mac80211)"
+ 	depends on !MAC80211
+ 	depends on BACKPORT_CFG80211
+-	select CRYPTO
+-	select CRYPTO_ARC4
+-	select CRYPTO_AES
+-	select CRYPTO_CCM
+-	select CRYPTO_GCM
+-	select CRC32
+-	select AVERAGE
++	depends on CRYPTO
++	depends on CRYPTO_ARC4
++	depends on CRYPTO_AES
++	depends on CRYPTO_CCM
++	depends on CRYPTO_GCM
++	depends on CRC32
++	depends on AVERAGE
+ 	---help---
+ 	  This option enables the hardware independent IEEE 802.11
+ 	  networking stack.
+@@ -94,7 +94,7 @@ config BACKPORT_MAC80211_LEDS
+ 	depends on !MAC80211_LEDS
+ 	depends on BACKPORT_MAC80211
+ 	depends on LEDS_CLASS
+-	select LEDS_TRIGGERS
++	depends on LEDS_TRIGGERS
+ 	---help---
+ 	  This option enables a few LED triggers for different
+ 	  packet receive/transmit events.
+diff --git a/backports/net/mac802154/Kconfig b/backports/net/mac802154/Kconfig
+index c88c497..b34dea5 100644
+--- a/backports/net/mac802154/Kconfig
++++ b/backports/net/mac802154/Kconfig
+@@ -2,11 +2,11 @@ config BACKPORT_MAC802154
+ 	tristate "Generic IEEE 802.15.4 Soft Networking Stack (mac802154)"
+ 	depends on !MAC802154
+ 	depends on BACKPORT_IEEE802154
+-	select CRC_CCITT
+-	select CRYPTO_AUTHENC
+-	select CRYPTO_CCM
+-	select CRYPTO_CTR
+-	select CRYPTO_AES
++	depends on CRC_CCITT
++	depends on CRYPTO_AUTHENC
++	depends on CRYPTO_CCM
++	depends on CRYPTO_CTR
++	depends on CRYPTO_AES
+ 	---help---
+ 	  This option enables the hardware independent IEEE 802.15.4
+ 	  networking stack for SoftMAC devices (the ones implementing
+diff --git a/backports/net/nfc/Kconfig b/backports/net/nfc/Kconfig
+index 87f1738..c6f939c 100644
+--- a/backports/net/nfc/Kconfig
++++ b/backports/net/nfc/Kconfig
+@@ -18,8 +18,8 @@ menuconfig BACKPORT_NFC
+ config BACKPORT_NFC_DIGITAL
+ 	depends on NFC
+ 	depends on !NFC_DIGITAL
+-	select CRC_CCITT
+-	select CRC_ITU_T
++	depends on CRC_CCITT
++	depends on CRC_ITU_T
+ 	tristate "NFC Digital Protocol stack support"
+ 	default n
+ 	help
+diff --git a/backports/net/nfc/hci/Kconfig b/backports/net/nfc/hci/Kconfig
+index 4766853..a811617 100644
+--- a/backports/net/nfc/hci/Kconfig
++++ b/backports/net/nfc/hci/Kconfig
+@@ -11,7 +11,7 @@ config BACKPORT_NFC_HCI
+ config BACKPORT_NFC_SHDLC
+ 	depends on NFC_HCI
+ 	depends on !NFC_SHDLC
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	bool "SHDLC link layer for HCI based BACKPORT_NFC drivers"
+ 	default n
+ 	---help---
+diff --git a/backports/net/nfc/nci/Kconfig b/backports/net/nfc/nci/Kconfig
+index c10eae0..0d2199c 100644
+--- a/backports/net/nfc/nci/Kconfig
++++ b/backports/net/nfc/nci/Kconfig
+@@ -13,7 +13,7 @@ config BACKPORT_NFC_NCI
+ config BACKPORT_NFC_NCI_SPI
+ 	depends on NFC_NCI && SPI
+ 	depends on !NFC_NCI_SPI
+-	select CRC_CCITT
++	depends on CRC_CCITT
+ 	bool "NCI over SPI protocol support"
+ 	default n
+ 	help
+-- 
+2.5.1
+

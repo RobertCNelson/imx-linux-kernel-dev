@@ -1,0 +1,25 @@
+From 325090b85782445b138418ce5fbac4f8b8afe9b6 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:18 -0500
+Subject: [PATCH 17/97] apply backport patch
+ collateral-evolutions/media/0004-missing-include/hackrf.patch
+
+---
+ backports/drivers/media/usb/hackrf/hackrf.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/backports/drivers/media/usb/hackrf/hackrf.c b/backports/drivers/media/usb/hackrf/hackrf.c
+index fd1fa41..f7df15a 100644
+--- a/backports/drivers/media/usb/hackrf/hackrf.c
++++ b/backports/drivers/media/usb/hackrf/hackrf.c
+@@ -22,6 +22,7 @@
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-event.h>
+ #include <media/videobuf2-vmalloc.h>
++#include <linux/mm.h>
+ 
+ /* HackRF USB API commands (from HackRF Library) */
+ enum {
+-- 
+2.5.1
+

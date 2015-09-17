@@ -1,0 +1,33 @@
+From 5cac03312f2df282b23705a84a0c2852cd219de1 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:30 -0500
+Subject: [PATCH 49/97] apply backport patch
+ collateral-evolutions/network/0032-sriov_configure/igb_sriov_configure.patch
+
+---
+ backports/drivers/net/ethernet/intel/igb/igb_main.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/drivers/net/ethernet/intel/igb/igb_main.c b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+index a0a9b1f..5e6fa8e 100644
+--- a/backports/drivers/net/ethernet/intel/igb/igb_main.c
++++ b/backports/drivers/net/ethernet/intel/igb/igb_main.c
+@@ -7568,6 +7568,7 @@ static int igb_sriov_reinit(struct pci_dev *dev)
+ 	return 0;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
+ static int igb_pci_disable_sriov(struct pci_dev *dev)
+ {
+ 	int err = igb_disable_sriov(dev);
+@@ -7577,6 +7578,7 @@ static int igb_pci_disable_sriov(struct pci_dev *dev)
+ 
+ 	return err;
+ }
++#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0) */
+ 
+ static int igb_pci_enable_sriov(struct pci_dev *dev, int num_vfs)
+ {
+-- 
+2.5.1
+

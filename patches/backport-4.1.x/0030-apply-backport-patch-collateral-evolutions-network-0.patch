@@ -1,0 +1,25 @@
+From a961262520cbf97234c73223e095e9c46b6baa8d Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:23 -0500
+Subject: [PATCH 30/97] apply backport patch
+ collateral-evolutions/network/0013-fix-makefile-includes/net_wireless_Makefile.patch
+
+---
+ backports/net/wireless/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/backports/net/wireless/Makefile b/backports/net/wireless/Makefile
+index 4c9e39f..7ee7cd6 100644
+--- a/backports/net/wireless/Makefile
++++ b/backports/net/wireless/Makefile
+@@ -20,6 +20,6 @@ CFLAGS_trace.o := -I$(src)
+ ccflags-y += -D__CHECK_ENDIAN__
+ 
+ $(obj)/regdb.c: $(src)/db.txt $(src)/genregdb.awk
+-	@$(AWK) -f $(srctree)/$(src)/genregdb.awk < $< > $@
++	@$(AWK) -f $(src)/genregdb.awk < $< > $@
+ 
+ clean-files := regdb.c
+-- 
+2.5.1
+

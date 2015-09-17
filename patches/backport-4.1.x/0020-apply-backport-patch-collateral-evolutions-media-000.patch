@@ -1,0 +1,28 @@
+From bfdaf2d3d8ccbf660dc1b1a54ca19e6895827b24 Mon Sep 17 00:00:00 2001
+From: Robert Nelson <robertcnelson@gmail.com>
+Date: Thu, 17 Sep 2015 15:44:19 -0500
+Subject: [PATCH 20/97] apply backport patch
+ collateral-evolutions/media/0006-no-eprobe_defer/v4l2-clk.patch
+
+---
+ backports/drivers/media/v4l2-core/v4l2-clk.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/backports/drivers/media/v4l2-core/v4l2-clk.c b/backports/drivers/media/v4l2-core/v4l2-clk.c
+index 34e416a..55cd50b 100644
+--- a/backports/drivers/media/v4l2-core/v4l2-clk.c
++++ b/backports/drivers/media/v4l2-core/v4l2-clk.c
+@@ -40,8 +40,10 @@ struct v4l2_clk *v4l2_clk_get(struct device *dev, const char *id)
+ 	struct v4l2_clk *clk;
+ 	struct clk *ccf_clk = clk_get(dev, id);
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
+ 	if (PTR_ERR(ccf_clk) == -EPROBE_DEFER)
+ 		return ERR_PTR(-EPROBE_DEFER);
++#endif
+ 
+ 	if (!IS_ERR_OR_NULL(ccf_clk)) {
+ 		clk = kzalloc(sizeof(*clk), GFP_KERNEL);
+-- 
+2.5.1
+
