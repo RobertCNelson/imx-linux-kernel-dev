@@ -1,15 +1,15 @@
-From 858f1c252ba044a66997a9ee9bf0bceecd1f9050 Mon Sep 17 00:00:00 2001
+From c8ce6655162de072388bb5ac263084cd9b6813cc Mon Sep 17 00:00:00 2001
 From: Robert Nelson <robertcnelson@gmail.com>
-Date: Thu, 10 Sep 2015 15:38:11 -0500
+Date: Thu, 17 Sep 2015 12:22:25 -0500
 Subject: [PATCH] packaging: sync builddeb changes
 
 Signed-off-by: Robert Nelson <robertcnelson@gmail.com>
 ---
- scripts/package/builddeb | 160 +++++++++++++++++++++++++++++++++--------------
- 1 file changed, 112 insertions(+), 48 deletions(-)
+ scripts/package/builddeb | 250 +++++++++++++++++++++++++----------------------
+ 1 file changed, 133 insertions(+), 117 deletions(-)
 
 diff --git a/scripts/package/builddeb b/scripts/package/builddeb
-index 152d4d2..69d8ff0d 100644
+index b57f86d..69d8ff0d 100755
 --- a/scripts/package/builddeb
 +++ b/scripts/package/builddeb
 @@ -15,6 +15,8 @@ set -e
@@ -36,21 +36,9 @@ index 152d4d2..69d8ff0d 100644
  	case "$UTS_MACHINE" in
  	i386|ia64|alpha)
  		debarch="$UTS_MACHINE" ;;
-@@ -35,16 +42,19 @@ create_package() {
- 	sparc*)
- 		debarch=sparc ;;
- 	s390*)
--		debarch=s390 ;;
-+		debarch=s390$(grep -q CONFIG_64BIT=y $KCONFIG_CONFIG && echo x || true) ;;
- 	ppc*)
--		debarch=powerpc ;;
-+		debarch=$(grep -q CPU_LITTLE_ENDIAN=y $KCONFIG_CONFIG && echo ppc64el || echo powerpc) ;;
- 	parisc*)
- 		debarch=hppa ;;
- 	mips*)
- 		debarch=mips$(grep -q CPU_LITTLE_ENDIAN=y $KCONFIG_CONFIG && echo el || true) ;;
-+	arm64)
-+		debarch=arm64 ;;
+@@ -45,8 +52,9 @@ create_package() {
+ 	arm64)
+ 		debarch=arm64 ;;
  	arm*)
 -		debarch=arm$(grep -q CONFIG_AEABI=y $KCONFIG_CONFIG && echo el || true) ;;
 +		debarch=arm$(grep -q CONFIG_AEABI=y $KCONFIG_CONFIG && echo hf || true) ;;
@@ -59,7 +47,7 @@ index 152d4d2..69d8ff0d 100644
  		echo "" >&2
  		echo "** ** **  WARNING  ** ** **" >&2
  		echo "" >&2
-@@ -57,13 +67,8 @@ create_package() {
+@@ -59,48 +67,32 @@ create_package() {
  	if [ -n "$KBUILD_DEBARCH" ] ; then
  		debarch="$KBUILD_DEBARCH"
  	fi
@@ -69,21 +57,44 @@ index 152d4d2..69d8ff0d 100644
 +	forcearch="-DArchitecture=$debarch"
  
 -	# Create the package
--	dpkg-gencontrol -isp $forcearch -Vkernel:debarch="${debarch:-$(dpkg --print-architecture)}" -p$pname -P"$pdir"
+-	dpkg-gencontrol $forcearch -Vkernel:debarch="${debarch:-$(dpkg --print-architecture)}" -p$pname -P"$pdir"
 -	dpkg --build "$pdir" ..
  }
  
  # Some variables and settings used throughout the script
-@@ -74,6 +79,7 @@ if [ -n "$KDEB_PKGVERSION" ]; then
++version=$KERNELRELEASE
+ revision=$(cat .version)
+-
+-#e.g. 3.14.28-xxxx for version and package name
+-if grep -q '^CONFIG_LOCALVERSION_AUTO=y' $KCONFIG_CONFIG 
+-then
+-  version=`echo $KERNELRELEASE | cut -f -2 -d- `
+-else
+-  version=$KERNELRELEASE
+-fi
+-
+-#e.g take commit sha for package version
+ if [ -n "$KDEB_PKGVERSION" ]; then
+ 	packageversion=$KDEB_PKGVERSION
+-elif grep -q '^CONFIG_LOCALVERSION_AUTO=y' $KCONFIG_CONFIG
+-then
+-  packageversion=`echo $KERNELRELEASE | cut -f -2 -d- --complement`
  else
- 	packageversion=$version-$revision
+-  packageversion=$version-$revision
++	packageversion=$version-$revision
  fi
+-
 +sourcename=$KDEB_SOURCENAME
  tmpdir="$objtree/debian/tmp"
  fwdir="$objtree/debian/fwtmp"
  kernel_headers_dir="$objtree/debian/hdrtmp"
-@@ -84,6 +90,9 @@ fwpackagename=linux-firmware-image-$version
+ libc_headers_dir="$objtree/debian/headertmp"
+-dtb_dir="$objtree/debian/dtbtmp"
+ dbg_dir="$objtree/debian/dbgtmp"
+ packagename=linux-image-$version
+ fwpackagename=linux-firmware-image-$version
  kernel_headers_packagename=linux-headers-$version
+-dtb_packagename=linux-dtb-$version
  libc_headers_packagename=linux-libc-dev
  dbg_packagename=$packagename-dbg
 +debarch=
@@ -92,41 +103,60 @@ index 152d4d2..69d8ff0d 100644
  
  if [ "$ARCH" = "um" ] ; then
  	packagename=user-mode-linux-$version
-@@ -108,29 +117,18 @@ BUILD_DEBUG="$(grep -s '^CONFIG_DEBUG_INFO=y' $KCONFIG_CONFIG || true)"
+@@ -117,43 +109,28 @@ parisc|mips|powerpc)
+ 	installed_image_path="boot/vmlinux-$version"
+ 	;;
+ *)
+-	installed_image_path="boot/"
++	installed_image_path="boot/vmlinuz-$version"
+ esac
+ 
+ BUILD_DEBUG="$(grep -s '^CONFIG_DEBUG_INFO=y' $KCONFIG_CONFIG || true)"
+ 
  # Setup the directory structure
- rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir"
+-rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir" "$dtb_dir" 2>/dev/null
++rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir"
  mkdir -m 755 -p "$tmpdir/DEBIAN"
 -mkdir -p  "$tmpdir/lib" "$tmpdir/boot" "$tmpdir/usr/share/doc/$packagename"
 -mkdir -m 755 -p "$fwdir/DEBIAN"
--mkdir -p "$fwdir/lib/firmware/$version/" "$fwdir/usr/share/doc/$fwpackagename"
+-mkdir -p "$fwdir/lib/firmware/$KERNELRELEASE/" "$fwdir/usr/share/doc/$fwpackagename"
 -mkdir -m 755 -p "$libc_headers_dir/DEBIAN"
 -mkdir -p "$libc_headers_dir/usr/share/doc/$libc_headers_packagename"
+-
+-mkdir -m 755 -p "$dtb_dir/DEBIAN"
+-mkdir -p "$dtb_dir/boot/dts" "$dtb_dir/usr/share/doc/$dtb_packagename"
+-
 -mkdir -m 755 -p "$kernel_headers_dir/DEBIAN"
 -mkdir -p "$kernel_headers_dir/usr/share/doc/$kernel_headers_packagename"
-+mkdir -p "$tmpdir/lib" "$tmpdir/boot"
-+mkdir -p "$fwdir/lib/firmware/$version/"
- mkdir -p "$kernel_headers_dir/lib/modules/$version/"
+-mkdir -p "$kernel_headers_dir/lib/modules/$KERNELRELEASE/"
 -if [ "$ARCH" = "um" ] ; then
--	mkdir -p "$tmpdir/usr/lib/uml/modules/$version" "$tmpdir/usr/bin"
+-	mkdir -p "$tmpdir/usr/lib/uml/modules/$KERNELRELEASE" "$tmpdir/usr/bin"
 -fi
 -if [ -n "$BUILD_DEBUG" ] ; then
 -	mkdir -p "$dbg_dir/usr/share/doc/$dbg_packagename"
 -	mkdir -m 755 -p "$dbg_dir/DEBIAN"
 -fi
++mkdir -p "$tmpdir/lib" "$tmpdir/boot"
++mkdir -p "$fwdir/lib/firmware/$version/"
++mkdir -p "$kernel_headers_dir/lib/modules/$version/"
  
  # Build and install the kernel
  if [ "$ARCH" = "um" ] ; then
 +	mkdir -p "$tmpdir/usr/lib/uml/modules/$version" "$tmpdir/usr/bin" "$tmpdir/usr/share/doc/$packagename"
  	$MAKE linux
- 	cp System.map "$tmpdir/usr/lib/uml/modules/$version/System.map"
+-	cp System.map "$tmpdir/usr/lib/uml/modules/$KERNELRELEASE/System.map"
++	cp System.map "$tmpdir/usr/lib/uml/modules/$version/System.map"
  	cp $KCONFIG_CONFIG "$tmpdir/usr/share/doc/$packagename/config"
  	gzip "$tmpdir/usr/share/doc/$packagename/config"
--else 
-+else
- 	cp System.map "$tmpdir/boot/System.map-$version"
- 	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$version"
+ else
+-	cp System.map "$tmpdir/boot/System.map-$KERNELRELEASE"
+-	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$KERNELRELEASE"
++	cp System.map "$tmpdir/boot/System.map-$version"
++	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$version"
  fi
-@@ -141,6 +139,22 @@ else
+ # Not all arches include the boot path in KBUILD_IMAGE
+ if [ -e $KBUILD_IMAGE ]; then
+@@ -162,13 +139,29 @@ else
  	cp arch/$ARCH/boot/$KBUILD_IMAGE "$tmpdir/$installed_image_path"
  fi
  
@@ -148,43 +178,66 @@ index 152d4d2..69d8ff0d 100644
 +
  if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
  	INSTALL_MOD_PATH="$tmpdir" $MAKE KBUILD_SRC= modules_install
- 	rm -f "$tmpdir/lib/modules/$version/build"
-@@ -150,18 +164,22 @@ if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
- 		rmdir "$tmpdir/lib/modules/$version"
+-	rm -f "$tmpdir/lib/modules/$KERNELRELEASE/build"
+-	rm -f "$tmpdir/lib/modules/$KERNELRELEASE/source"
++	rm -f "$tmpdir/lib/modules/$version/build"
++	rm -f "$tmpdir/lib/modules/$version/source"
+ 	if [ "$ARCH" = "um" ] ; then
+-		mv "$tmpdir/lib/modules/$KERNELRELEASE"/* "$tmpdir/usr/lib/uml/modules/$KERNELRELEASE/"
+-		rmdir "$tmpdir/lib/modules/$KERNELRELEASE"
++		mv "$tmpdir/lib/modules/$version"/* "$tmpdir/usr/lib/uml/modules/$version/"
++		rmdir "$tmpdir/lib/modules/$version"
  	fi
  	if [ -n "$BUILD_DEBUG" ] ; then
--		(
--			cd $tmpdir
--			for module in $(find lib/modules/ -name *.ko); do
--				mkdir -p $(dirname $dbg_dir/usr/lib/debug/$module)
--				# only keep debug symbols in the debug file
--				$OBJCOPY --only-keep-debug $module $dbg_dir/usr/lib/debug/$module
--				# strip original module from debug symbols
--				$OBJCOPY --strip-debug $module
--				# then add a link to those
--				$OBJCOPY --add-gnu-debuglink=$dbg_dir/usr/lib/debug/$module $module
--			done
--		)
-+		for module in $(find $tmpdir/lib/modules/ -name *.ko -printf '%P\n'); do
-+			module=lib/modules/$module
-+			mkdir -p $(dirname $dbg_dir/usr/lib/debug/$module)
-+			# only keep debug symbols in the debug file
-+			$OBJCOPY --only-keep-debug $tmpdir/$module $dbg_dir/usr/lib/debug/$module
-+			# strip original module from debug symbols
-+			$OBJCOPY --strip-debug $tmpdir/$module
-+			# then add a link to those
-+			$OBJCOPY --add-gnu-debuglink=$dbg_dir/usr/lib/debug/$module $tmpdir/$module
-+		done
-+
+ 		for module in $(find $tmpdir/lib/modules/ -name *.ko -printf '%P\n'); do
+@@ -181,13 +174,13 @@ if grep -q '^CONFIG_MODULES=y' $KCONFIG_CONFIG ; then
+ 			# then add a link to those
+ 			$OBJCOPY --add-gnu-debuglink=$dbg_dir/usr/lib/debug/$module $tmpdir/$module
+ 		done
+-	fi
+-fi
+ 
+-if grep -q '^CONFIG_OF=y' $KCONFIG_CONFIG ; then
+-	mkdir -p "$tmpdir/boot/dts"
+-	cp $objtree/arch/arm/boot/dts/*.dtb $dtb_dir/boot/dts
+-	#INSTALL_DTBS_PATH="$dtb_dir/boot/dts" $MAKE KBUILD_SRC= dtbs_install
 +		# resign stripped modules
 +		MODULE_SIG_ALL="$(grep -s '^CONFIG_MODULE_SIG_ALL=y' $KCONFIG_CONFIG || true)"
 +		if [ -n "$MODULE_SIG_ALL" ]; then
 +			INSTALL_MOD_PATH="$tmpdir" $MAKE KBUILD_SRC= modules_sign
 +		fi
- 	fi
++	fi
  fi
  
-@@ -206,7 +224,7 @@ if [ -n "$DEBEMAIL" ]; then
+ if [ "$ARCH" != "um" ]; then
+@@ -195,10 +188,6 @@ if [ "$ARCH" != "um" ]; then
+ 	$MAKE headers_install KBUILD_SRC= INSTALL_HDR_PATH="$libc_headers_dir/usr"
+ fi
+ 
+-# Firmware
+-$MAKE firmware_install KBUILD_SRC= INSTALL_FW_PATH="$tmpdir/lib/firmware"
+-
+-
+ # Install the maintainer scripts
+ # Note: hook scripts under /etc/kernel are also executed by official Debian
+ # kernel packages, as well as kernel packages built using make-kpkg.
+@@ -218,14 +207,12 @@ for script in postinst postrm preinst prerm ; do
+ set -e
+ 
+ # Pass maintainer script parameters to hook scripts
+-
+ export DEB_MAINT_PARAMS="\$*"
+ 
+ # Tell initramfs builder whether it's wanted
+-
+ export INITRD=$want_initrd
+ 
+-test -d $debhookdir/$script.d && run-parts --arg="$KERNELRELEASE" --arg="/$installed_image_path" $debhookdir/$script.d
++test -d $debhookdir/$script.d && run-parts --arg="$version" --arg="/$installed_image_path" $debhookdir/$script.d
+ exit 0
+ EOF
+ 	chmod 755 "$tmpdir/DEBIAN/$script"
+@@ -237,7 +224,7 @@ if [ -n "$DEBEMAIL" ]; then
  elif [ -n "$EMAIL" ]; then
         email=$EMAIL
  else
@@ -193,7 +246,7 @@ index 152d4d2..69d8ff0d 100644
  fi
  if [ -n "$DEBFULLNAME" ]; then
         name=$DEBFULLNAME
-@@ -217,9 +235,20 @@ else
+@@ -248,11 +235,22 @@ else
  fi
  maintainer="$name <$email>"
  
@@ -213,9 +266,12 @@ index 152d4d2..69d8ff0d 100644
 -linux-upstream ($packageversion) unstable; urgency=low
 +$sourcename ($packageversion) $distribution; urgency=low
  
-   * Custom built Linux kernel.
+-  * Custom built Linux kernel for UDOO.
++  * Custom built Linux kernel.
  
-@@ -233,10 +262,10 @@ This is a packacked upstream version of the Linux kernel.
+  -- $maintainer  $(date -R)
+ EOF
+@@ -264,10 +262,10 @@ This is a packacked upstream version of the Linux kernel.
  The sources may be found at most Linux ftp sites, including:
  ftp://ftp.kernel.org/pub/linux/kernel
  
@@ -228,7 +284,7 @@ index 152d4d2..69d8ff0d 100644
  
      This program is free software; you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
-@@ -246,12 +275,16 @@ On Debian GNU/Linux systems, the complete text of the GNU General Public
+@@ -277,15 +275,18 @@ On Debian GNU/Linux systems, the complete text of the GNU General Public
  License version 2 can be found in \`/usr/share/common-licenses/GPL-2'.
  EOF
  
@@ -245,31 +301,128 @@ index 152d4d2..69d8ff0d 100644
 +Build-Depends: $build_depends
  Standards-Version: 3.8.4
  Homepage: http://www.kernel.org/
+-Vcs-Git: https://github.com/UDOOboard/linux_kernel
  EOF
-@@ -287,14 +320,16 @@ EOF
  
+ if [ "$ARCH" = "um" ]; then
+@@ -310,7 +311,7 @@ else
+ 
+ Package: $packagename
+ Provides: linux-image, linux-image-2.6, linux-modules-$version
+-Suggests: $fwpackagename, $dtb_packagename
++Suggests: $fwpackagename
+ Architecture: any
+ Description: Linux kernel, version $version
+  This package contains the Linux kernel, modules and corresponding other
+@@ -320,22 +321,20 @@ EOF
  fi
  
--# Build header package
--(cd $srctree; find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl > "$objtree/debian/hdrsrcfiles")
--(cd $srctree; find arch/$SRCARCH/include include scripts -type f >> "$objtree/debian/hdrsrcfiles")
--(cd $objtree; find arch/$SRCARCH/include Module.symvers include scripts -type f >> "$objtree/debian/hdrobjfiles")
-+# Build kernel header package
+ # Build kernel header package
+-if [ -n "$BUILD_HEADERS" ] ; then
+-  
+-  (cd $srctree; find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl) > "$objtree/debian/hdrsrcfiles"
+-  (cd $srctree; find arch/$SRCARCH/include include scripts -type f) >> "$objtree/debian/hdrsrcfiles"
+-  (cd $srctree; find arch/$SRCARCH -name module.lds -o -name Kbuild.platforms -o -name Platform) >> "$objtree/debian/hdrsrcfiles"
+-  (cd $srctree; find $(find arch/$SRCARCH -name include -o -name scripts -type d) -type f) >> "$objtree/debian/hdrsrcfiles"
+-  (cd $objtree; find arch/$SRCARCH/include Module.symvers include scripts -type f) >> "$objtree/debian/hdrobjfiles"
+-  destdir=$kernel_headers_dir/usr/src/linux-headers-$version
+-  mkdir -p "$destdir"
+-  (cd $srctree; tar -c -f - -T -) < "$objtree/debian/hdrsrcfiles" | (cd $destdir; tar -xf -)
+-  (cd $objtree; tar -c -f - -T -) < "$objtree/debian/hdrobjfiles" | (cd $destdir; tar -xf -)
+-  (cd $objtree; cp $KCONFIG_CONFIG $destdir/.config) # copy .config manually to be where it's expected to be
+-  ln -sf "/usr/src/linux-headers-$version" "$kernel_headers_dir/lib/modules/$KERNELRELEASE/build"
+-  rm -f "$objtree/debian/hdrsrcfiles" "$objtree/debian/hdrobjfiles"
+-
+-  cat <<EOF >> debian/control
 +(cd $srctree; find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl) > "$objtree/debian/hdrsrcfiles"
 +(cd $srctree; find arch/$SRCARCH/include include scripts -type f) >> "$objtree/debian/hdrsrcfiles"
 +(cd $srctree; find arch/$SRCARCH -name module.lds -o -name Kbuild.platforms -o -name Platform) >> "$objtree/debian/hdrsrcfiles"
 +(cd $srctree; find $(find arch/$SRCARCH -name include -o -name scripts -type d) -type f) >> "$objtree/debian/hdrsrcfiles"
 +(cd $objtree; find arch/$SRCARCH/include Module.symvers include scripts -type f) >> "$objtree/debian/hdrobjfiles"
- destdir=$kernel_headers_dir/usr/src/linux-headers-$version
- mkdir -p "$destdir"
--(cd $srctree; tar -c -f - -T "$objtree/debian/hdrsrcfiles") | (cd $destdir; tar -xf -)
--(cd $objtree; tar -c -f - -T "$objtree/debian/hdrobjfiles") | (cd $destdir; tar -xf -)
++destdir=$kernel_headers_dir/usr/src/linux-headers-$version
++mkdir -p "$destdir"
 +(cd $srctree; tar -c -f - -T -) < "$objtree/debian/hdrsrcfiles" | (cd $destdir; tar -xf -)
 +(cd $objtree; tar -c -f - -T -) < "$objtree/debian/hdrobjfiles" | (cd $destdir; tar -xf -)
- (cd $objtree; cp $KCONFIG_CONFIG $destdir/.config) # copy .config manually to be where it's expected to be
- ln -sf "/usr/src/linux-headers-$version" "$kernel_headers_dir/lib/modules/$version/build"
- rm -f "$objtree/debian/hdrsrcfiles" "$objtree/debian/hdrobjfiles"
-@@ -370,4 +405,33 @@ EOF
++(cd $objtree; cp $KCONFIG_CONFIG $destdir/.config) # copy .config manually to be where it's expected to be
++ln -sf "/usr/src/linux-headers-$version" "$kernel_headers_dir/lib/modules/$version/build"
++rm -f "$objtree/debian/hdrsrcfiles" "$objtree/debian/hdrobjfiles"
++
++cat <<EOF >> debian/control
+ 
+ Package: $kernel_headers_packagename
+ Provides: linux-headers, linux-headers-2.6
+@@ -346,26 +345,9 @@ Description: Linux kernel headers for $KERNELRELEASE on \${kernel:debarch}
+  This is useful for people who need to build external modules
+ EOF
+ 
+-  cat <<EOF >> debian/control
+-
+-Package: $libc_headers_packagename
+-Section: devel
+-Provides: linux-kernel-headers
+-Architecture: any
+-Description: Linux support headers for userspace development
+- This package provides userspaces headers from the Linux kernel.  These headers
+- are used by the installed headers for GNU glibc and other system libraries.
+-EOF
+-
+-  if [ "$ARCH" != "um" ]; then
+-  	create_package "$kernel_headers_packagename" "$kernel_headers_dir"
+-  	create_package "$libc_headers_packagename" "$libc_headers_dir"
+-  fi
+-fi
+-
+ # Do we have firmware? Move it out of the way and build it into a package.
+ if [ -e "$tmpdir/lib/firmware" ]; then
+-	mv "$tmpdir/lib/firmware"/* "$fwdir/lib/firmware/$KERNELRELEASE/"
++	mv "$tmpdir/lib/firmware"/* "$fwdir/lib/firmware/$version/"
+ 	rmdir "$tmpdir/lib/firmware"
+ 
+ 	cat <<EOF >> debian/control
+@@ -381,14 +363,19 @@ fi
+ 
+ cat <<EOF >> debian/control
+ 
+-Package: $dtb_packagename
++Package: $libc_headers_packagename
++Section: devel
++Provides: linux-kernel-headers
+ Architecture: any
+-Description: Linux DTB, version $version
+- This package contains device blobs from the Linux kernel, version $version.
++Description: Linux support headers for userspace development
++ This package provides userspaces headers from the Linux kernel.  These headers
++ are used by the installed headers for GNU glibc and other system libraries.
+ EOF
+ 
+-create_package "$dtb_packagename" "$dtb_dir"
+-
++if [ "$ARCH" != "um" ]; then
++	create_package "$kernel_headers_packagename" "$kernel_headers_dir"
++	create_package "$libc_headers_packagename" "$libc_headers_dir"
++fi
+ 
+ create_package "$packagename" "$tmpdir"
+ 
+@@ -396,13 +383,13 @@ if [ -n "$BUILD_DEBUG" ] ; then
+ 	# Build debug package
+ 	# Different tools want the image in different locations
+ 	# perf
+-	mkdir -p $dbg_dir/usr/lib/debug/lib/modules/$KERNELRELEASE/
+-	cp vmlinux $dbg_dir/usr/lib/debug/lib/modules/$KERNELRELEASE/
++	mkdir -p $dbg_dir/usr/lib/debug/lib/modules/$version/
++	cp vmlinux $dbg_dir/usr/lib/debug/lib/modules/$version/
+ 	# systemtap
+ 	mkdir -p $dbg_dir/usr/lib/debug/boot/
+-	ln -s ../lib/modules/$KERNELRELEASE/vmlinux $dbg_dir/usr/lib/debug/boot/vmlinux-$version
++	ln -s ../lib/modules/$version/vmlinux $dbg_dir/usr/lib/debug/boot/vmlinux-$version
+ 	# kdump-tools
+-	ln -s lib/modules/$KERNELRELEASE/vmlinux $dbg_dir/usr/lib/debug/vmlinux-$version
++	ln -s lib/modules/$version/vmlinux $dbg_dir/usr/lib/debug/vmlinux-$version
+ 
+ 	cat <<EOF >> debian/control
+ 
+@@ -418,4 +405,33 @@ EOF
  	create_package "$dbg_packagename" "$dbg_dir"
  fi
  
