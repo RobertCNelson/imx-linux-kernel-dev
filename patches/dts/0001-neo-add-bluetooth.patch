@@ -1,19 +1,19 @@
-From f93dd0290899b3cb590d97909de283f6e4842204 Mon Sep 17 00:00:00 2001
+From 4763864b75fd07559a47a5570e21f830dab0bf4f Mon Sep 17 00:00:00 2001
 From: Robert Nelson <robertcnelson@gmail.com>
-Date: Fri, 11 Sep 2015 10:55:35 -0500
+Date: Thu, 17 Sep 2015 12:19:37 -0500
 Subject: [PATCH] neo: add bluetooth
 
 Signed-off-by: Robert Nelson <robertcnelson@gmail.com>
 ---
- arch/arm/boot/dts/imx6sx-udoo-neo.dtsi | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ arch/arm/boot/dts/imx6sx-udoo-neo.dtsi | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
-index 5cf3ea8..01a4c83 100644
+index a3be251..476b29c 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
 @@ -89,6 +89,17 @@
- 		};
+ //		};
  	};
  
 +	kim {
@@ -30,15 +30,6 @@ index 5cf3ea8..01a4c83 100644
  };
  
  &cpu0 {
-@@ -507,7 +518,7 @@
- 	#address-cells = <1>;
- 	#size-cells = <0>;
- 	wlcore: wlcore@0 {
--		compatible = "ti,wl1831";
-+		compatible = "ti,wl1835";
- 		reg = <2>;
- 		interrupt-parent = <&gpio2>;
- 		interrupts = <16 IRQ_TYPE_EDGE_RISING>;
 -- 
 2.5.1
 
