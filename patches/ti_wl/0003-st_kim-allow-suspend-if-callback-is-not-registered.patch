@@ -1,7 +1,7 @@
-From 26c0aa5c37cd9ece6e7e17042877bb1a33a73af5 Mon Sep 17 00:00:00 2001
+From 7405f5028beebb4d1e7f6f2c234ca7e986a076f6 Mon Sep 17 00:00:00 2001
 From: Eyal Reizer <eyalr@ti.com>
 Date: Wed, 29 Jan 2014 09:03:41 +0200
-Subject: [PATCH 05/10] st_kim: allow suspend if callback is not registered
+Subject: [PATCH 3/5] st_kim: allow suspend if callback is not registered
 
 Suspend/resume was failing if callbacks were not registered.
 As it is ok not to do anything when suspending fix this
@@ -9,7 +9,7 @@ so it soen't return an error and allow the system to suspend.
 
 Signed-off-by: Eyal Reizer <eyalr@ti.com>
 ---
- drivers/misc/ti-st/st_kim.c |    4 ++--
+ drivers/misc/ti-st/st_kim.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/misc/ti-st/st_kim.c b/drivers/misc/ti-st/st_kim.c
@@ -35,5 +35,5 @@ index 3bab3e8..b373189 100644
  
  /**********************************************************************/
 -- 
-1.7.9.5
+2.5.1
 

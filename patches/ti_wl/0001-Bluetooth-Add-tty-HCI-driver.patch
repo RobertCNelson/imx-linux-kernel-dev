@@ -1,7 +1,7 @@
-From 295cc59ba886386f07b0760df245381deafc3098 Mon Sep 17 00:00:00 2001
+From 7cedce1d7612cfb493fe1808281d7274090f2b3e Mon Sep 17 00:00:00 2001
 From: Pavan Savoy <pavan_savoy@ti.com>
 Date: Mon, 15 Oct 2012 17:47:35 -0500
-Subject: [PATCH 02/10] Bluetooth: Add tty HCI driver
+Subject: [PATCH 1/5] Bluetooth: Add tty HCI driver
 
 tty_hci driver exposes a /dev/hci_tty character device node, that intends to
 emulate a generic /dev/ttyX device that would be used by the user-space
@@ -18,9 +18,9 @@ Signed-off-by: Vishal Mahaveer <vishalm@ti.com>
  [Fixed checkpatch --strict warnings]
 Signed-off-by: Eyal Reizer <eyalr@ti.com>
 ---
- drivers/misc/ti-st/Kconfig   |    8 +
- drivers/misc/ti-st/Makefile  |    1 +
- drivers/misc/ti-st/tty_hci.c |  542 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/misc/ti-st/Kconfig   |   8 +
+ drivers/misc/ti-st/Makefile  |   1 +
+ drivers/misc/ti-st/tty_hci.c | 542 +++++++++++++++++++++++++++++++++++++++++++
  3 files changed, 551 insertions(+)
  create mode 100644 drivers/misc/ti-st/tty_hci.c
 
@@ -599,5 +599,5 @@ index 0000000..5b27b04
 +MODULE_AUTHOR("Pavan Savoy <pavan_savoy@ti.com>");
 +MODULE_LICENSE("GPL");
 -- 
-1.7.9.5
+2.5.1
 
