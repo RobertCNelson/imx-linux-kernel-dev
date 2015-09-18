@@ -1,0 +1,32 @@
+From b1127030411fbd586620b851f85509b314126c8a Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Thu, 19 Mar 2015 17:20:32 +0200
+Subject: [PATCH 15/33] mac80211: allow CSA while scanning/ROC (INTERNAL)
+
+Some devices are smart-enough to manage CSA timing
+while scanning/ROC. let them handle it.
+
+TODO: add feature flag, etc.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/net/mac80211/cfg.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/backports/net/mac80211/cfg.c b/backports/net/mac80211/cfg.c
+index 7863a0d..fa03ba2 100644
+--- a/backports/net/mac80211/cfg.c
++++ b/backports/net/mac80211/cfg.c
+@@ -3164,9 +3164,6 @@ __ieee80211_channel_switch(struct wiphy *wiphy, struct net_device *dev,
+ 	sdata_assert_lock(sdata);
+ 	lockdep_assert_held(&local->mtx);
+ 
+-	if (!list_empty(&local->roc_list) || local->scanning)
+-		return -EBUSY;
+-
+ 	if (sdata->wdev.cac_started)
+ 		return -EBUSY;
+ 
+-- 
+2.5.1
+

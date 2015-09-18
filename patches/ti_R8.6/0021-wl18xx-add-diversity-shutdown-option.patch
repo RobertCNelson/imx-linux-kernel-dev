@@ -1,0 +1,164 @@
+From a5fc1b2cc84d51e58f6813c0053ab193488fcc22 Mon Sep 17 00:00:00 2001
+From: Guy Mishol <guym@ti.com>
+Date: Wed, 13 May 2015 09:16:43 +0300
+Subject: [PATCH 21/33] wl18xx: add diversity shutdown option
+
+add option to shutdown the 5GHz antenna
+diversity and enable it back.
+
+Signed-off-by: Guy Mishol <guym@ti.com>
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wl18xx/debugfs.c | 62 ++++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wl18xx/main.c    | 12 +++--
+ backports/drivers/net/wireless/ti/wlcore/cmd.h     |  1 +
+ backports/drivers/net/wireless/ti/wlcore/wlcore.h  |  3 ++
+ 4 files changed, 75 insertions(+), 3 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+index 163c795..8304101 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+@@ -357,6 +357,67 @@ static const struct file_operations radar_debug_mode_ops = {
+ 	.llseek = default_llseek,
+ };
+ 
++static ssize_t diversity_mode_write(struct file *file,
++				    const char __user *user_buf,
++				    size_t count, loff_t *ppos)
++{
++	struct wl1271 *wl = file->private_data;
++	struct wl12xx_vif *wlvif;
++	unsigned long value;
++	int ret;
++
++	ret = kstrtoul_from_user(user_buf, count, 10, &value);
++	if (ret < 0) {
++		wl1271_warning("illegal value in diversity mode!");
++		return -EINVAL;
++	}
++
++	/* valid values: 0/1 */
++	if (!(value == 0 || value == 1)) {
++		wl1271_warning("value is not in valid!");
++		return -EINVAL;
++	}
++
++	mutex_lock(&wl->mutex);
++
++	wl->diversity_mode = value;
++
++	if (unlikely(wl->state != WLCORE_STATE_ON))
++		goto out;
++
++	ret = wl1271_ps_elp_wakeup(wl);
++	if (ret < 0)
++		goto out;
++
++	wl12xx_for_each_wlvif(wl, wlvif) {
++		wlcore_cmd_generic_cfg(wl, wlvif,
++				       WLCORE_CFG_FEATURE_DIVERSITY_MODE,
++				       wl->diversity_mode, 0);
++	}
++
++	wl1271_ps_elp_sleep(wl);
++out:
++	mutex_unlock(&wl->mutex);
++	return count;
++}
++
++static ssize_t diversity_mode_read(struct file *file,
++				   char __user *userbuf,
++				   size_t count, loff_t *ppos)
++{
++	struct wl1271 *wl = file->private_data;
++
++	return wl1271_format_buffer(userbuf, count, ppos,
++					"%d\n", wl->diversity_mode);
++}
++
++static const struct file_operations diversity_mode_ops = {
++	.write = diversity_mode_write,
++	.read = diversity_mode_read,
++	.open = simple_open,
++	.llseek = default_llseek,
++};
++
+ static ssize_t dynamic_fw_traces_write(struct file *file,
+ 					const char __user *user_buf,
+ 					size_t count, loff_t *ppos)
+@@ -575,6 +636,7 @@ int wl18xx_debugfs_add_files(struct wl1271 *wl,
+ 	DEBUGFS_ADD(radar_detection, moddir);
+ 	DEBUGFS_ADD(radar_debug_mode, moddir);
+ 	DEBUGFS_ADD(dynamic_fw_traces, moddir);
++	DEBUGFS_ADD(diversity_mode, moddir);
+ 
+ 	return 0;
+ 
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/main.c b/backports/drivers/net/wireless/ti/wl18xx/main.c
+index 091dcf8..c6a81b9 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/main.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/main.c
+@@ -1151,6 +1151,13 @@ static int wl18xx_hw_init(struct wl1271 *wl)
+ 	return ret;
+ }
+ 
++static int wl18xx_init_vif(struct wl1271 *wl, struct wl12xx_vif *wlvif)
++{
++	return wlcore_cmd_generic_cfg(wl, wlvif,
++				      WLCORE_CFG_FEATURE_DIVERSITY_MODE,
++				      wl->diversity_mode, 0);
++}
++
+ static void wl18xx_convert_fw_status(struct wl1271 *wl, void *raw_fw_status,
+ 				     struct wl_fw_status *fw_status)
+ {
+@@ -1692,6 +1699,7 @@ static struct wlcore_ops wl18xx_ops = {
+ 	.tx_immediate_compl = wl18xx_tx_immediate_completion,
+ 	.tx_delayed_compl = NULL,
+ 	.hw_init	= wl18xx_hw_init,
++	.init_vif	= wl18xx_init_vif,
+ 	.convert_fw_status = wl18xx_convert_fw_status,
+ 	.set_tx_desc_csum = wl18xx_set_tx_desc_csum,
+ 	.get_pg_ver	= wl18xx_get_pg_ver,
+@@ -1990,10 +1998,8 @@ static int wl18xx_setup(struct wl1271 *wl)
+ 				  &wl18xx_siso20_ht_cap);
+ 	}
+ 
+-	if (!checksum_param) {
++	if (!checksum_param)
+ 		wl18xx_ops.set_rx_csum = NULL;
+-		wl18xx_ops.init_vif = NULL;
+-	}
+ 
+ 	/* Enable 11a Band only if we have 5G antennas */
+ 	wl->enable_11a = (priv->conf.phy.number_of_assembled_ant5 != 0);
+diff --git a/backports/drivers/net/wireless/ti/wlcore/cmd.h b/backports/drivers/net/wireless/ti/wlcore/cmd.h
+index 8dc46c0..2fb4fae 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/cmd.h
++++ b/backports/drivers/net/wireless/ti/wlcore/cmd.h
+@@ -655,6 +655,7 @@ struct wl12xx_cmd_regdomain_dfs_config {
+ } __packed;
+ 
+ enum wlcore_generic_cfg_feature {
++	WLCORE_CFG_FEATURE_DIVERSITY_MODE = 1,
+ 	WLCORE_CFG_FEATURE_RADAR_DEBUG = 2,
+ };
+ 
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore.h b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+index 4221f12..ffb0977 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -509,6 +509,9 @@ struct wl1271 {
+ 
+ 	/* dynamic fw traces */
+ 	u32 dynamic_fw_traces;
++
++	/* antenna diversity shut down */
++	u8 diversity_mode;
+ };
+ 
+ int wlcore_probe(struct wl1271 *wl, struct platform_device *pdev);
+-- 
+2.5.1
+

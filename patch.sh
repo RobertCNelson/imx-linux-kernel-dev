@@ -253,6 +253,58 @@ dts () {
 	${git} "${DIR}/patches/dts/0001-neo-add-bluetooth.patch"
 }
 
+
+ti_R86 () {
+	echo "dir: ti_wl"
+	#regenerate="enable"
+	if [ "x${regenerate}" = "xenable" ] ; then
+		start_cleanup
+	fi
+
+	${git} "${DIR}/patches/ti_R8.6/0001-wl18xx-allow-ap-p2p-combinations.patch"
+	${git} "${DIR}/patches/ti_R8.6/0002-wlcore-add-antenna-diversity-reading.patch"
+	${git} "${DIR}/patches/ti_R8.6/0003-wlcore-don-t-WARN_ON-in-case-of-existing-ROC.patch"
+	${git} "${DIR}/patches/ti_R8.6/0004-wl18xx-use-long-intervals-in-sched-scan.patch"
+	${git} "${DIR}/patches/ti_R8.6/0005-wl18xx-update-statistics-acx-and-debugfs-files-WAIT-.patch"
+	${git} "${DIR}/patches/ti_R8.6/0006-mac80211-handle-iface_work-in-case-of-hw_scan.patch"
+	${git} "${DIR}/patches/ti_R8.6/0007-wlcore-remove-IBSS-support-indication.patch"
+	${git} "${DIR}/patches/ti_R8.6/0008-wlcore-always-set-MMC_PM_KEEP_POWER-workaround.patch"
+	${git} "${DIR}/patches/ti_R8.6/0009-wlcore-add-wake_locks-ANDROID.patch"
+	${git} "${DIR}/patches/ti_R8.6/0010-wlcore-don-t-suspend-on-pending-recovery-ANDROID.patch"
+	${git} "${DIR}/patches/ti_R8.6/0011-wlcore-add-version-and-timestamp-strings-INTERNAL.patch"
+	${git} "${DIR}/patches/ti_R8.6/0012-cfg80211-add-dfs_cac-nop_time_ms-module-params-INTER.patch"
+	${git} "${DIR}/patches/ti_R8.6/0013-cfg80211-use-10-minutes-CAC-for-ETSI-WORKAROUND.patch"
+	${git} "${DIR}/patches/ti_R8.6/0014-mac80211-handle-hw-roc-cancel-vs.-expiration-race.patch"
+	${git} "${DIR}/patches/ti_R8.6/0015-mac80211-allow-CSA-while-scanning-ROC-INTERNAL.patch"
+	${git} "${DIR}/patches/ti_R8.6/0016-wlcore-add-generic_cfg_feature-command-definitions.patch"
+	${git} "${DIR}/patches/ti_R8.6/0017-wlcore-wl18xx-add-radar_debug_mode-handling.patch"
+	${git} "${DIR}/patches/ti_R8.6/0018-wl18xx-fallback-to-default-conf-in-case-of-invalid-c.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+	#	${git} "${DIR}/patches/ti_R8.6/0019-TMP-am335x-evm-dts-ECO-add-wlan.patch"
+		git commit --allow-empty -a -m 'TMP-am335x-evm-dts-ECO-add-wlan'
+	fi
+	${git} "${DIR}/patches/ti_R8.6/0020-wl18xx-add-dynamic-fw-traces.patch"
+	${git} "${DIR}/patches/ti_R8.6/0021-wl18xx-add-diversity-shutdown-option.patch"
+	${git} "${DIR}/patches/ti_R8.6/0022-wl18xx-add-diversity-statistics.patch"
+	${git} "${DIR}/patches/ti_R8.6/0023-wlcore-wl18xx-add-time-sync-event-handling.patch"
+	${git} "${DIR}/patches/ti_R8.6/0024-wl18xx-wlcore-time-sync-demo-TMP.patch"
+	${git} "${DIR}/patches/ti_R8.6/0025-wlcore-add-p2p-device-support.patch"
+	${git} "${DIR}/patches/ti_R8.6/0026-mac80211-RX-BA-support-for-sta-max_rx_aggregation_su.patch"
+	${git} "${DIR}/patches/ti_R8.6/0027-wlcore-ACX_BA_SESSION_RX_SETUP-win_size-taken-from-s.patch"
+	${git} "${DIR}/patches/ti_R8.6/0028-wlcore-Add-RX_BA_WIN_SIZE_CHANGE_EVENT-event.patch"
+	${git} "${DIR}/patches/ti_R8.6/0029-wlcore-remove-unused-variable-SQUASH.patch"
+	${git} "${DIR}/patches/ti_R8.6/0030-wl18xx-wlan_irq-support-platform-dependent-interrupt.patch"
+	${git} "${DIR}/patches/ti_R8.6/0031-wlcore-read-irq-type-value.patch"
+	${git} "${DIR}/patches/ti_R8.6/0032-time-sync-demo-fix-tsf-sync-on-AP-mode-SQUASH.patch"
+	${git} "${DIR}/patches/ti_R8.6/0033-mac80211-extract-basic-rates-on-start_ap.patch"
+
+	if [ "x${regenerate}" = "xenable" ] ; then
+		number=33
+		cleanup
+	fi
+}
+
 ti_wl () {
 	echo "dir: ti_wl"
 	${git} "${DIR}/patches/ti_wl/0001-imx6q-sabresd-add-support-for-wilink8-wlan-and-bluet.patch"
@@ -268,6 +320,7 @@ ti_wl () {
 
 linux_backports
 dts
+ti_R86
 #ti_wl
 
 packaging () {

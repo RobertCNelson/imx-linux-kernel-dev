@@ -1,0 +1,148 @@
+From c2cc818b9d8febe5c185e3cc6338242c188f379e Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Sun, 28 Sep 2014 14:17:08 +0300
+Subject: [PATCH 17/33] wlcore/wl18xx: add radar_debug_mode handling
+
+add debugfs key to set/clear radar_debug_mode.
+in this mode, the driver simply ignores radar
+events (but prints them).
+
+the fw is also notified about this mode through
+a special generic_cfg_feature command.
+
+this mode is relevant only for ap mode. look for
+it when initializing ap vif.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wl18xx/debugfs.c | 61 ++++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wl18xx/event.c   |  3 +-
+ backports/drivers/net/wireless/ti/wlcore/init.c    |  6 +++
+ backports/drivers/net/wireless/ti/wlcore/wlcore.h  |  1 +
+ 4 files changed, 70 insertions(+), 1 deletion(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+index 1529257..3be3f2a 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+@@ -297,6 +297,66 @@ static const struct file_operations radar_detection_ops = {
+ 	.llseek = default_llseek,
+ };
+ 
++static ssize_t radar_debug_mode_write(struct file *file,
++				      const char __user *user_buf,
++				      size_t count, loff_t *ppos)
++{
++	struct wl1271 *wl = file->private_data;
++	struct wl12xx_vif *wlvif;
++	unsigned long value;
++	int ret;
++
++	ret = kstrtoul_from_user(user_buf, count, 10, &value);
++	if (ret < 0) {
++		wl1271_warning("illegal value in radar_debug_mode!");
++		return -EINVAL;
++	}
++
++	/* valid values: 0/1 */
++	if (!(value == 0 || value == 1)) {
++		wl1271_warning("value is not in valid!");
++		return -EINVAL;
++	}
++
++	mutex_lock(&wl->mutex);
++
++	wl->radar_debug_mode = value;
++
++	if (unlikely(wl->state != WLCORE_STATE_ON))
++		goto out;
++
++	ret = wl1271_ps_elp_wakeup(wl);
++	if (ret < 0)
++		goto out;
++
++	wl12xx_for_each_wlvif_ap(wl, wlvif) {
++		wlcore_cmd_generic_cfg(wl, wlvif,
++				       WLCORE_CFG_FEATURE_RADAR_DEBUG,
++				       wl->radar_debug_mode, 0);
++	}
++
++	wl1271_ps_elp_sleep(wl);
++out:
++	mutex_unlock(&wl->mutex);
++	return count;
++}
++
++static ssize_t radar_debug_mode_read(struct file *file,
++				     char __user *userbuf,
++				     size_t count, loff_t *ppos)
++{
++	struct wl1271 *wl = file->private_data;
++	return wl1271_format_buffer(userbuf, count, ppos,
++				    "%d\n", wl->radar_debug_mode);
++}
++
++static const struct file_operations radar_debug_mode_ops = {
++	.write = radar_debug_mode_write,
++	.read = radar_debug_mode_read,
++	.open = simple_open,
++	.llseek = default_llseek,
++};
++
+ int wl18xx_debugfs_add_files(struct wl1271 *wl,
+ 			     struct dentry *rootdir)
+ {
+@@ -464,6 +524,7 @@ int wl18xx_debugfs_add_files(struct wl1271 *wl,
+ 
+ 	DEBUGFS_ADD(conf, moddir);
+ 	DEBUGFS_ADD(radar_detection, moddir);
++	DEBUGFS_ADD(radar_debug_mode, moddir);
+ 
+ 	return 0;
+ 
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/event.c b/backports/drivers/net/wireless/ti/wl18xx/event.c
+index 548bb9e..f9a7b26 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/event.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/event.c
+@@ -133,7 +133,8 @@ int wl18xx_process_mailbox_events(struct wl1271 *wl)
+ 			    mbox->radar_channel,
+ 			    wl18xx_radar_type_decode(mbox->radar_type));
+ 
+-		ieee80211_radar_detected(wl->hw);
++		if (!wl->radar_debug_mode)
++			ieee80211_radar_detected(wl->hw);
+ 	}
+ 
+ 	if (vector & PERIODIC_SCAN_REPORT_EVENT_ID) {
+diff --git a/backports/drivers/net/wireless/ti/wlcore/init.c b/backports/drivers/net/wireless/ti/wlcore/init.c
+index 5ca1fb1..51ad91c 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/init.c
++++ b/backports/drivers/net/wireless/ti/wlcore/init.c
+@@ -558,6 +558,12 @@ static int wl12xx_init_ap_role(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+ 	if (ret < 0)
+ 		return ret;
+ 
++
++	if (wl->radar_debug_mode)
++		wlcore_cmd_generic_cfg(wl, wlvif,
++				       WLCORE_CFG_FEATURE_RADAR_DEBUG,
++				       wl->radar_debug_mode, 0);
++
+ 	return 0;
+ }
+ 
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore.h b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+index 3aacda4..4eec86e 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -471,6 +471,7 @@ struct wl1271 {
+ 
+ 	/* the current dfs region */
+ 	enum nl80211_dfs_regions dfs_region;
++	bool radar_debug_mode;
+ 
+ 	/* size of the private FW status data */
+ 	size_t fw_status_len;
+-- 
+2.5.1
+

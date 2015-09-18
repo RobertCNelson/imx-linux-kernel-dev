@@ -1,0 +1,276 @@
+From ec0300a8ff53a747b1a077dbc885ac77294a82a8 Mon Sep 17 00:00:00 2001
+From: Yaniv Machani <yanivma@ti.com>
+Date: Tue, 19 May 2015 17:01:29 +0300
+Subject: [PATCH 24/33] wl18xx/wlcore : time sync demo [TMP]
+
+Driver demo level of the time sync feature
+triggering the GPIO using hr timers
+DT/HW changes are required.
+
+Signed-off-by: Yaniv Machani <yanivma@ti.com>
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wl18xx/debugfs.c | 45 +++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wl18xx/event.c   | 32 +++++++++++++++
+ backports/drivers/net/wireless/ti/wl18xx/event.h   |  1 +
+ backports/drivers/net/wireless/ti/wlcore/main.c    | 46 ++++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wlcore/wlcore.h  | 13 ++++++
+ 5 files changed, 137 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+index 2c2aa81..9693e17b 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/debugfs.c
+@@ -29,6 +29,7 @@
+ #include "acx.h"
+ #include "cmd.h"
+ #include "debugfs.h"
++#include <linux/gpio.h>
+ 
+ #define WL18XX_DEBUGFS_FWSTATS_FILE(a, b, c) \
+ 	DEBUGFS_FWSTATS_FILE(a, b, c, wl18xx_acx_statistics)
+@@ -466,6 +467,49 @@ static const struct file_operations dynamic_fw_traces_ops = {
+ 	.llseek = default_llseek,
+ };
+ 
++static ssize_t time_sync_write(struct file *file,
++				const char __user *user_buf,
++				size_t count, loff_t *ppos)
++{
++	struct wl1271 *wl = file->private_data;
++	unsigned long value;
++	int ret;
++
++	ret = kstrtoul_from_user(user_buf, count, 0, &value);
++	if (ret < 0) {
++		wl1271_warning("Illegal interval for time sync");
++		return -EINVAL;
++	}
++
++	if (value > 1000) {
++		wl1271_warning("Time sync interval must be between 0 and 1000");
++		return -ERANGE;
++	}
++
++	mutex_lock(&wl->mutex);
++
++	wl->time_sync.interval_ms = value;
++
++	if (value == 0) {
++		hrtimer_cancel(&wl->time_sync.timer);
++	} else {
++		wl1271_info("Triggering time sync GPIO");
++		wlcore_trigger_time_sync(wl);
++	}
++
++	mutex_unlock(&wl->mutex);
++
++	return count;
++}
++
++static const struct file_operations time_sync_ops = {
++    .write  = time_sync_write,
++    .open   = simple_open,
++    .llseek = default_llseek,
++};
++
++
++
+ int wl18xx_debugfs_add_files(struct wl1271 *wl,
+ 			     struct dentry *rootdir)
+ {
+@@ -631,6 +675,7 @@ int wl18xx_debugfs_add_files(struct wl1271 *wl,
+ 
+ 	DEBUGFS_ADD(conf, moddir);
+ 	DEBUGFS_ADD(radar_detection, moddir);
++	DEBUGFS_ADD(time_sync, moddir);
+ 	DEBUGFS_ADD(radar_debug_mode, moddir);
+ 	DEBUGFS_ADD(dynamic_fw_traces, moddir);
+ 	DEBUGFS_ADD(diversity_mode, moddir);
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/event.c b/backports/drivers/net/wireless/ti/wl18xx/event.c
+index c39d82f..b882780 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/event.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/event.c
+@@ -20,6 +20,8 @@
+  */
+ 
+ #include <net/genetlink.h>
++#include <linux/hrtimer.h>
++#include <linux/ktime.h>
+ #include "event.h"
+ #include "scan.h"
+ #include "../wlcore/cmd.h"
+@@ -114,10 +116,40 @@ static int wlcore_smart_config_decode_event(struct wl1271 *wl,
+ 
+ static void wlcore_event_time_sync(struct wl1271 *wl, u16 tsf_msb, u16 tsf_lsb)
+ {
++	ktime_t ktime;
+ 	u32 clock;
++	u32 interval_usc;
++	u32 mod_usc;
++	u32 next_tick_usc;
++
+     /* convert the MSB+LSB to a u32 TSF value */
+     clock = (tsf_msb << 16) | tsf_lsb;
++
+     wl1271_info("TIME_SYNC_EVENT_ID: clock %u", clock);
++
++    wl1271_info("TIME_SYNC_EVENT_ID: clock %d", clock);
++
++	/* Calculate the next tick */
++	interval_usc = wl->time_sync.interval_ms * USEC_PER_MSEC;
++	mod_usc  = clock % interval_usc;
++	next_tick_usc  = interval_usc -  mod_usc;
++
++	/* skip the current interval if it's too close in time */
++	if (next_tick_usc < 50)
++		next_tick_usc = next_tick_usc + interval_usc;
++
++	/* schedule hr timer 200ns before the desired time */
++	ktime = ktime_add_ns(wl->time_sync.gpio_ktime,
++			     NSEC_PER_USEC * (next_tick_usc - 200));
++
++	/* save the actual target time for the next wake-up */
++	wl->time_sync.target_ktime =
++		ktime_add_ns(wl->time_sync.gpio_ktime,
++			     NSEC_PER_USEC * (next_tick_usc));
++
++	/* set the timer */
++	hrtimer_start(&wl->time_sync.timer, ktime, HRTIMER_MODE_ABS);
++
+ }
+ 
+ int wl18xx_process_mailbox_events(struct wl1271 *wl)
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/event.h b/backports/drivers/net/wireless/ti/wl18xx/event.h
+index f3d4f13..91466e1 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/event.h
++++ b/backports/drivers/net/wireless/ti/wl18xx/event.h
+@@ -99,6 +99,7 @@ struct wl18xx_event_mailbox {
+ 
+ 	/* time sync msb*/
+ 	u16 time_sync_tsf_msb;
++
+ 	/* radar detect */
+ 	u8 radar_channel;
+ 	u8 radar_type;
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index f0286a9..074dfa2 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -27,6 +27,7 @@
+ #include <linux/vmalloc.h>
+ #include <linux/interrupt.h>
+ #include <linux/irq.h>
++#include <linux/gpio.h>
+ 
+ #include "wlcore.h"
+ #include "debug.h"
+@@ -6070,6 +6071,33 @@ static void wl1271_unregister_hw(struct wl1271 *wl)
+ 
+ }
+ 
++void wlcore_trigger_time_sync(struct wl1271 *wl)
++{
++	wl->time_sync.gpio_ktime = ktime_get();
++	gpio_set_value(wl->time_sync.gpio, 1);
++	udelay(1);
++	gpio_set_value(wl->time_sync.gpio, 0);
++}
++EXPORT_SYMBOL_GPL(wlcore_trigger_time_sync);
++
++static enum hrtimer_restart wlcore_time_sync_hrtimer_cb(struct hrtimer *timer)
++{
++	struct wlcore_time_sync *time_sync =
++		container_of(timer, struct wlcore_time_sync, timer);
++	struct wl1271 *wl =
++		container_of(time_sync, struct wl1271, time_sync);
++	struct timespec ts;
++
++	while (ktime_compare(ktime_get(), wl->time_sync.target_ktime) < 0)
++	{
++		ndelay(100);
++	}
++
++	wlcore_trigger_time_sync(wl);
++
++	return HRTIMER_NORESTART;
++}
++
+ static int wl1271_init_ieee80211(struct wl1271 *wl)
+ {
+ 	int i;
+@@ -6335,8 +6363,24 @@ struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
+ 		goto err_mbox;
+ 	}
+ 
++	/* time sync */
++	wl->time_sync.gpio = 66;
++	ret = gpio_request_one(wl->time_sync.gpio, GPIOF_DIR_OUT, "time_sync");
++	if (ret < 0) {
++		wl1271_error("error requesting time_sync gpio");
++		goto err_buffer_32;
++	}
++	wl1271_info("Time Sync: gpio requested");
++
++	hrtimer_init(&wl->time_sync.timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
++	wl->time_sync.timer.function = &wlcore_time_sync_hrtimer_cb;
++	wl->time_sync.gpio_ktime = ktime_set(0, 0);
++	wl->time_sync.target_ktime = ktime_set(0, 0);
++
+ 	return hw;
+ 
++err_buffer_32:
++	kfree(wl->buffer_32);
+ err_mbox:
+ 	kfree(wl->mbox);
+ 
+@@ -6385,6 +6429,8 @@ int wlcore_free_hw(struct wl1271 *wl)
+ 
+ 	wlcore_sysfs_free(wl);
+ 
++	gpio_free(wl->time_sync.gpio);
++
+ 	kfree(wl->buffer_32);
+ 	kfree(wl->mbox);
+ 	free_page((unsigned long)wl->fwlog);
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore.h b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+index ffb0977..cd4cc0b 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -183,6 +183,14 @@ struct wl1271_stats {
+ 	unsigned int excessive_retries;
+ };
+ 
++struct wlcore_time_sync {
++	struct hrtimer timer;
++	int gpio;
++	u32 interval_ms;
++	ktime_t gpio_ktime;
++	ktime_t target_ktime;
++};
++
+ struct wl1271 {
+ 	bool initialized;
+ 	struct ieee80211_hw *hw;
+@@ -512,6 +520,9 @@ struct wl1271 {
+ 
+ 	/* antenna diversity shut down */
+ 	u8 diversity_mode;
++
++	/* time sync timer */
++	struct wlcore_time_sync time_sync;
+ };
+ 
+ int wlcore_probe(struct wl1271 *wl, struct platform_device *pdev);
+@@ -527,6 +538,8 @@ void wlcore_regdomain_config(struct wl1271 *wl);
+ void wlcore_update_inconn_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+ 			      struct wl1271_station *wl_sta, bool in_conn);
+ 
++void wlcore_trigger_time_sync(struct wl1271 *wl);
++
+ static inline void
+ wlcore_set_ht_cap(struct wl1271 *wl, enum ieee80211_band band,
+ 		  struct ieee80211_sta_ht_cap *ht_cap)
+-- 
+2.5.1
+

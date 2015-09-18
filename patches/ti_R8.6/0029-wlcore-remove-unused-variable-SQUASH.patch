@@ -1,0 +1,28 @@
+From 22a2d7ce5e0a7b3270d5c84aac0ed57dd56b7bab Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Thu, 28 May 2015 17:35:38 +0300
+Subject: [PATCH 29/33] wlcore: remove unused variable [SQUASH]
+
+should be squashed into:
+343ec27 wlcore/wl18xx : add time sync event handling
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/main.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index bcf1ac9..b4c4f7b 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -6177,7 +6177,6 @@ static enum hrtimer_restart wlcore_time_sync_hrtimer_cb(struct hrtimer *timer)
+ 		container_of(timer, struct wlcore_time_sync, timer);
+ 	struct wl1271 *wl =
+ 		container_of(time_sync, struct wl1271, time_sync);
+-	struct timespec ts;
+ 
+ 	while (ktime_compare(ktime_get(), wl->time_sync.target_ktime) < 0)
+ 	{
+-- 
+2.5.1
+

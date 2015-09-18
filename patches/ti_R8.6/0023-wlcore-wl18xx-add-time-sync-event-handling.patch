@@ -1,0 +1,101 @@
+From d399cefa7ab9249786a749a6d8a2254e89ed2b6c Mon Sep 17 00:00:00 2001
+From: Yaniv Machani <yanivma@ti.com>
+Date: Tue, 12 May 2015 12:56:37 +0300
+Subject: [PATCH 23/33] wlcore/wl18xx : add time sync event handling
+
+Added support for a new time sync event
+the event data contains the WiLink TSF value.
+To trigger the event, a HW modification is required,
+so as a supporting firmware binary.
+
+Signed-off-by: Yaniv Machani <yanivma@ti.com>
+---
+ backports/drivers/net/wireless/ti/wl18xx/event.c | 13 +++++++++++++
+ backports/drivers/net/wireless/ti/wl18xx/event.h | 12 ++++++++----
+ backports/drivers/net/wireless/ti/wl18xx/main.c  |  4 ++--
+ 3 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/event.c b/backports/drivers/net/wireless/ti/wl18xx/event.c
+index f9a7b26..c39d82f 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/event.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/event.c
+@@ -112,6 +112,14 @@ static int wlcore_smart_config_decode_event(struct wl1271 *wl,
+ 	return 0;
+ }
+ 
++static void wlcore_event_time_sync(struct wl1271 *wl, u16 tsf_msb, u16 tsf_lsb)
++{
++	u32 clock;
++    /* convert the MSB+LSB to a u32 TSF value */
++    clock = (tsf_msb << 16) | tsf_lsb;
++    wl1271_info("TIME_SYNC_EVENT_ID: clock %u", clock);
++}
++
+ int wl18xx_process_mailbox_events(struct wl1271 *wl)
+ {
+ 	struct wl18xx_event_mailbox *mbox = wl->mbox;
+@@ -128,6 +136,11 @@ int wl18xx_process_mailbox_events(struct wl1271 *wl)
+ 			wl18xx_scan_completed(wl, wl->scan_wlvif);
+ 	}
+ 
++	if (vector & TIME_SYNC_EVENT_ID)
++		wlcore_event_time_sync(wl,
++		        mbox->time_sync_tsf_msb,
++		        mbox->time_sync_tsf_lsb);
++
+ 	if (vector & RADAR_DETECTED_EVENT_ID) {
+ 		wl1271_info("radar event: channel %d type %s",
+ 			    mbox->radar_channel,
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/event.h b/backports/drivers/net/wireless/ti/wl18xx/event.h
+index 266ee87..f3d4f13 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/event.h
++++ b/backports/drivers/net/wireless/ti/wl18xx/event.h
+@@ -38,8 +38,9 @@ enum {
+ 	REMAIN_ON_CHANNEL_COMPLETE_EVENT_ID      = BIT(18),
+ 	DFS_CHANNELS_CONFIG_COMPLETE_EVENT       = BIT(19),
+ 	PERIODIC_SCAN_REPORT_EVENT_ID            = BIT(20),
+-	SMART_CONFIG_SYNC_EVENT_ID		 = BIT(22),
+-	SMART_CONFIG_DECODE_EVENT_ID		 = BIT(23),
++	SMART_CONFIG_SYNC_EVENT_ID               = BIT(22),
++	SMART_CONFIG_DECODE_EVENT_ID             = BIT(23),
++	TIME_SYNC_EVENT_ID                       = BIT(24),
+ };
+ 
+ enum wl18xx_radar_types {
+@@ -95,13 +96,16 @@ struct wl18xx_event_mailbox {
+ 	/* smart config sync channel */
+ 	u8 sc_sync_channel;
+ 	u8 sc_sync_band;
+-	u8 padding2[2];
+ 
++	/* time sync msb*/
++	u16 time_sync_tsf_msb;
+ 	/* radar detect */
+ 	u8 radar_channel;
+ 	u8 radar_type;
+ 
+-	u8 padding3[2];
++	/* time sync lsb*/
++	u16 time_sync_tsf_lsb;
++
+ } __packed;
+ 
+ int wl18xx_wait_for_event(struct wl1271 *wl, enum wlcore_wait_event event,
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/main.c b/backports/drivers/net/wireless/ti/wl18xx/main.c
+index c6a81b9..d977896 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/main.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/main.c
+@@ -1004,8 +1004,8 @@ static int wl18xx_boot(struct wl1271 *wl)
+ 		CHANNEL_SWITCH_COMPLETE_EVENT_ID |
+ 		DFS_CHANNELS_CONFIG_COMPLETE_EVENT |
+ 		SMART_CONFIG_SYNC_EVENT_ID |
+-		SMART_CONFIG_DECODE_EVENT_ID;
+-;
++		SMART_CONFIG_DECODE_EVENT_ID |
++		TIME_SYNC_EVENT_ID;
+ 
+ 	wl->ap_event_mask = MAX_TX_FAILURE_EVENT_ID;
+ 
+-- 
+2.5.1
+

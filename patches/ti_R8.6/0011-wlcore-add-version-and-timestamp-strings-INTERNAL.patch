@@ -1,0 +1,187 @@
+From d8c15dfb231ffe78cb43fcdf2c841ae56ff215ab Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Tue, 7 Feb 2012 18:14:32 +0200
+Subject: [PATCH 11/33] wlcore: add version and timestamp strings (INTERNAL)
+
+In order to allow better version control, add version
+and timestamp strings into wlcore module.
+
+These strings will be printed on driver load, and when
+reading the driver_state.
+
+If the tree was changed and unstaged or if a new tag was added, we
+were not regenerating the version.h file, so it would contain outdated
+information.
+
+To fix this, force the version.h file to be rechecked during make and
+use __TIMESTAMP__ instead of using the shell's date command, so that
+we don't regenerate it everytime.
+
+Additionally, use --dirty in git describe to mark dirty trees as such.
+
+With compat-wireless, we shouldn't force the version.h file checks,
+otherwise it will overwrite what we generated in compat-wireless
+itself.  This was only needed for dirty trees anyway.  The side-effect
+is that the version will not be regenerated when the tree becomes
+dirty.
+
+In environments without .git folder, use release_version.h instead.
+
+There are some reports of compilation errors due
+to missing version.h.
+This probably means that version.h wasn't recognized
+as a dependency, and wasn't generated.
+Declare this dependency explicitly in order to make
+sure version.h will be generated.
+
+if we use backports to compile our driver, the compilation
+is done on the target kernel, but we want to generate the
+version tag from the driver git.
+
+check for the existence of KLIB_BUILD and GIT_TREE params,
+and generate version.h from the GIT_TREE if they both
+exist.
+(note that backports doesn't require GIT_TREE to be
+defined, so it has to be part of the build script)
+
+When checking for git existence in wlcore's Makefile,
+use $(PWD), as the built-in wildcard function returns
+unexpected results when working against remote
+makefile (e.g. when using backports).
+
+git describe --dirty doesn't work well when specfiying
+git-dir and work-tree parameters (git diff-index doesn't
+run against the work-tree, resulting in -dirty always
+being set).
+
+workaround it by changing the current directory to the
+git directory before running the command.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+Signed-off-by: Luciano Coelho <coelho@ti.com>
+Signed-off-by: Arik Nemtsov <arik@wizery.com>
+---
+ backports/drivers/net/wireless/ti/.gitignore       |  1 +
+ backports/drivers/net/wireless/ti/wlcore/Makefile  | 42 ++++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wlcore/debugfs.c |  4 +++
+ backports/drivers/net/wireless/ti/wlcore/main.c    |  4 +++
+ .../net/wireless/ti/wlcore/release_version.h       |  2 ++
+ 5 files changed, 53 insertions(+)
+ create mode 100644 backports/drivers/net/wireless/ti/.gitignore
+ create mode 100644 backports/drivers/net/wireless/ti/wlcore/release_version.h
+
+diff --git a/backports/drivers/net/wireless/ti/.gitignore b/backports/drivers/net/wireless/ti/.gitignore
+new file mode 100644
+index 0000000..6702033
+--- /dev/null
++++ b/backports/drivers/net/wireless/ti/.gitignore
+@@ -0,0 +1 @@
++version.h
+diff --git a/backports/drivers/net/wireless/ti/wlcore/Makefile b/backports/drivers/net/wireless/ti/wlcore/Makefile
+index 1661fcf..4f5868e 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/Makefile
++++ b/backports/drivers/net/wireless/ti/wlcore/Makefile
+@@ -1,6 +1,48 @@
+ wlcore-objs		= main.o cmd.o io.o event.o tx.o rx.o ps.o acx.o \
+ 			  boot.o init.o debugfs.o scan.o sysfs.o vendor_cmd.o
+ 
++# use special params for the compat case
++ifneq ($(KLIB_BUILD),)
++ifneq ($(GIT_TREE),)
++GIT_PATH := $(GIT_TREE)/
++GIT_CHDIR_CMD := cd $(GIT_TREE) &&
++endif
++endif
++
++ifneq ($(GIT_PATH),)
++GIT_CHECK_PATH := $(GIT_PATH)
++else
++GIT_CHECK_PATH := $(PWD)/
++endif
++
++ifeq ($(wildcard $(GIT_CHECK_PATH).git/HEAD),)
++# use release_version.h if .git not exists
++WLCORE_VERSION_DEPS := $(src)/release_version.h
++
++define filechk_version.h
++	(cat $(src)/release_version.h)
++endef
++
++else
++# use git describe to determine version
++WLCORE_VERSION_DEPS := $(GIT_PATH).git/HEAD $(GIT_PATH).git/index $(GIT_PATH).git/refs/tags
++
++define filechk_version.h
++	(echo 'static const char *wlcore_timestamp = __TIMESTAMP__;'; \
++	echo 'static const char *wlcore_git_head = \
++			"$(shell $(GIT_CHDIR_CMD) git describe --dirty)";')
++endef
++
++endif
++
++$(obj)/version.h: $(WLCORE_VERSION_DEPS)
++	@$(call filechk,version.h)
++
++# seems like in some cases, for unknown reason,
++# this dependency is not enforced implictly,
++# so add it explicitly
++$(obj)/main.c: $(src)/version.h
++
+ wlcore_spi-objs 	= spi.o
+ wlcore_sdio-objs	= sdio.o
+ 
+diff --git a/backports/drivers/net/wireless/ti/wlcore/debugfs.c b/backports/drivers/net/wireless/ti/wlcore/debugfs.c
+index eb43f94..09848ea 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/debugfs.c
++++ b/backports/drivers/net/wireless/ti/wlcore/debugfs.c
+@@ -34,6 +34,7 @@
+ #include "io.h"
+ #include "tx.h"
+ #include "hw_ops.h"
++#include "version.h"
+ 
+ /* ms */
+ #define WL1271_DEBUGFS_STATS_LIFETIME 1000
+@@ -461,6 +462,9 @@ static ssize_t driver_state_read(struct file *file, char __user *user_buf,
+ #define DRIVER_STATE_PRINT_LHEX(x) DRIVER_STATE_PRINT(x, "0x%lx")
+ #define DRIVER_STATE_PRINT_HEX(x)  DRIVER_STATE_PRINT(x, "0x%x")
+ 
++	DRIVER_STATE_PRINT_GENERIC(version, "%s", wlcore_git_head);
++	DRIVER_STATE_PRINT_GENERIC(timestamp, "%s", wlcore_timestamp);
++
+ 	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+ 		if (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+ 			continue;
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index 9e7d1f6..f0286a9 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -41,6 +41,7 @@
+ #include "scan.h"
+ #include "hw_ops.h"
+ #include "sysfs.h"
++#include "version.h"
+ 
+ #define WL1271_BOOT_RETRIES 3
+ 
+@@ -6513,6 +6514,9 @@ static void wlcore_nvs_cb(const struct firmware *fw, void *context)
+ 		goto out_unreg;
+ 
+ 	wl->initialized = true;
++
++	wl1271_info("driver version: %s", wlcore_git_head);
++	wl1271_info("compilation time: %s", wlcore_timestamp);
+ 	goto out;
+ 
+ out_unreg:
+diff --git a/backports/drivers/net/wireless/ti/wlcore/release_version.h b/backports/drivers/net/wireless/ti/wlcore/release_version.h
+new file mode 100644
+index 0000000..ea3b595
+--- /dev/null
++++ b/backports/drivers/net/wireless/ti/wlcore/release_version.h
+@@ -0,0 +1,2 @@
++static const char *wlcore_timestamp = __TIMESTAMP__;
++static const char *wlcore_git_head = "ol_r8.a9.22";
+-- 
+2.5.1
+

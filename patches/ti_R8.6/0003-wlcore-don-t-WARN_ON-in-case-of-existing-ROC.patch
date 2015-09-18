@@ -1,0 +1,38 @@
+From 4249ebd0c753017402e558bd4b770180d2a5a306 Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Wed, 29 Oct 2014 14:46:40 +0200
+Subject: [PATCH 03/33] wlcore: don't WARN_ON in case of existing ROC
+
+When working with AP + P2P, it's possible to get into
+a state when the AP is in ROC (due to assiciating station)
+while trying to ROC on the P2P interface.
+
+Replace the WARN_ON with wl1271_error to avoid warnings
+in this case.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/main.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index 0be8079..f5e5c41 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -5540,9 +5540,10 @@ static int wlcore_op_remain_on_channel(struct ieee80211_hw *hw,
+ 		goto out;
+ 
+ 	/* return EBUSY if we can't ROC right now */
+-	if (WARN_ON(wl->roc_vif ||
+-		    find_first_bit(wl->roc_map,
+-				   WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES)) {
++	if (wl->roc_vif ||
++	    find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES) {
++		wl1271_warning("active roc on role %d",
++			       find_first_bit(wl->roc_map, WL12XX_MAX_ROLES));
+ 		ret = -EBUSY;
+ 		goto out;
+ 	}
+-- 
+2.5.1
+

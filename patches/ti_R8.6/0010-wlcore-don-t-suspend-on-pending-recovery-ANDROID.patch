@@ -1,0 +1,81 @@
+From cefc8bf78a9488fd18fdd40486f292865077280f Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Wed, 31 Dec 2014 17:34:56 +0200
+Subject: [PATCH 10/33] wlcore: don't suspend on pending recovery (ANDROID)
+
+Some customers complain that if we cancel a pending recovery during
+suspend, the android scheduler will keep banging on the suspend handler,
+without letting recovery take its course. Grab a wakelock to give the
+recovery process some breathing room.
+
+Signed-off-by: Arik Nemtsov <arik@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/main.c   | 11 +++++++++++
+ backports/drivers/net/wireless/ti/wlcore/wlcore.h |  1 +
+ 2 files changed, 12 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index 828da13..9e7d1f6 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -814,6 +814,10 @@ void wl12xx_queue_recovery_work(struct wl1271 *wl)
+ 		set_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags);
+ 		wl1271_ps_elp_wakeup(wl);
+ 		wlcore_disable_interrupts_nosync(wl);
++#ifdef CONFIG_HAS_WAKELOCK
++		/* give us a grace period for recovery */
++		wake_lock_timeout(&wl->recovery_wake, 5 * HZ);
++#endif
+ 		ieee80211_queue_work(wl->hw, &wl->recovery_work);
+ 	}
+ }
+@@ -1786,6 +1790,10 @@ static int wl1271_op_suspend(struct ieee80211_hw *hw,
+ 	/* we want to perform the recovery before suspending */
+ 	if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags)) {
+ 		wl1271_warning("postponing suspend to perform recovery");
++#ifdef CONFIG_HAS_WAKELOCK
++		/* give us a grace period for recovery */
++		wake_lock_timeout(&wl->recovery_wake, 5 * HZ);
++#endif
+ 		return -EBUSY;
+ 	}
+ 
+@@ -6283,6 +6291,7 @@ struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
+ #ifdef CONFIG_HAS_WAKELOCK
+ 	wake_lock_init(&wl->wake_lock, WAKE_LOCK_SUSPEND, "wl1271_wake");
+ 	wake_lock_init(&wl->rx_wake, WAKE_LOCK_SUSPEND, "rx_wake");
++	wake_lock_init(&wl->recovery_wake, WAKE_LOCK_SUSPEND, "recovery_wake");
+ #endif
+ 
+ 	wl->state = WLCORE_STATE_OFF;
+@@ -6343,6 +6352,7 @@ err_wq:
+ #ifdef CONFIG_HAS_WAKELOCK
+ 	wake_lock_destroy(&wl->wake_lock);
+ 	wake_lock_destroy(&wl->rx_wake);
++	wake_lock_destroy(&wl->recovery_wake);
+ #endif
+ 	destroy_workqueue(wl->freezable_wq);
+ 
+@@ -6364,6 +6374,7 @@ int wlcore_free_hw(struct wl1271 *wl)
+ #ifdef CONFIG_HAS_WAKELOCK
+ 	wake_lock_destroy(&wl->wake_lock);
+ 	wake_lock_destroy(&wl->rx_wake);
++	wake_lock_destroy(&wl->recovery_wake);
+ #endif
+ 	/* Unblock any fwlog readers */
+ 	mutex_lock(&wl->mutex);
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore.h b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+index 3991714..3aacda4 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -356,6 +356,7 @@ struct wl1271 {
+ #ifdef CONFIG_HAS_WAKELOCK
+ 	struct wake_lock wake_lock;
+ 	struct wake_lock rx_wake;
++	struct wake_lock recovery_wake;
+ #endif
+ 	struct wl1271_stats stats;
+ 
+-- 
+2.5.1
+

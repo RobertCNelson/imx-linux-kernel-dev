@@ -7,10 +7,10 @@ Subject: [PATCH 95/97] disable unsatisfied Makefile parts
  backports/drivers/net/ethernet/Makefile          | 160 +++++++++++------------
  backports/drivers/net/ethernet/broadcom/Makefile |  18 +--
  backports/drivers/net/ethernet/intel/Makefile    |  22 ++--
- backports/drivers/net/usb/Makefile               |  57 ++++----
+ backports/drivers/net/usb/Makefile               |  56 ++++----
  backports/drivers/net/wireless/Makefile          |  12 +-
  backports/drivers/usb/class/Makefile             |   8 +-
- 6 files changed, 139 insertions(+), 138 deletions(-)
+ 6 files changed, 138 insertions(+), 138 deletions(-)
 
 diff --git a/backports/drivers/net/ethernet/Makefile b/backports/drivers/net/ethernet/Makefile
 index 2ee3d11..bbcee5b 100644
@@ -241,10 +241,10 @@ index abda9c0..0717df5 100644
 +#obj-$(CONFIG_BACKPORT_I40EVF += i40evf/
 +#obj-$(CONFIG_BACKPORT_FM10K += fm10k/
 diff --git a/backports/drivers/net/usb/Makefile b/backports/drivers/net/usb/Makefile
-index 1f27c91..a000228 100644
+index 1f27c91..ca1d0e1 100644
 --- a/backports/drivers/net/usb/Makefile
 +++ b/backports/drivers/net/usb/Makefile
-@@ -1,38 +1,39 @@
+@@ -1,38 +1,38 @@
  #
  # Makefile for USB Network drivers
  #
@@ -311,7 +311,6 @@ index 1f27c91..a000228 100644
 +#obj-$(CONFIG_BACKPORT_USB_VL600		+= lg-vl600.o
  obj-$(CONFIG_BACKPORT_USB_NET_QMI_WWAN)	+= qmi_wwan.o
  obj-$(CONFIG_BACKPORT_USB_NET_CDC_MBIM)	+= cdc_mbim.o
-+
 diff --git a/backports/drivers/net/wireless/Makefile b/backports/drivers/net/wireless/Makefile
 index 3c447ab..c9f4386 100644
 --- a/backports/drivers/net/wireless/Makefile

@@ -1,0 +1,35 @@
+From 953f2d89f8cc849971f44298dc2b84f7c69c9bc4 Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Wed, 25 Feb 2015 17:26:42 +0200
+Subject: [PATCH 13/33] cfg80211: use 10 minutes CAC for ETSI (WORKAROUND)
+
+for channels 120, 124 and 128.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/net/wireless/reg.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/backports/net/wireless/reg.c b/backports/net/wireless/reg.c
+index 1f241d8..7f9fb76 100644
+--- a/backports/net/wireless/reg.c
++++ b/backports/net/wireless/reg.c
+@@ -1226,6 +1226,15 @@ static void handle_channel(struct wiphy *wiphy,
+ 			chan->dfs_cac_ms = reg_rule->dfs_cac_ms;
+ 		else
+ 			chan->dfs_cac_ms = dfs_cac_time_ms;
++
++		/*
++		 * workaround: use 10 minutes CAC for channel 120,124 and 128
++		 * in case of ETSI dfs region
++		 */
++		if (regd->dfs_region == NL80211_DFS_ETSI &&
++		    chan->band == IEEE80211_BAND_5GHZ &&
++		    chan->center_freq >= 5600 && chan->center_freq <= 5640)
++			chan->dfs_cac_ms = 10 * 60 * 1000;
+ 	}
+ 
+ 	if (chan->orig_mpwr) {
+-- 
+2.5.1
+

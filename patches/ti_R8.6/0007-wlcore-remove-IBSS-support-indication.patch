@@ -1,0 +1,33 @@
+From c025cd2cfedb0a78da819d11bcd20f0c889abdd8 Mon Sep 17 00:00:00 2001
+From: Guy Mishol <guym@ti.com>
+Date: Wed, 27 Aug 2014 16:32:13 +0300
+Subject: [PATCH 07/33] wlcore: remove IBSS support indication
+
+IBSS is not supported any more.
+remove BIT(NL80211_IFTYPE_ADHOC) from
+wl->hw->wiphy->interface_modes
+
+Signed-off-by: Guy Mishol <guym@ti.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/main.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index f5e5c41..96eaf86 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -6084,8 +6084,9 @@ static int wl1271_init_ieee80211(struct wl1271 *wl)
+ 	wl->hw->wiphy->n_cipher_suites = ARRAY_SIZE(cipher_suites);
+ 
+ 	wl->hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+-		BIT(NL80211_IFTYPE_ADHOC) | BIT(NL80211_IFTYPE_AP) |
+-		BIT(NL80211_IFTYPE_P2P_CLIENT) | BIT(NL80211_IFTYPE_P2P_GO);
++					 BIT(NL80211_IFTYPE_AP) |
++					 BIT(NL80211_IFTYPE_P2P_CLIENT) |
++					 BIT(NL80211_IFTYPE_P2P_GO);
+ 	wl->hw->wiphy->max_scan_ssids = 1;
+ 	wl->hw->wiphy->max_sched_scan_ssids = 16;
+ 	wl->hw->wiphy->max_match_sets = 16;
+-- 
+2.5.1
+

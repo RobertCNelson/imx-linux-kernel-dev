@@ -1,0 +1,53 @@
+From 0634fb5e7b4ae2fefe790fc44252a596ddb7cd29 Mon Sep 17 00:00:00 2001
+From: Guy Mishol <guym@ti.com>
+Date: Tue, 30 Sep 2014 17:36:29 +0300
+Subject: [PATCH 02/33] wlcore: add antenna diversity reading
+
+update the rssi reading on rx_status
+to read both RSSI level (7 bits) and
+antenna diversity (msb)
+
+Signed-off-by: Guy Mishol <guym@ti.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/rx.c | 10 +++++++++-
+ backports/drivers/net/wireless/ti/wlcore/rx.h |  3 +++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/rx.c b/backports/drivers/net/wireless/ti/wlcore/rx.c
+index e125974..6a33c32 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/rx.c
++++ b/backports/drivers/net/wireless/ti/wlcore/rx.c
+@@ -74,7 +74,15 @@ static void wl1271_rx_status(struct wl1271 *wl,
+ 	if (desc->rate <= wl->hw_min_ht_rate)
+ 		status->flag |= RX_FLAG_HT;
+ 
+-	status->signal = desc->rssi;
++	/*
++	 * Read the signal level and antenna diversity indication.
++	 * The msb in the signal level is always set as it is a
++	 * negative number.
++	 * The antenna indication is the msb of the rssi.
++	 */
++
++	status->signal = ((desc->rssi & RSSI_LEVEL_BITMASK) | BIT(7));
++	status->antenna = ((desc->rssi & ANT_DIVERSITY_BITMASK) >> 7);
+ 
+ 	/*
+ 	 * FIXME: In wl1251, the SNR should be divided by two.  In wl1271 we
+diff --git a/backports/drivers/net/wireless/ti/wlcore/rx.h b/backports/drivers/net/wireless/ti/wlcore/rx.h
+index a3b1618..f5a7087c 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/rx.h
++++ b/backports/drivers/net/wireless/ti/wlcore/rx.h
+@@ -30,6 +30,9 @@
+ #define WL1271_RX_MAX_RSSI -30
+ #define WL1271_RX_MIN_RSSI -95
+ 
++#define RSSI_LEVEL_BITMASK	0x7F
++#define ANT_DIVERSITY_BITMASK	BIT(7)
++
+ #define SHORT_PREAMBLE_BIT   BIT(0)
+ #define OFDM_RATE_BIT        BIT(6)
+ #define PBCC_RATE_BIT        BIT(7)
+-- 
+2.5.1
+

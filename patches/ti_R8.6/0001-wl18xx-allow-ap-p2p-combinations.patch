@@ -1,0 +1,86 @@
+From cefd678bc7a1e9ae35dfba9f1146498fb169cb00 Mon Sep 17 00:00:00 2001
+From: Guy Mishol <guym@ti.com>
+Date: Tue, 19 Aug 2014 14:01:18 +0300
+Subject: [PATCH 01/33] wl18xx: allow ap + p2p combinations
+
+Allow various ap + p2p_go/cli interface combinations.
+
+Signed-off-by: Guy Mishol <guym@ti.com>
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wl18xx/main.c | 52 +++++++++++++++++++++++++
+ 1 file changed, 52 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ti/wl18xx/main.c b/backports/drivers/net/wireless/ti/wl18xx/main.c
+index 717c4f5..230ffb3 100644
+--- a/backports/drivers/net/wireless/ti/wl18xx/main.c
++++ b/backports/drivers/net/wireless/ti/wl18xx/main.c
+@@ -1786,6 +1786,36 @@ static const struct ieee80211_iface_limit wl18xx_iface_ap_limits[] = {
+ 	},
+ };
+ 
++static const struct ieee80211_iface_limit wl18xx_iface_ap_cl_limits[] = {
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_STATION),
++	},
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_AP),
++	},
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_P2P_CLIENT),
++	},
++};
++
++static const struct ieee80211_iface_limit wl18xx_iface_ap_go_limits[] = {
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_STATION),
++	},
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_AP),
++	},
++	{
++		.max = 1,
++		.types = BIT(NL80211_IFTYPE_P2P_GO),
++	},
++};
++
+ static const struct ieee80211_iface_combination
+ wl18xx_iface_combinations[] = {
+ 	{
+@@ -1803,6 +1833,28 @@ wl18xx_iface_combinations[] = {
+ 					BIT(NL80211_CHAN_HT20) |
+ 					BIT(NL80211_CHAN_HT40MINUS) |
+ 					BIT(NL80211_CHAN_HT40PLUS),
++	},
++	{
++		.max_interfaces = 3,
++		.limits = wl18xx_iface_ap_cl_limits,
++		.n_limits = ARRAY_SIZE(wl18xx_iface_ap_cl_limits),
++		.num_different_channels = 2,
++	},
++	{
++		.max_interfaces = 3,
++		.limits = wl18xx_iface_ap_cl_limits,
++		.n_limits = ARRAY_SIZE(wl18xx_iface_ap_cl_limits),
++		.num_different_channels = 1,
++		.radar_detect_widths =  BIT(NL80211_CHAN_NO_HT) |
++					BIT(NL80211_CHAN_HT20) |
++					BIT(NL80211_CHAN_HT40MINUS) |
++					BIT(NL80211_CHAN_HT40PLUS),
++	},
++	{
++		.max_interfaces = 3,
++		.limits = wl18xx_iface_ap_go_limits,
++		.n_limits = ARRAY_SIZE(wl18xx_iface_ap_go_limits),
++		.num_different_channels = 1,
+ 	}
+ };
+ 
+-- 
+2.5.1
+

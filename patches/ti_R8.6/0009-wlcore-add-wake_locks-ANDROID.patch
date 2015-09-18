@@ -1,0 +1,146 @@
+From 7fc3405d8053945f59452e63e147607ee9f79218 Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Wed, 31 Dec 2014 17:34:25 +0200
+Subject: [PATCH 09/33] wlcore: add wake_locks (ANDROID)
+
+Add timed wakelock on rx, and wakelock to protect the resume flow.
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+Signed-off-by: Ido Yariv <ido@wizery.com>
+Signed-off-by: Arik Nemtsov <arik@wizery.com>
+---
+ backports/drivers/net/wireless/ti/wlcore/main.c    | 27 ++++++++++++++++++++++
+ backports/drivers/net/wireless/ti/wlcore/rx.c      |  5 ++++
+ backports/drivers/net/wireless/ti/wlcore/wlcore.h  |  4 ++++
+ .../drivers/net/wireless/ti/wlcore/wlcore_i.h      |  4 ++++
+ 4 files changed, 40 insertions(+)
+
+diff --git a/backports/drivers/net/wireless/ti/wlcore/main.c b/backports/drivers/net/wireless/ti/wlcore/main.c
+index 96eaf86..828da13 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/main.c
++++ b/backports/drivers/net/wireless/ti/wlcore/main.c
+@@ -674,6 +674,10 @@ static irqreturn_t wlcore_irq(int irq, void *cookie)
+ 		wl1271_debug(DEBUG_IRQ, "should not enqueue work");
+ 		disable_irq_nosync(wl->irq);
+ 		pm_wakeup_event(wl->dev, 0);
++#ifdef CONFIG_HAS_WAKELOCK
++		if (!test_and_set_bit(WL1271_FLAG_WAKE_LOCK, &wl->flags))
++			wake_lock(&wl->wake_lock);
++#endif
+ 		spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 		return IRQ_HANDLED;
+ 	}
+@@ -695,6 +699,11 @@ static irqreturn_t wlcore_irq(int irq, void *cookie)
+ 	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags) &&
+ 	    wl1271_tx_total_queue_count(wl) > 0)
+ 		ieee80211_queue_work(wl->hw, &wl->tx_work);
++
++#ifdef CONFIG_HAS_WAKELOCK
++	if (test_and_clear_bit(WL1271_FLAG_WAKE_LOCK, &wl->flags))
++		wake_unlock(&wl->wake_lock);
++#endif
+ 	spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	mutex_unlock(&wl->mutex);
+@@ -1917,6 +1926,12 @@ out_sleep:
+ 	wl1271_ps_elp_sleep(wl);
+ 
+ out:
++#ifdef CONFIG_HAS_WAKELOCK
++	spin_lock_irqsave(&wl->wl_lock, flags);
++	if (test_and_clear_bit(WL1271_FLAG_WAKE_LOCK, &wl->flags))
++		wake_unlock(&wl->wake_lock);
++	spin_unlock_irqrestore(&wl->wl_lock, flags);
++#endif
+ 	wl->wow_enabled = false;
+ 
+ 	/*
+@@ -6265,6 +6280,10 @@ struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
+ 		wl->tx_frames[i] = NULL;
+ 
+ 	spin_lock_init(&wl->wl_lock);
++#ifdef CONFIG_HAS_WAKELOCK
++	wake_lock_init(&wl->wake_lock, WAKE_LOCK_SUSPEND, "wl1271_wake");
++	wake_lock_init(&wl->rx_wake, WAKE_LOCK_SUSPEND, "rx_wake");
++#endif
+ 
+ 	wl->state = WLCORE_STATE_OFF;
+ 	wl->fw_type = WL12XX_FW_TYPE_NONE;
+@@ -6321,6 +6340,10 @@ err_aggr:
+ 	free_pages((unsigned long)wl->aggr_buf, order);
+ 
+ err_wq:
++#ifdef CONFIG_HAS_WAKELOCK
++	wake_lock_destroy(&wl->wake_lock);
++	wake_lock_destroy(&wl->rx_wake);
++#endif
+ 	destroy_workqueue(wl->freezable_wq);
+ 
+ err_hw:
+@@ -6338,6 +6361,10 @@ EXPORT_SYMBOL_GPL(wlcore_alloc_hw);
+ 
+ int wlcore_free_hw(struct wl1271 *wl)
+ {
++#ifdef CONFIG_HAS_WAKELOCK
++	wake_lock_destroy(&wl->wake_lock);
++	wake_lock_destroy(&wl->rx_wake);
++#endif
+ 	/* Unblock any fwlog readers */
+ 	mutex_lock(&wl->mutex);
+ 	wl->fwlog_size = -1;
+diff --git a/backports/drivers/net/wireless/ti/wlcore/rx.c b/backports/drivers/net/wireless/ti/wlcore/rx.c
+index 6a33c32..d92ae35 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/rx.c
++++ b/backports/drivers/net/wireless/ti/wlcore/rx.c
+@@ -208,6 +208,11 @@ static int wl1271_rx_handle_data(struct wl1271 *wl, u8 *data, u32 length,
+ 	skb_queue_tail(&wl->deferred_rx_queue, skb);
+ 	queue_work(wl->freezable_wq, &wl->netstack_work);
+ 
++#ifdef CONFIG_HAS_WAKELOCK
++	/* let the frame some time to propagate to user-space */
++	wake_lock_timeout(&wl->rx_wake, HZ);
++#endif
++
+ 	return is_data;
+ }
+ 
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore.h b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+index 7f363fa..3991714 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -353,6 +353,10 @@ struct wl1271 {
+ 	/* in dBm */
+ 	int power_level;
+ 
++#ifdef CONFIG_HAS_WAKELOCK
++	struct wake_lock wake_lock;
++	struct wake_lock rx_wake;
++#endif
+ 	struct wl1271_stats stats;
+ 
+ 	__le32 *buffer_32;
+diff --git a/backports/drivers/net/wireless/ti/wlcore/wlcore_i.h b/backports/drivers/net/wireless/ti/wlcore/wlcore_i.h
+index 39efc6d..73b186a 100644
+--- a/backports/drivers/net/wireless/ti/wlcore/wlcore_i.h
++++ b/backports/drivers/net/wireless/ti/wlcore/wlcore_i.h
+@@ -31,6 +31,9 @@
+ #include <linux/list.h>
+ #include <linux/bitops.h>
+ #include <net/mac80211.h>
++#ifdef CONFIG_HAS_WAKELOCK
++#include <linux/wakelock.h>
++#endif
+ 
+ #include "conf.h"
+ #include "ini.h"
+@@ -228,6 +231,7 @@ enum wl12xx_flags {
+ 	WL1271_FLAG_TX_PENDING,
+ 	WL1271_FLAG_IN_ELP,
+ 	WL1271_FLAG_ELP_REQUESTED,
++	WL1271_FLAG_WAKE_LOCK,
+ 	WL1271_FLAG_IRQ_RUNNING,
+ 	WL1271_FLAG_FW_TX_BUSY,
+ 	WL1271_FLAG_DUMMY_PACKET_PENDING,
+-- 
+2.5.1
+

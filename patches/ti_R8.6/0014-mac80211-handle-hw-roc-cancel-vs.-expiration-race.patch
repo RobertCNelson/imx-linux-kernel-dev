@@ -1,0 +1,58 @@
+From 4c3c3f14c400341a44b1829c78df80235f4be74a Mon Sep 17 00:00:00 2001
+From: Eliad Peller <eliad@wizery.com>
+Date: Mon, 9 Mar 2015 13:31:06 +0200
+Subject: [PATCH 14/33] mac80211: handle hw roc cancel vs. expiration race
+
+mac80211 handles roc expirations (indicated by
+ieee80211_remain_on_channel_expired()) with a separate
+work (hw_roc_done).
+
+If userspace asks to cancel the ongoing roc before
+hw_roc_done was scheduled, mac80211 will cancel
+the ongoing roc, while leaving the hw_roc_done work
+pending.
+
+This might end up in the next roc being cancelled
+by the stale work, causing mac80211 and the low-level
+driver to go out of sync.
+
+Fix it by cancelling hw_roc_done on roc cancel.
+Since hw_roc_done takes local->mtx, temporarily
+release it (before re-acquiring it and starting
+the next roc if needed).
+
+Signed-off-by: Eliad Peller <eliad@wizery.com>
+---
+ backports/net/mac80211/cfg.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/backports/net/mac80211/cfg.c b/backports/net/mac80211/cfg.c
+index 0e481dd..7863a0d 100644
+--- a/backports/net/mac80211/cfg.c
++++ b/backports/net/mac80211/cfg.c
+@@ -2742,7 +2742,22 @@ static int ieee80211_cancel_roc(struct ieee80211_local *local,
+ 		}
+ 
+ 		list_del(&found->list);
++		mutex_unlock(&local->mtx);
++
++		/*
++		 * The driver might have already expired the ROC (by
++		 * calling ieee80211_remain_on_channel_expired()), so
++		 * cancel the pending roc_done work (otherwise, it might
++		 * cancel the upcoming roc).
++		 */
++		cancel_work_sync(&local->hw_roc_done);
+ 
++		mutex_lock(&local->mtx);
++		/*
++		 * We hold rtnl, so nothing should have been able to
++		 * manipulate the roc_list during the temporary
++		 * lock release.
++		 */
+ 		if (found->started)
+ 			ieee80211_start_next_roc(local);
+ 		mutex_unlock(&local->mtx);
+-- 
+2.5.1
+
