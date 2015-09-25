@@ -17,7 +17,7 @@ KERNEL_TAG=${KERNEL_REL}.28
 BUILD=imx-r0.8
 kernel_rt=".X-rtY"
 
-#v3.X-rcX + upto SHA
+#v4.X-rcX + upto SHA
 #prev_KERNEL_SHA=""
 #KERNEL_SHA=""
 

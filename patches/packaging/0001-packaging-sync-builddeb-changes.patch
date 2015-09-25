@@ -1,6 +1,6 @@
-From c8ce6655162de072388bb5ac263084cd9b6813cc Mon Sep 17 00:00:00 2001
+From 4dbc6c7289419c0610341f7cce97fdbd7b1b5f35 Mon Sep 17 00:00:00 2001
 From: Robert Nelson <robertcnelson@gmail.com>
-Date: Thu, 17 Sep 2015 12:22:25 -0500
+Date: Fri, 25 Sep 2015 14:03:36 -0500
 Subject: [PATCH] packaging: sync builddeb changes
 
 Signed-off-by: Robert Nelson <robertcnelson@gmail.com>
@@ -9,7 +9,7 @@ Signed-off-by: Robert Nelson <robertcnelson@gmail.com>
  1 file changed, 133 insertions(+), 117 deletions(-)
 
 diff --git a/scripts/package/builddeb b/scripts/package/builddeb
-index b57f86d..69d8ff0d 100755
+index b57f86d..690996a 100755
 --- a/scripts/package/builddeb
 +++ b/scripts/package/builddeb
 @@ -15,6 +15,8 @@ set -e
@@ -115,7 +115,7 @@ index b57f86d..69d8ff0d 100755
  
  # Setup the directory structure
 -rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir" "$dtb_dir" 2>/dev/null
-+rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir"
++rm -rf "$tmpdir" "$fwdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir" $objtree/debian/files
  mkdir -m 755 -p "$tmpdir/DEBIAN"
 -mkdir -p  "$tmpdir/lib" "$tmpdir/boot" "$tmpdir/usr/share/doc/$packagename"
 -mkdir -m 755 -p "$fwdir/DEBIAN"
@@ -438,7 +438,7 @@ index b57f86d..69d8ff0d 100755
 +	\$(MAKE) KDEB_SOURCENAME=${sourcename} KDEB_PKGVERSION=${packageversion} bindeb-pkg
 +
 +clean:
-+	rm -rf debian/*tmp
++	rm -rf debian/*tmp debian/files
 +	mv debian/ debian.backup # debian/ might be cleaned away
 +	\$(MAKE) clean
 +	mv debian.backup debian
@@ -457,5 +457,5 @@ index b57f86d..69d8ff0d 100755
 +
  exit 0
 -- 
-2.5.1
+2.5.3
 
