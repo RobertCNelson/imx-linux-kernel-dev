@@ -208,7 +208,7 @@ external_git () {
 	echo "pulling: ${git_tag}"
 	git pull ${git_opts} ${git_patchset} ${git_tag}
 
-	git_tag="imx_3.14.28_1.0.0_ga_neo"
+	git_tag="neo-wl1831"
 	git_patchset="https://github.com/UDOOboard/linux_kernel/"
 	echo "pulling: ${git_tag}"
 	git pull ${git_opts} ${git_patchset} ${git_tag}
@@ -324,10 +324,10 @@ ti_wl () {
 	fi
 }
 
-linux_backports
-dts
-ti_R86
-ti_wl
+#linux_backports
+#dts
+#ti_R86
+#ti_wl
 
 packaging () {
 	echo "dir: packaging"
